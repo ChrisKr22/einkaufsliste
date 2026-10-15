@@ -1,0 +1,60 @@
+# Veröffentlicht die Web-App (Ordner web/) auf GitHub Pages – bei jedem Hochladen auf main.
+# Vorher werden Katalog und Offline-Liste aktualisiert und alle Tests ausgeführt.
+# Einmalig nötig: im Repository unter Settings › Pages bei „Source“ „GitHub Actions“ wählen.
+
+name: Web-App veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Katalog prüfen
+        run: python3 tools/catalog/katalog.py --check
+
+      - name: Web-App bauen (Katalog, Fotos, Offline-Liste)
+        run: python3 tools/web/build.py
+
+      - name: Tests
+        working-directory: web
+        run: node --test tests/*.test.js
+
+      - name: Nur die App-Dateien zusammenstellen
+        run: |
+          mkdir _site
+          cp -R web/index.html web/manifest.webmanifest web/sw.js web/css web/js web/data web/icons web/images _site/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

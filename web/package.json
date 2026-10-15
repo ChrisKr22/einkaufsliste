@@ -1,0 +1,10 @@
+{
+  "name": "feedyourself-web",
+  "private": true,
+  "type": "module",
+  "description": "FeedYourself als Web-App (PWA). Keine Abhängigkeiten.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build": "python3 ../tools/web/build.py"
+  }
+}

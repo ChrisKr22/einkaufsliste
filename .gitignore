@@ -1,0 +1,22 @@
+.DS_Store
+
+# Foto-Werkzeug
+tools/photos/api-keys.env
+tools/photos/work/
+
+# Xcode
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Originalfotos (verarbeitete Bilder liegen in Catalog/Images/)
+Catalog/Inbox/*
+!Catalog/Inbox/LIESMICH.md
+
+# Lokale Claude-Einstellungen
+.claude/
+
+# Python-Zwischenspeicher
+__pycache__/
+*.pyc

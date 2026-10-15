@@ -1,0 +1,303 @@
+// Einkaufsmodus: Kacheln, Liste oder Fokus. Tippen / → wischen = in den Wagen, ← = zurückstellen,
+// in der Fokus-Ansicht zusätzlich ↑ = in den Wagen. Dazu „Zurückgestellt“, „Im Wagen“ und „Einkauf abschließen“.
+
+import { categoryStyle } from '../category-style.js';
+import { buzz, esc, photoContent, photoUrl, thumb } from './dom.js';
+
+const VIEW_KEY = 'feedyourself.shopView';
+const VIEWS = ['grid', 'list', 'focus'];
+const SWIPE_PX = 80;
+
+const HINTS = {
+  grid: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
+  list: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
+  focus: '↑ oder → wischen: in den Wagen · ← wischen: zurückstellen',
+};
+
+const svg = {
+  later: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 12H6M11.5 6l-6 6 6 6"/></svg>',
+  cart: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>',
+  check: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  chevron: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+};
+
+function readView() {
+  try { return VIEWS.includes(localStorage.getItem(VIEW_KEY)) ? localStorage.getItem(VIEW_KEY) : 'grid'; } catch { return 'grid'; }
+}
+
+function saveView(view) {
+  try { localStorage.setItem(VIEW_KEY, view); } catch { /* Ansicht wird dann nicht gemerkt */ }
+}
+
+export function mountShoppingView(root, model, { onGoToPlanning }) {
+  const top = root.querySelector('#shop-top');
+  const bar = root.querySelector('#progress-bar');
+  const progressEl = root.querySelector('.progress');
+  const progressLabel = root.querySelector('#progress-label');
+  const switchButtons = [...root.querySelectorAll('[data-view]')];
+  const hint = root.querySelector('#shop-hint');
+  const content = root.querySelector('#shop-content');
+  const finishBar = root.querySelector('#finish-bar');
+  const finishButton = root.querySelector('#finish');
+  let view = readView();
+  let cartOpen = false;
+  let lastCarted = model.state.cartedCount;
+
+  const find = (id) => model.state.items.find((i) => i.id === id);
+
+  for (const button of switchButtons) {
+    button.addEventListener('click', () => {
+      view = button.dataset.view;
+      saveView(view);
+      render();
+    });
+  }
+
+  root.addEventListener('click', (event) => {
+    const t = event.target;
+    const cart = t.closest('[data-cart]');
+    const later = t.closest('[data-later]');
+    const reopen = t.closest('[data-reopen]');
+    if (later) model.toLater(find(later.dataset.later));
+    else if (cart) model.toCart(find(cart.dataset.cart));
+    else if (reopen) model.reopen(find(reopen.dataset.reopen));
+    else if (t.closest('[data-toggle-cart]')) { cartOpen = !cartOpen; render(); }
+    else if (t.closest('[data-finish]')) model.finishShopping();
+    else if (t.closest('[data-to-plan]')) { model.dismissSummary(); onGoToPlanning(); }
+  });
+
+  attachSwipeGestures(content, {
+    allowUp: () => view === 'focus',
+    onCart: (id) => { const item = find(id); if (item) model.toCart(item); },
+    onLater: (id) => { const item = find(id); if (item) model.toLater(item); },
+  });
+
+  // ---------------------------------------------------------------- Darstellen
+
+  function render() {
+    if (model.state.cartedCount !== lastCarted) {
+      lastCarted = model.state.cartedCount;
+      buzz();
+    }
+    const { summary } = model.state;
+    top.hidden = Boolean(summary);
+    hint.hidden = Boolean(summary);
+    finishBar.hidden = Boolean(summary) || model.state.items.length === 0;
+    if (summary) {
+      content.innerHTML = summaryView(summary);
+      return;
+    }
+
+    const { done, total, ratio } = model.progress;
+    bar.style.width = `${Math.round(ratio * 100)}%`;
+    progressEl.setAttribute('aria-valuemax', String(total));
+    progressEl.setAttribute('aria-valuenow', String(done));
+    progressLabel.textContent = `${done} / ${total}`;
+    for (const b of switchButtons) b.setAttribute('aria-checked', String(b.dataset.view === view));
+    hint.textContent = HINTS[view];
+    finishButton.disabled = done === 0;
+
+    if (total === 0) {
+      content.innerHTML = `<div class="empty">${svg.cart}<h2>Die Liste ist leer</h2>`
+        + '<p>Plane zuerst, was du brauchst.</p><button type="button" class="button secondary inline" data-to-plan>Zur Planung</button></div>';
+      return;
+    }
+
+    const parts = [];
+    if (model.openItems.length === 0) {
+      parts.push(`<div class="all-done">${svg.check}<span>Alles erledigt – jetzt den Einkauf abschließen.</span></div>`);
+    } else if (view === 'focus') {
+      parts.push(focusView());
+    } else {
+      parts.push(...model.shopSections.map(({ category, items }) => `
+        <section class="section" aria-label="${esc(category.name)}">
+          <h2 class="section-title">${esc(category.name)}</h2>
+          ${view === 'grid'
+            ? `<div class="tiles">${items.map((i) => tile(i, category.key)).join('')}</div>`
+            : `<div class="srows">${items.map((i) => srow(i, category.key)).join('')}</div>`}
+        </section>`));
+    }
+    parts.push(laterSection(), cartSection());
+    content.innerHTML = parts.join('');
+  }
+
+  function itemLabel(item) {
+    return [`${item.product.name}, ${item.quantity}×`, item.note].filter(Boolean).join(', ');
+  }
+
+  function swipeHints() {
+    return `<span class="swipe-hint cart" aria-hidden="true">${svg.cart}In den Wagen</span>`
+      + `<span class="swipe-hint later" aria-hidden="true">${svg.later}Zurückstellen</span>`;
+  }
+
+  function photo(item, key, cls) {
+    const style = categoryStyle(key);
+    const hasPhoto = photoUrl(item.product) ? ' has-photo' : '';
+    return `<span class="${cls}${hasPhoto}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">`
+      + `${photoContent(item.product, key)}</span>`;
+  }
+
+  function tile(item, key) {
+    return `<div class="tile" data-swipe="${item.id}">
+      <button type="button" class="tile-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+        ${photo(item, key, 'tile-photo')}
+        <span class="tile-body">
+          <span class="tile-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${item.quantity}×</span></span>
+          <span class="item-note">${esc(item.note)}</span>
+        </span>
+      </button>
+      <button type="button" class="later-button" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      ${swipeHints()}
+    </div>`;
+  }
+
+  function srow(item, key) {
+    return `<div class="srow" data-swipe="${item.id}">
+      <button type="button" class="srow-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+        ${thumb(item.product, key, 'medium')}
+        <span class="srow-text"><span class="item-name">${esc(item.product.name)}</span><span class="item-note">${esc(item.note)}</span></span>
+        <span class="item-qty">${item.quantity}×</span>
+      </button>
+      <button type="button" class="later-button" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      ${swipeHints()}
+    </div>`;
+  }
+
+  function focusView() {
+    const queue = model.focusQueue;
+    const [item, next] = queue;
+    const category = model.categoryFor(item.product);
+    const position = `Noch ${queue.length} offen${next ? ` · danach: ${next.product.name}` : ''}`;
+    return `<div class="focus">
+      <div class="focus-stack">
+        ${next ? '<div class="focus-peek" aria-hidden="true"></div>' : ''}
+        <div class="focus-card" data-swipe="${item.id}">
+          <button type="button" class="focus-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+            <span class="focus-photo-wrap">
+              ${photo(item, category?.key, 'focus-photo')}
+              <span class="chip">${esc(category?.name ?? 'Sonstiges')}</span>
+            </span>
+            <span class="focus-body">
+              <span class="focus-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${item.quantity}×</span></span>
+              <span class="item-note">${esc(item.note)}</span>
+              <span class="focus-position">${esc(position)}</span>
+            </span>
+          </button>
+          ${swipeHints()}
+        </div>
+      </div>
+      <div class="focus-actions">
+        <button type="button" class="button later-soft" data-later="${item.id}">← Zurückstellen</button>
+        <button type="button" class="button accent-soft" data-cart="${item.id}">In den Wagen ↑</button>
+      </div>
+    </div>`;
+  }
+
+  function miniRow(item, action, label) {
+    const key = model.categoryFor(item.product)?.key;
+    return `<div class="mini-row">
+      ${thumb(item.product, key, 'tiny')}
+      <span class="mini-name">${esc(item.product.name)} <span>${item.quantity}×</span></span>
+      <button type="button" class="text-button" data-reopen="${item.id}" aria-label="${esc(item.product.name)}: ${label}">${label}</button>
+    </div>`;
+  }
+
+  function laterSection() {
+    const items = model.laterItems;
+    if (!items.length) return '';
+    return `<section class="section later-section" aria-label="Zurückgestellt">
+      <h2 class="section-title later">Zurückgestellt · ${items.length}</h2>
+      <p class="section-note">Nicht gefunden – bleibt für den nächsten Einkauf auf der Liste.</p>
+      <div class="card later-card">${items.map((i) => miniRow(i, 'reopen', 'Doch gefunden')).join('')}</div>
+    </section>`;
+  }
+
+  function cartSection() {
+    const items = model.cartItems;
+    if (!items.length) return '';
+    return `<section class="section cart-section">
+      <button type="button" class="cart-toggle" data-toggle-cart aria-expanded="${cartOpen}">
+        ${svg.cart}<span>Im Wagen · ${items.length}</span><span class="chevron${cartOpen ? ' open' : ''}">${svg.chevron}</span>
+      </button>
+      ${cartOpen ? `<div class="card in-cart">${items.map((i) => miniRow(i, 'reopen', 'Zurück')).join('')}</div>` : ''}
+    </section>`;
+  }
+
+  function summaryView({ bought, kept }) {
+    const boughtText = bought === 1 ? '1 Produkt gekauft' : `${bought} Produkte gekauft`;
+    const keptText = kept === 0
+      ? 'Die Liste ist leer – Zeit, neu zu planen.'
+      : `${kept === 1 ? '1 Produkt bleibt' : `${kept} Produkte bleiben`} für den nächsten Einkauf auf der Liste.`;
+    return `<div class="summary" role="status">
+      <span class="summary-icon">${svg.check}</span>
+      <h2>Einkauf erledigt</h2>
+      <p>${boughtText} – beim nächsten Mal mit Menge und Anmerkung vorausgefüllt.</p>
+      <p>${keptText}</p>
+      <button type="button" class="button primary inline" data-to-plan>Zur Planung</button>
+    </div>`;
+  }
+
+  model.subscribe(render);
+  render();
+}
+
+/** Wischgesten auf allen Elementen mit [data-swipe]. Waagerecht immer, nach oben nur in der Fokus-Ansicht. */
+function attachSwipeGestures(container, { allowUp, onCart, onLater }) {
+  let g = null;
+
+  const reset = (el) => {
+    el.classList.remove('dragging');
+    el.style.transform = '';
+    el.style.removeProperty('--p');
+    delete el.dataset.dir;
+  };
+
+  container.addEventListener('pointerdown', (event) => {
+    const el = event.target.closest('[data-swipe]');
+    if (!el || event.target.closest('[data-later]') || event.button > 0) return;
+    g = { el, id: el.dataset.swipe, x: event.clientX, y: event.clientY, dx: 0, dy: 0, mode: null };
+  });
+
+  container.addEventListener('pointermove', (event) => {
+    if (!g) return;
+    const dx = event.clientX - g.x;
+    const dy = event.clientY - g.y;
+    if (!g.mode) {
+      if (Math.hypot(dx, dy) < 10) return;
+      if (Math.abs(dx) >= Math.abs(dy)) g.mode = 'x';
+      else if (allowUp() && dy < 0) g.mode = 'y';
+      else { g = null; return; }   // senkrecht: Seite scrollt
+      g.el.classList.add('dragging');
+      g.el.setPointerCapture?.(event.pointerId);
+    }
+    g.dx = g.mode === 'x' ? dx : 0;
+    g.dy = g.mode === 'y' ? Math.min(0, dy) : 0;
+    const progress = Math.min(1, Math.max(Math.abs(g.dx), Math.abs(g.dy)) / SWIPE_PX);
+    g.el.style.transform = `translate(${g.dx}px, ${g.dy}px) rotate(${(g.dx / 30).toFixed(2)}deg)`;
+    g.el.style.setProperty('--p', progress.toFixed(2));
+    g.el.dataset.dir = g.dx > 0 || g.dy < 0 ? 'cart' : g.dx < 0 ? 'later' : '';
+  });
+
+  container.addEventListener('pointerup', () => {
+    if (!g) return;
+    const { el, id, dx, dy, mode } = g;
+    g = null;
+    if (!mode) return;
+    // Ein Klick direkt nach dem Wischen soll nicht zusätzlich „in den Wagen“ auslösen.
+    const block = (e) => { e.stopPropagation(); e.preventDefault(); };
+    container.addEventListener('click', block, { capture: true });
+    setTimeout(() => container.removeEventListener('click', block, { capture: true }), 350);
+
+    const action = dx > SWIPE_PX || dy < -SWIPE_PX ? 'cart' : dx < -SWIPE_PX ? 'later' : null;
+    if (!action) { reset(el); return; }
+    el.classList.remove('dragging');
+    el.classList.add('flying');
+    el.style.transform = dy < -SWIPE_PX ? 'translateY(-120%)' : `translateX(${action === 'cart' ? 120 : -120}%)`;
+    setTimeout(() => (action === 'cart' ? onCart(id) : onLater(id)), 160);
+  });
+
+  container.addEventListener('pointercancel', () => {
+    if (g) reset(g.el);
+    g = null;
+  });
+}

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F4F5F4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151213" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="FeedYourself">
+  <meta name="description" content="Einkaufsliste zum Planen und Einkaufen – offline auf dem iPhone.">
+  <!-- Private Nutzung: Suchmaschinen sollen die App nicht aufnehmen. -->
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+  <title>FeedYourself</title>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-row">
+        <h1 class="wordmark">Feed<span>Yourself</span></h1>
+        <div class="header-actions">
+          <span id="count" class="count" aria-live="polite"></span>
+          <button type="button" id="open-settings" class="icon-button settings-button" aria-label="Einstellungen">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="mode" role="tablist" aria-label="Modus">
+        <button type="button" role="tab" id="tab-plan" aria-controls="plan-view" aria-selected="true" data-mode="plan">Planen</button>
+        <button type="button" role="tab" id="tab-shop" aria-controls="shop-view" aria-selected="false" data-mode="shop">Einkaufen</button>
+      </div>
+    </header>
+
+    <main id="plan-view" class="view" role="tabpanel" aria-labelledby="tab-plan">
+      <div class="search">
+        <label class="sr-only" for="search">Produkt suchen</label>
+        <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="search" type="text" inputmode="search" enterkeyhint="enter" autocomplete="off" autocorrect="off"
+               autocapitalize="off" spellcheck="false" placeholder="Was brauchst du?">
+        <button type="button" id="search-clear" class="icon-button search-clear" aria-label="Suche leeren" hidden>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+        </button>
+      </div>
+      <section id="suggestions" class="card suggestions" aria-label="Vorschläge" hidden></section>
+      <div id="list" class="list"></div>
+      <div id="share-row" class="share-row" hidden>
+        <button type="button" class="button secondary share-button" data-share>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 12v7.5h14V12"/></svg>
+          Liste teilen
+        </button>
+      </div>
+      <section id="recent" class="section recent" aria-labelledby="recent-title" hidden></section>
+    </main>
+
+    <main id="shop-view" class="view shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+      <div id="shop-top" class="shop-top">
+        <div class="progress" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-bar"></span></div>
+        <span id="progress-label" class="progress-label"></span>
+        <div class="view-switch" role="radiogroup" aria-label="Ansicht">
+          <button type="button" role="radio" data-view="grid" aria-label="Kacheln" aria-checked="true">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+          </button>
+          <button type="button" role="radio" data-view="list" aria-label="Liste" aria-checked="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="5" width="4" height="4" rx="1"/><rect x="4" y="15" width="4" height="4" rx="1"/><path d="M11 7h9M11 17h9"/></svg>
+          </button>
+          <button type="button" role="radio" data-view="focus" aria-label="Fokus" aria-checked="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="17" rx="2.5"/><path d="M3 7v10M21 7v10"/></svg>
+          </button>
+        </div>
+      </div>
+      <p id="shop-hint" class="shop-hint"></p>
+      <div id="shop-content"></div>
+      <div id="finish-bar" class="finish-bar">
+        <button type="button" id="finish" class="button primary" data-finish>Einkauf abschließen</button>
+      </div>
+    </main>
+
+    <div id="settings" class="settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+      <div class="settings-inner">
+        <div class="settings-header">
+          <h2 id="settings-title">Einstellungen</h2>
+          <button type="button" class="text-button strong" data-close-settings>Fertig</button>
+        </div>
+        <section aria-labelledby="categories-title">
+          <h3 class="section-title" id="categories-title">Kategorien</h3>
+          <p class="section-note">Die Reihenfolge ist dein Weg durch den Laden. Zum Sortieren am Griff ziehen, Namen antippen zum Umbenennen.</p>
+          <div id="category-list" class="card category-list" role="list"></div>
+          <button type="button" class="add-category" data-add-category>+ Kategorie hinzufügen</button>
+          <p class="section-note">Beim Löschen wandern die Produkte nach „Sonstiges“.</p>
+        </section>
+        <section id="paste-share" class="settings-section" aria-labelledby="paste-title">
+          <h3 class="section-title" id="paste-title">Geteilte Liste einfügen</h3>
+          <p class="section-note">Hat dir jemand eine Liste geschickt? Nachricht oder Link kopieren und hier einfügen – die Produkte kommen zu deiner Liste dazu.</p>
+          <div class="card paste-card">
+            <label class="sr-only" for="paste-input">Nachricht oder Link</label>
+            <textarea id="paste-input" rows="3" placeholder="Nachricht oder Link hier einfügen"></textarea>
+            <div class="backup-actions">
+              <button type="button" class="button secondary" data-paste-clipboard>Aus Zwischenablage</button>
+              <button type="button" class="button primary" data-paste-apply>Übernehmen</button>
+            </div>
+            <p id="paste-error" class="backup-error" role="alert" hidden></p>
+          </div>
+        </section>
+        <section id="backup" class="settings-section" aria-labelledby="backup-title">
+          <h3 class="section-title" id="backup-title">Sicherung</h3>
+          <p class="section-note">Deine Liste liegt nur auf diesem Gerät. Sichere sie ab und zu als Datei, zum Beispiel in iCloud Drive oder per AirDrop.</p>
+          <div class="card backup-card">
+            <p id="backup-status" class="backup-status"></p>
+            <div class="backup-actions">
+              <button type="button" class="button primary" data-export>Sicherung exportieren</button>
+              <button type="button" class="button secondary" data-import>Sicherung einspielen</button>
+              <input type="file" id="backup-file" accept="application/json,.json" hidden>
+            </div>
+            <div id="backup-confirm" class="backup-confirm" hidden></div>
+            <p id="backup-error" class="backup-error" role="alert" hidden></p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div id="incoming-root"></div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <div id="sheet-root"></div>
+  </div>
+
+  <noscript><p class="noscript">FeedYourself braucht JavaScript.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
