@@ -2,6 +2,7 @@
 
 import { processPhoto as defaultProcessPhoto } from '../photo.js';
 import { esc, stepper, thumb } from './dom.js';
+import { formatQuantity, spokenQuantity, UNIT_KEYS, UNITS, unitOf } from '../units.js';
 
 export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto } = {}) {
   let openId = null;
@@ -50,7 +51,7 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
     if (t.closest('[data-close]')) close();
     else if (t.closest('[data-remove]')) model.remove(item);
     else if (t.closest('[data-inc]')) model.increment(item);
-    else if (t.closest('[data-dec]') && item.quantity > 1) model.decrement(item);
+    else if (t.closest('[data-dec]') && model.canDecrease(item)) model.decrement(item);
     else if (t.closest('[data-photo-pick]')) root.querySelector('[data-photo-input]')?.click();
     else if (t.closest('[data-photo-reset]')) { setStatus(''); model.removePhoto(item.product); }
   });
@@ -58,6 +59,9 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
   root.addEventListener('change', (event) => {
     const input = event.target.closest('[data-photo-input]');
     if (input) usePhoto(input.files?.[0]);
+    const unit = event.target.closest('#entry-unit');
+    const item = model.editingItem;
+    if (unit && item && unit.value !== unitOf(item)) model.setEntryUnit(item, unit.value);
   });
 
   root.addEventListener('keydown', (event) => {
@@ -85,9 +89,11 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
       // Nur Menge und Foto aktualisieren, damit Eingabe und Fokus im Textfeld erhalten bleiben.
       const qty = root.querySelector('.stepper .qty');
       if (qty) {
-        qty.textContent = `${item.quantity}×`;
-        qty.setAttribute('aria-label', `${item.quantity} Stück`);
+        qty.textContent = formatQuantity(item.quantity, unitOf(item));
+        qty.setAttribute('aria-label', spokenQuantity(item.quantity, unitOf(item)));
       }
+      const unitSelect = root.querySelector('#entry-unit');
+      if (unitSelect && unitSelect.value !== unitOf(item)) unitSelect.value = unitOf(item);
       updatePhoto(item, category);
       return;
     }
@@ -111,6 +117,12 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
         </div>
         <p class="photo-status" role="status" hidden></p>
         <div class="sheet-row"><span>Menge</span>${stepper(item, { large: true })}</div>
+        <div class="sheet-row">
+          <label for="entry-unit">Einheit</label>
+          <select id="entry-unit" class="unit-select">
+            ${UNIT_KEYS.map((key) => `<option value="${key}"${key === unitOf(item) ? ' selected' : ''}>${UNITS[key].label}</option>`).join('')}
+          </select>
+        </div>
         <div>
           <label for="note">Anmerkung</label>
           <textarea id="note" rows="2" placeholder="z. B. Sorte, Marke, Größe">${esc(item.note)}</textarea>

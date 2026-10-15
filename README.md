@@ -52,7 +52,15 @@ Lokal im Browser ansehen (auf dem Mac):
 cd web && python3 -m http.server 8000
 ```
 
-Dann http://localhost:8000 öffnen. Für das iPhone braucht es HTTPS, also das Veröffentlichen (unten).
+Dann http://localhost:8000 öffnen. In Safari zeigt *Entwickler › Responsive Design Mode* (⌥⌘R) die App in iPhone-Größe.
+
+**Auf dem iPhone testen, ohne zu veröffentlichen:** iPhone und Mac im selben WLAN, dann auf dem Mac
+
+```bash
+cd web && python3 -m http.server 8000 --bind 0.0.0.0
+```
+
+und auf dem iPhone in Safari `http://<IP-des-Macs>:8000` öffnen (IP: *Systemeinstellungen › WLAN › Details*). Ohne HTTPS gibt es dabei keinen Offline-Modus und kein Teilen-Menü; alles andere funktioniert. Die Testdaten sind getrennt von der installierten App.
 
 ## Veröffentlichen (GitHub Pages) und aufs iPhone
 

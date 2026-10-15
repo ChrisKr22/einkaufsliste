@@ -1,6 +1,7 @@
 // Planungsmodus: Suche mit Vorschlägen, Liste nach Kategorien, Menge, Wischen zum Entfernen.
 
 import { esc, icon, stepper, thumb, buzz } from './dom.js';
+import { spokenQuantity, unitOf } from '../units.js';
 
 const SWIPE_DELETE_PX = 90;
 const RECENT_ORDER_KEY = 'feedyourself.recentOrder';
@@ -156,7 +157,7 @@ export function mountPlanningView(root, model) {
     if (item.status === 'later') note = `<span class="row-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
     else if (item.note) note = `<span class="row-note">${esc(item.note)}</span>`;
     else note = '<span class="row-note placeholder">Anmerkung hinzufügen</span>';
-    const label = [`${item.product.name}, ${item.quantity} Stück`, item.note].filter(Boolean).join(', ');
+    const label = [`${item.product.name}, ${spokenQuantity(item.quantity, unitOf(item))}`, item.note].filter(Boolean).join(', ');
     return `<div class="row" data-row="${item.id}">
       <div class="row-delete" aria-hidden="true">Entfernen</div>
       <div class="row-inner">

@@ -12,6 +12,7 @@ import { mountPlanningView } from './views/planning-view.js';
 import { mountSettingsView } from './views/settings-view.js';
 import { mountIncomingDialog, mountPasteSection, mountShareButton, receiveFromLocation } from './views/share-view.js';
 import { mountShoppingView } from './views/shopping-view.js';
+import { mountProductUnits } from './views/units-view.js';
 
 async function openStore() {
   try {
@@ -115,6 +116,7 @@ async function start() {
   mountEditSheet(document.querySelector('#sheet-root'), model);
   mountSettingsView(document.querySelector('#settings'), model, { opener: document.querySelector('#open-settings') });
   mountBackupSection(document.querySelector('#backup'), model);
+  mountProductUnits(document.querySelector('#product-units'), model);
   mountShareButton(document.querySelector('#plan-view'), model);
   mountPasteSection(document.querySelector('#paste-share'), model);
   mountIncomingDialog(document.querySelector('#incoming-root'), model);

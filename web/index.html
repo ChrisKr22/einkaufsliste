@@ -93,6 +93,15 @@
           <button type="button" class="add-category" data-add-category>+ Kategorie hinzufügen</button>
           <p class="section-note">Beim Löschen wandern die Produkte nach „Sonstiges“.</p>
         </section>
+        <section id="product-units" class="settings-section" aria-labelledby="units-title">
+          <h3 class="section-title" id="units-title">Einheiten je Produkt</h3>
+          <p class="section-note">In welcher Einheit kommt ein Produkt auf die Liste – z. B. Äpfel in Kilogramm, Eier in Stück? Gilt ab dem nächsten Hinzufügen; Einträge auf der Liste änderst du im Bearbeiten-Fenster.</p>
+          <div class="card unit-card">
+            <label class="sr-only" for="unit-search">Produkt suchen</label>
+            <input id="unit-search" type="text" placeholder="Produkt suchen …" autocomplete="off" autocorrect="off" spellcheck="false">
+            <div id="unit-list" class="unit-list" role="list"></div>
+          </div>
+        </section>
         <section id="paste-share" class="settings-section" aria-labelledby="paste-title">
           <h3 class="section-title" id="paste-title">Geteilte Liste einfügen</h3>
           <p class="section-note">Hat dir jemand eine Liste geschickt? Nachricht oder Link kopieren und hier einfügen – die Produkte kommen zu deiner Liste dazu.</p>

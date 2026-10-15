@@ -1,4 +1,4 @@
-# FeedYourself – App-Konzept (Entwurf v0.6)
+# FeedYourself – App-Konzept (Entwurf v0.7)
 
 Web-App (PWA) fürs iPhone, nach der Installation vollständig offline. (Ursprünglich als native iOS-App geplant, siehe Kapitel 7.) Eine grafische, interaktive Einkaufsliste mit zwei Modi: **Planung** und **Einkauf**.
 
@@ -97,9 +97,8 @@ Umschalten über einen großen Segment-Schalter oben oder eine Tab-Leiste: **Pla
   | Tippen | in den Wagen | in den Wagen |
   | → nach rechts wischen | in den Wagen | in den Wagen |
   | ← nach links wischen | zurückstellen / nicht vorhanden | zurückstellen / nicht vorhanden |
-  | ↑ nach oben wischen | (scrollt die Liste) | in den Wagen |
 
-  - Waagerechte Gesten stören das senkrechte Scrollen nicht. Die Fokus-Ansicht scrollt nicht, deshalb funktioniert dort zusätzlich ↑.
+  - Nur waagerechte Gesten – senkrecht wird überall gescrollt, auch in der Fokus-Ansicht. (Hochwischen gab es anfangs in der Fokus-Ansicht; entfernt, weil es beim Scrollen störte.)
   - Beim Ziehen färbt sich die Karte (grün bzw. gelb = Wagen, blau = zurückstellen), ab ~80 pt Weg wird ausgelöst, dazu kommt haptisches Feedback.
   - Zusätzlich gibt es auf jeder Karte einen kleinen ←-Knopf und in der Fokus-Ansicht zwei große Knöpfe (für VoiceOver und Bedienung ohne Wischen).
   - In SwiftUI: `DragGesture` mit Richtungsprüfung (waagerecht nur, wenn |dx| > |dy|), in der Liste alternativ die nativen `swipeActions`.
@@ -114,7 +113,7 @@ Umschalten über einen großen Segment-Schalter oben oder eine Tab-Leiste: **Pla
 ### 2.3 Lebenszyklus eines Eintrags
 
 ```
- Katalog/Verlauf ──hinzufügen──▶ OFFEN ──tippen / → (↑ Fokus)──▶ IM WAGEN ──abschließen──▶ GEKAUFT (Verlauf)
+ Katalog/Verlauf ──hinzufügen──▶ OFFEN ──tippen / → wischen──▶ IM WAGEN ──abschließen──▶ GEKAUFT (Verlauf)
                                  │  ▲                            │                            │
                     ← wischen    │  └──────── rückgängig ────────┘                            │
                                  ▼                                                            │
@@ -188,6 +187,25 @@ Erreichbar über das Regler-Symbol oben rechts (in beiden Modi), öffnet sich al
 - Display beim Einkaufen anlassen (Ein/Aus).
 
 Weitere Punkte kommen dazu, sobald sie festgelegt sind (z. B. Standardansicht im Einkauf, Bildnachweise).
+
+
+### 3.3 Maßeinheiten ✅
+
+| Einheit | Anzeige | Schritt (Plus/Minus) | Startwert |
+|---|---|---|---|
+| Stück | 4× | 1 | 1 |
+| Packung | 2 Pck. | 1 | 1 |
+| Gramm | 500 g | 100 | 500 |
+| Kilogramm | 1,5 kg | 0,5 | 1 |
+| Milliliter | 500 ml | 100 | 500 |
+| Liter | 1,5 l | 0,5 | 1 |
+
+- **Je Produkt** eine Standard-Einheit (Einstellungen › „Einheiten je Produkt“, mit Suche), z. B. Äpfel in Kilogramm. Gilt ab dem nächsten Hinzufügen; ohne Festlegung: Stück.
+- **Je Eintrag** änderbar im Bearbeiten-Fenster (Auswahl „Einheit“); die Menge springt dann auf den Startwert der neuen Einheit.
+- Minus an der kleinsten Menge entfernt den Eintrag (in der Liste, mit Rückgängig); im Bearbeiten-Fenster bleibt er stehen.
+- „Zuletzt gekauft“, geteilte Listen und die Sicherung behalten Menge **und** Einheit. Wurde die Standard-Einheit seit dem letzten Kauf geändert, startet das Produkt mit dem Startwert der neuen Einheit (nicht „6 kg“ statt „6 Stück“).
+- Geteilte Liste mit anderer Einheit als die eigene: die eigene Menge bleibt.
+- Optional kann `catalog.json` je Produkt eine Einheit vorgeben (`"unit": "kg"`).
 
 ---
 
@@ -431,7 +449,7 @@ Quellen: [Apple Developer Forums – SwiftData & CloudKit Sharing](https://devel
 **Später**
 - Teilen der Liste per Browser-Link mit Sync, falls nötig (siehe Kapitel 8)
 - Mehrere Listen / Läden mit eigener Kategorie-Reihenfolge
-- Einheiten (g, kg, l) zusätzlich zu „x"
+- ✅ Maßeinheiten (Stück, Packung, g, kg, ml, l) – siehe 3.3
 - Widget & Siri („Füge Milch zur Einkaufsliste hinzu")
 - Apple Watch für den Einkaufsmodus
 - Spracheingabe
@@ -444,7 +462,7 @@ Quellen: [Apple Developer Forums – SwiftData & CloudKit Sharing](https://devel
 - Technik: Web-App (PWA) statt nativer App, weil kein passendes Xcode verfügbar ist
 - Name: **FeedYourself**
 - Einkaufsmodus: Kacheln, Liste **und** Fokus-Ansicht, umschaltbar
-- Gesten: → wischen / Tippen = in den Wagen, ← wischen = zurückstellen; in der Fokus-Ansicht zusätzlich ↑ = in den Wagen
+- Gesten: → wischen / Tippen = in den Wagen, ← wischen = zurückstellen (überall, kein Hochwischen)
 - Planungsliste mit Fotos
 - Einkauf abschließen nur per Knopf
 - Basis-Fotos: eigene Fotos per Ordner-Import (Catalog/Inbox); Pixabay/Pexels-Werkzeug optional

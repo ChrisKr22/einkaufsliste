@@ -2,6 +2,7 @@
 // – per Link (#liste=…) oder durch Einfügen der Nachricht in der installierten App.
 
 import { categoryStyle } from '../category-style.js';
+import { formatQuantity, unitOf } from '../units.js';
 import { esc } from './dom.js';
 
 /** „Liste teilen“ unter der Planungsliste. */
@@ -76,7 +77,7 @@ export function mountIncomingDialog(root, model) {
       const merged = onList.has(item.name.toLocaleLowerCase('de'));
       return `<li class="incoming-row">
         <span class="thumb tiny" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="${style.path}"/></svg></span>
-        <span class="incoming-text"><span class="mini-name">${esc(item.name)} <span>${item.quantity}×</span></span>
+        <span class="incoming-text"><span class="mini-name">${esc(item.name)} <span>${formatQuantity(item.quantity, unitOf(item))}</span></span>
         ${item.note ? `<span class="item-note">${esc(item.note)}</span>` : ''}</span>
         ${merged ? '<span class="incoming-tag">schon auf der Liste</span>' : ''}
       </li>`;

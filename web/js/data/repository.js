@@ -2,6 +2,7 @@
 // Ansichten und das ListModel sprechen nur hiermit, nie direkt mit dem Speicher –
 // so lässt sich später ein Sync (z. B. für die Browser-Ansicht anderer) ergänzen.
 
+import { DEFAULT_UNIT, isUnit, normalizeQuantity, stepUp, UNITS, unitOf } from '../units.js';
 import { createBackup, LAST_BACKUP_KEY, restoreBackup } from './backup.js';
 
 export const FALLBACK_CATEGORY = 'sonst';
@@ -10,13 +11,25 @@ export const DELETED_CATEGORIES_KEY = 'deletedCategoryKeys';
 /**
  * @typedef {{id: string, key: string, name: string, sortOrder: number}} Category
  * @typedef {{id: string, catalogId: string|null, name: string, synonyms: string[], categoryId: string|null,
- *   isCustom: boolean, purchaseCount: number, lastPurchasedAt: number|null, lastQuantity: number, lastNote: string}} Product
+ *   isCustom: boolean, purchaseCount: number, lastPurchasedAt: number|null, lastQuantity: number, lastNote: string,
+ *   unit?: string, lastUnit?: string}} Product   (unit: Standard-Einheit, fehlt = Stück)
  * @typedef {'open'|'inCart'|'later'} EntryStatus
- * @typedef {{id: string, productId: string, quantity: number, note: string, status: EntryStatus, addedAt: number}} Entry
+ * @typedef {{id: string, productId: string, quantity: number, unit?: string, note: string, status: EntryStatus, addedAt: number}} Entry
  * @typedef {Entry & {product: Product}} ListItem
  */
 
-export const newId = () => crypto.randomUUID();
+/**
+ * Zufällige ID. crypto.randomUUID gibt es nur über HTTPS bzw. localhost –
+ * beim Testen im WLAN (http://192.168…) wird sie aus getRandomValues gebildet.
+ */
+export function newId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
 
 const byName = (a, b) => a.name.localeCompare(b.name, 'de');
 const normalizeName = (name) => name.trim().toLocaleLowerCase('de');
@@ -49,8 +62,9 @@ export class ShoppingRepository {
   }
 
   /**
-   * Legt das Produkt auf die Liste. Steht es schon drauf (nicht im Wagen), wird die Menge um 1 erhöht.
-   * Ohne Angaben werden Menge und Anmerkung vom letzten Einkauf übernommen.
+   * Legt das Produkt auf die Liste. Steht es schon drauf (nicht im Wagen), wird die Menge um eine Stufe erhöht.
+   * Einheit: die des Produkts. Ohne Angaben werden Menge und Anmerkung vom letzten Einkauf übernommen
+   * (die Menge nur, wenn damals dieselbe Einheit galt).
    * @returns {Promise<{type: 'added'|'incremented', item: ListItem, previousQuantity?: number}>}
    */
   async add(productId, { quantity, note } = {}) {
@@ -61,15 +75,18 @@ export class ShoppingRepository {
     const existing = entries.find((e) => e.productId === productId && e.status !== 'inCart');
     if (existing) {
       const previousQuantity = existing.quantity;
-      const updated = { ...existing, quantity: existing.quantity + 1, status: 'open' };
+      const updated = { ...existing, quantity: stepUp(existing.quantity, unitOf(existing)), status: 'open' };
       await this.store.put('entries', updated);
       return { type: 'incremented', item: { ...updated, product }, previousQuantity };
     }
 
+    const unit = unitOf(product);
+    const remembered = (product.lastUnit ?? DEFAULT_UNIT) === unit ? product.lastQuantity : null;
     const entry = {
       id: newId(),
       productId,
-      quantity: Math.max(1, quantity ?? product.lastQuantity ?? 1),
+      quantity: normalizeQuantity(quantity ?? remembered ?? UNITS[unit].initial, unit),
+      unit,
       note: note ?? product.lastNote ?? '',
       status: 'open',
       addedAt: this.now(),
@@ -95,13 +112,41 @@ export class ShoppingRepository {
       lastPurchasedAt: null,
       lastQuantity: 1,
       lastNote: '',
+      unit: DEFAULT_UNIT,
     };
     await this.store.put('products', product);
     return product;
   }
 
   async setQuantity(entryId, quantity) {
-    await this.#update(entryId, { quantity: Math.max(1, quantity) });
+    const entry = await this.store.get('entries', entryId);
+    if (!entry) throw new Error('Eintrag nicht gefunden');
+    await this.#update(entryId, { quantity: normalizeQuantity(quantity, unitOf(entry)) });
+  }
+
+  /** Einheit eines Eintrags ändern; die Menge springt auf den Startwert der neuen Einheit. */
+  async setEntryUnit(entryId, unit) {
+    if (!isUnit(unit)) throw new Error('Unbekannte Einheit');
+    const entry = await this.store.get('entries', entryId);
+    if (!entry) throw new Error('Eintrag nicht gefunden');
+    if (unitOf(entry) === unit) return entry;
+    await this.store.put('entries', { ...entry, unit, quantity: UNITS[unit].initial });
+    return entry;
+  }
+
+  /** Setzt einen Eintrag auf einen früheren Stand zurück (für „Rückgängig“). */
+  async replaceEntry(entry) {
+    const { product, ...plain } = entry;
+    await this.store.put('entries', plain);
+  }
+
+  /** Standard-Einheit eines Produkts (gilt ab dem nächsten Hinzufügen). */
+  async setProductUnit(productId, unit) {
+    if (!isUnit(unit)) throw new Error('Unbekannte Einheit');
+    const product = await this.store.get('products', productId);
+    if (!product) throw new Error('Produkt nicht gefunden');
+    await this.store.put('products', { ...product, unit });
+    return unitOf(product);
   }
 
   async setNote(entryId, note) {
@@ -249,7 +294,7 @@ export class ShoppingRepository {
         const category = categories.find((c) => c.key === item.categoryKey) ?? fallback;
         product = {
           id: newId(), catalogId: null, name: item.name, synonyms: [], categoryId: category?.id ?? null,
-          isCustom: true, purchaseCount: 0, lastPurchasedAt: null, lastQuantity: 1, lastNote: '',
+          isCustom: true, purchaseCount: 0, lastPurchasedAt: null, lastQuantity: 1, lastNote: '', unit: unitOf(item),
         };
         await this.store.put('products', product);
         byName.set(normalizeName(product.name), product);
@@ -259,12 +304,15 @@ export class ShoppingRepository {
       if (existing) {
         const notes = [existing.note, item.note].filter(Boolean);
         const note = notes.length === 2 && notes[0] !== notes[1] ? `${notes[0]} / ${notes[1]}` : (notes[0] ?? '');
-        const merged = { ...existing, quantity: Math.max(existing.quantity, item.quantity), note, status: 'open' };
+        const sameUnit = unitOf(existing) === unitOf(item);
+        const quantity = sameUnit ? Math.max(existing.quantity, item.quantity) : existing.quantity;
+        const merged = { ...existing, quantity, note, status: 'open' };
         await this.store.put('entries', merged);
         Object.assign(existing, merged);
         result.updated++;
       } else {
-        const entry = { id: newId(), productId: product.id, quantity: item.quantity, note: item.note, status: 'open', addedAt: this.now() };
+        const unit = unitOf(item);
+        const entry = { id: newId(), productId: product.id, quantity: normalizeQuantity(item.quantity, unit), unit, note: item.note, status: 'open', addedAt: this.now() };
         await this.store.put('entries', entry);
         entries.push(entry);
         result.added++;
@@ -301,6 +349,7 @@ export class ShoppingRepository {
             purchaseCount: (product.purchaseCount ?? 0) + 1,
             lastPurchasedAt: now,
             lastQuantity: entry.quantity,
+            lastUnit: unitOf(entry),
             lastNote: entry.note,
           });
         }

@@ -27,8 +27,8 @@ const listed = (model) => model.plannedItems.map((i) => `${i.product.name} ${i.q
 describe('Liste teilen', () => {
   test('Kodieren und Dekodieren, auch mit Umlauten und Sonderzeichen', async () => {
     const items = [
-      { catalogId: 'aepfel', name: 'Äpfel', categoryKey: 'obst', quantity: 2, note: 'Elstar – „bio“ & süß' },
-      { catalogId: null, name: 'Kokosmilch light', categoryKey: 'sonst', quantity: 1, note: '' },
+      { catalogId: 'aepfel', name: 'Äpfel', categoryKey: 'obst', quantity: 1.5, unit: 'kg', note: 'Elstar – „bio“ & süß' },
+      { catalogId: null, name: 'Kokosmilch light', categoryKey: 'sonst', quantity: 1, unit: 'stk', note: '' },
     ];
     const code = await encodeShare(items);
     assert.match(code, /^[zj][A-Za-z0-9_-]+$/, 'nur URL-sichere Zeichen');

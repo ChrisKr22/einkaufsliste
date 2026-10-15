@@ -1,6 +1,7 @@
 // Kleine Helfer für die Ansichten.
 
 import { categoryStyle } from '../category-style.js';
+import { formatQuantity, spokenQuantity, unitOf } from '../units.js';
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ESCAPES[c]);
@@ -45,7 +46,7 @@ export function stepper(item, { large = false } = {}) {
   const name = esc(item.product.name);
   return `<div class="stepper${large ? ' large' : ''}">`
     + `<button type="button" data-dec="${item.id}" aria-label="${name} weniger">${icon.minus}</button>`
-    + `<span class="qty" aria-label="${item.quantity} Stück">${item.quantity}×</span>`
+    + `<span class="qty" aria-label="${spokenQuantity(item.quantity, unitOf(item))}">${formatQuantity(item.quantity, unitOf(item))}</span>`
     + `<button type="button" data-inc="${item.id}" aria-label="${name} mehr">${icon.plus}</button>`
     + '</div>';
 }

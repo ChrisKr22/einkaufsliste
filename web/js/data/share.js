@@ -1,6 +1,8 @@
 // Liste teilen ohne Server: Die Einträge stecken komprimiert im Link (#liste=…).
 // Wer den Link in der Web-App öffnet – oder ihn in der installierten App einfügt –, kann sie übernehmen.
 
+import { DEFAULT_UNIT, formatQuantity, isUnit, normalizeQuantity, unitOf } from '../units.js';
+
 export const SHARE_PARAM = 'liste';
 const FORMAT = 1;
 const MAX_ITEMS = 300;
@@ -26,7 +28,7 @@ async function pipe(bytes, stream) {
 // ---------------------------------------------------------------- Kodieren / Dekodieren
 
 /**
- * @param {Array<{catalogId: string|null, name: string, categoryKey: string|null, quantity: number, note: string}>} items
+ * @param {Array<{catalogId: string|null, name: string, categoryKey: string|null, quantity: number, unit?: string, note: string}>} items
  * @returns {Promise<string>} Code für den Link (z… = komprimiert, j… = unkomprimiert)
  */
 export async function encodeShare(items) {
@@ -34,6 +36,7 @@ export async function encodeShare(items) {
     v: FORMAT,
     i: items.map((it) => {
       const row = { n: it.name, q: it.quantity };
+      if (unitOf(it) !== DEFAULT_UNIT) row.u = unitOf(it);
       if (it.catalogId) row.c = it.catalogId;
       if (it.categoryKey) row.k = it.categoryKey;
       if (it.note) row.t = it.note;
@@ -66,11 +69,13 @@ export async function decodeShare(code) {
   if (payload?.v !== FORMAT || !Array.isArray(payload.i) || payload.i.length === 0 || payload.i.length > MAX_ITEMS) fail();
   return payload.i.map((row) => {
     if (typeof row?.n !== 'string' || !row.n.trim()) fail();
+    const unit = isUnit(row.u) ? row.u : DEFAULT_UNIT;
     return {
       catalogId: typeof row.c === 'string' ? row.c : null,
       name: row.n.trim().slice(0, 80),
       categoryKey: typeof row.k === 'string' ? row.k : null,
-      quantity: Math.min(99, Math.max(1, Math.round(Number(row.q) || 1))),
+      quantity: normalizeQuantity(row.q, unit),
+      unit,
       note: typeof row.t === 'string' ? row.t.slice(0, 200) : '',
     };
   });
@@ -92,7 +97,7 @@ export function shareText(sections, url) {
   const lines = [`Einkaufsliste (${count === 1 ? '1 Produkt' : `${count} Produkte`})`];
   for (const { category, items } of sections) {
     lines.push('', category.name);
-    for (const item of items) lines.push(`• ${item.product.name} ${item.quantity}×${item.note ? ` – ${item.note}` : ''}`);
+    for (const item of items) lines.push(`• ${item.product.name} ${formatQuantity(item.quantity, unitOf(item))}${item.note ? ` – ${item.note}` : ''}`);
   }
   if (url) lines.push('', 'In FeedYourself übernehmen:', url);
   return lines.join('\n');

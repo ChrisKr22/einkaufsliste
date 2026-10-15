@@ -1,7 +1,8 @@
 // Einkaufsmodus: Kacheln, Liste oder Fokus. Tippen / → wischen = in den Wagen, ← = zurückstellen,
-// in der Fokus-Ansicht zusätzlich ↑ = in den Wagen. Dazu „Zurückgestellt“, „Im Wagen“ und „Einkauf abschließen“.
+// Senkrecht wird immer gescrollt. Dazu „Zurückgestellt“, „Im Wagen“ und „Einkauf abschließen“.
 
 import { categoryStyle } from '../category-style.js';
+import { formatQuantity, spokenQuantity, unitOf } from '../units.js';
 import { buzz, esc, photoContent, photoUrl, thumb } from './dom.js';
 
 const VIEW_KEY = 'feedyourself.shopView';
@@ -11,7 +12,7 @@ const SWIPE_PX = 80;
 const HINTS = {
   grid: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
   list: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
-  focus: '↑ oder → wischen: in den Wagen · ← wischen: zurückstellen',
+  focus: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
 };
 
 const svg = {
@@ -67,7 +68,6 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   });
 
   attachSwipeGestures(content, {
-    allowUp: () => view === 'focus',
     onCart: (id) => { const item = find(id); if (item) model.toCart(item); },
     onLater: (id) => { const item = find(id); if (item) model.toLater(item); },
   });
@@ -122,7 +122,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   }
 
   function itemLabel(item) {
-    return [`${item.product.name}, ${item.quantity}×`, item.note].filter(Boolean).join(', ');
+    return [`${item.product.name}, ${spokenQuantity(item.quantity, unitOf(item))}`, item.note].filter(Boolean).join(', ');
   }
 
   function swipeHints() {
@@ -142,7 +142,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       <button type="button" class="tile-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
         ${photo(item, key, 'tile-photo')}
         <span class="tile-body">
-          <span class="tile-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${item.quantity}×</span></span>
+          <span class="tile-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span></span>
           <span class="item-note">${esc(item.note)}</span>
         </span>
       </button>
@@ -156,7 +156,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       <button type="button" class="srow-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
         ${thumb(item.product, key, 'medium')}
         <span class="srow-text"><span class="item-name">${esc(item.product.name)}</span><span class="item-note">${esc(item.note)}</span></span>
-        <span class="item-qty">${item.quantity}×</span>
+        <span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span>
       </button>
       <button type="button" class="later-button" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
       ${swipeHints()}
@@ -178,7 +178,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
               <span class="chip">${esc(category?.name ?? 'Sonstiges')}</span>
             </span>
             <span class="focus-body">
-              <span class="focus-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${item.quantity}×</span></span>
+              <span class="focus-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span></span>
               <span class="item-note">${esc(item.note)}</span>
               <span class="focus-position">${esc(position)}</span>
             </span>
@@ -188,7 +188,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       </div>
       <div class="focus-actions">
         <button type="button" class="button later-soft" data-later="${item.id}">← Zurückstellen</button>
-        <button type="button" class="button accent-soft" data-cart="${item.id}">In den Wagen ↑</button>
+        <button type="button" class="button accent-soft" data-cart="${item.id}">In den Wagen →</button>
       </div>
     </div>`;
   }
@@ -197,7 +197,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     const key = model.categoryFor(item.product)?.key;
     return `<div class="mini-row">
       ${thumb(item.product, key, 'tiny')}
-      <span class="mini-name">${esc(item.product.name)} <span>${item.quantity}×</span></span>
+      <span class="mini-name">${esc(item.product.name)} <span>${formatQuantity(item.quantity, unitOf(item))}</span></span>
       <button type="button" class="text-button" data-reopen="${item.id}" aria-label="${esc(item.product.name)}: ${label}">${label}</button>
     </div>`;
   }
@@ -241,8 +241,11 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   render();
 }
 
-/** Wischgesten auf allen Elementen mit [data-swipe]. Waagerecht immer, nach oben nur in der Fokus-Ansicht. */
-function attachSwipeGestures(container, { allowUp, onCart, onLater }) {
+/**
+ * Wischgesten auf allen Elementen mit [data-swipe]: nur waagerecht (→ Wagen, ← zurückstellen).
+ * Senkrechte Bewegungen gehören immer dem Scrollen.
+ */
+function attachSwipeGestures(container, { onCart, onLater }) {
   let g = null;
 
   const reset = (el) => {
@@ -255,44 +258,41 @@ function attachSwipeGestures(container, { allowUp, onCart, onLater }) {
   container.addEventListener('pointerdown', (event) => {
     const el = event.target.closest('[data-swipe]');
     if (!el || event.target.closest('[data-later]') || event.button > 0) return;
-    g = { el, id: el.dataset.swipe, x: event.clientX, y: event.clientY, dx: 0, dy: 0, mode: null };
+    g = { el, id: el.dataset.swipe, x: event.clientX, y: event.clientY, dx: 0, active: false };
   });
 
   container.addEventListener('pointermove', (event) => {
     if (!g) return;
     const dx = event.clientX - g.x;
     const dy = event.clientY - g.y;
-    if (!g.mode) {
+    if (!g.active) {
       if (Math.hypot(dx, dy) < 10) return;
-      if (Math.abs(dx) >= Math.abs(dy)) g.mode = 'x';
-      else if (allowUp() && dy < 0) g.mode = 'y';
-      else { g = null; return; }   // senkrecht: Seite scrollt
+      if (Math.abs(dx) < Math.abs(dy)) { g = null; return; }   // senkrecht: Seite scrollt
+      g.active = true;
       g.el.classList.add('dragging');
       g.el.setPointerCapture?.(event.pointerId);
     }
-    g.dx = g.mode === 'x' ? dx : 0;
-    g.dy = g.mode === 'y' ? Math.min(0, dy) : 0;
-    const progress = Math.min(1, Math.max(Math.abs(g.dx), Math.abs(g.dy)) / SWIPE_PX);
-    g.el.style.transform = `translate(${g.dx}px, ${g.dy}px) rotate(${(g.dx / 30).toFixed(2)}deg)`;
-    g.el.style.setProperty('--p', progress.toFixed(2));
-    g.el.dataset.dir = g.dx > 0 || g.dy < 0 ? 'cart' : g.dx < 0 ? 'later' : '';
+    g.dx = dx;
+    g.el.style.transform = `translateX(${dx}px) rotate(${(dx / 30).toFixed(2)}deg)`;
+    g.el.style.setProperty('--p', Math.min(1, Math.abs(dx) / SWIPE_PX).toFixed(2));
+    g.el.dataset.dir = dx > 0 ? 'cart' : dx < 0 ? 'later' : '';
   });
 
   container.addEventListener('pointerup', () => {
     if (!g) return;
-    const { el, id, dx, dy, mode } = g;
+    const { el, id, dx, active } = g;
     g = null;
-    if (!mode) return;
+    if (!active) return;
     // Ein Klick direkt nach dem Wischen soll nicht zusätzlich „in den Wagen“ auslösen.
     const block = (e) => { e.stopPropagation(); e.preventDefault(); };
     container.addEventListener('click', block, { capture: true });
     setTimeout(() => container.removeEventListener('click', block, { capture: true }), 350);
 
-    const action = dx > SWIPE_PX || dy < -SWIPE_PX ? 'cart' : dx < -SWIPE_PX ? 'later' : null;
+    const action = dx > SWIPE_PX ? 'cart' : dx < -SWIPE_PX ? 'later' : null;
     if (!action) { reset(el); return; }
     el.classList.remove('dragging');
     el.classList.add('flying');
-    el.style.transform = dy < -SWIPE_PX ? 'translateY(-120%)' : `translateX(${action === 'cart' ? 120 : -120}%)`;
+    el.style.transform = `translateX(${action === 'cart' ? 120 : -120}%)`;
     setTimeout(() => (action === 'cart' ? onCart(id) : onLater(id)), 160);
   });
 

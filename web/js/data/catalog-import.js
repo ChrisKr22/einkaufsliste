@@ -3,6 +3,7 @@
 // - Neuere Katalog-Version: fehlende ergänzen, Synonyme aktualisieren.
 //   Namen und Reihenfolge, die man in der App geändert hat, bleiben unangetastet.
 
+import { DEFAULT_UNIT, isUnit } from '../units.js';
 import { DELETED_CATEGORIES_KEY, FALLBACK_CATEGORY, newId } from './repository.js';
 
 const VERSION_KEY = 'catalogVersion';
@@ -54,6 +55,7 @@ export async function importCatalog(catalog, store) {
         lastPurchasedAt: null,
         lastQuantity: 1,
         lastNote: '',
+        unit: isUnit(item.unit) ? item.unit : DEFAULT_UNIT,   // optional in catalog.json
       });
       summary.productsAdded++;
     }

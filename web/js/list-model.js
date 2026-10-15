@@ -2,9 +2,10 @@
 // Unabhängig vom DOM, testbar mit Node.
 
 import { backupFileName, parseBackup, summarize } from './data/backup.js';
-import { FALLBACK_CATEGORY } from './data/repository.js';
+import { FALLBACK_CATEGORY, newId } from './data/repository.js';
 import { decodeShare, encodeShare, extractShareCode, shareText, shareUrl } from './data/share.js';
 import { fold, searchProducts } from './search.js';
+import { formatQuantity, stepDown, stepUp, UNITS, unitOf } from './units.js';
 
 export class ListModel {
   /** @param {import('./data/repository.js').ShoppingRepository} repository */
@@ -80,8 +81,8 @@ export class ListModel {
     return searchProducts(this.trimmedQuery, this.state.products).map((product) => {
       const onList = planned.find((i) => i.product.id === product.id);
       let subtitle;
-      if (onList) subtitle = `Schon auf der Liste · ${onList.quantity}× → +1`;
-      else if (product.purchaseCount > 0) subtitle = `Zuletzt: ${product.lastQuantity}×${product.lastNote ? ` · ${product.lastNote}` : ''}`;
+      if (onList) subtitle = `Schon auf der Liste · ${formatQuantity(onList.quantity, unitOf(onList))} → mehr`;
+      else if (product.purchaseCount > 0) subtitle = `Zuletzt: ${formatQuantity(product.lastQuantity, product.lastUnit)}${product.lastNote ? ` · ${product.lastNote}` : ''}`;
       else subtitle = this.categoryFor(product)?.name ?? 'Sonstiges';
       return { product, subtitle, isOnList: Boolean(onList) };
     });
@@ -267,7 +268,7 @@ export class ListModel {
       .map((product) => ({
         product,
         isOnList: planned.has(product.id),
-        subtitle: `${product.lastQuantity ?? 1}×${product.lastNote ? ` · ${product.lastNote}` : ''}`,
+        subtitle: `${formatQuantity(product.lastQuantity ?? 1, product.lastUnit)}${product.lastNote ? ` · ${product.lastNote}` : ''}`,
       }));
   }
 
@@ -334,7 +335,7 @@ export class ListModel {
         this.#finishAdd(`${result.item.product.name} hinzugefügt`);
       } else {
         this.undoAction = () => this.repository.setQuantity(result.item.id, result.previousQuantity);
-        this.#finishAdd(`${result.item.product.name}: jetzt ${result.item.quantity}×`);
+        this.#finishAdd(`${result.item.product.name}: jetzt ${formatQuantity(result.item.quantity, unitOf(result.item))}`);
       }
     });
   }
@@ -351,20 +352,44 @@ export class ListModel {
     if (!name) return;
     await this.#perform(async () => {
       const product = await this.repository.createProduct(name.charAt(0).toUpperCase() + name.slice(1));
-      const result = await this.repository.add(product.id, { quantity: 1, note: '' });
+      const result = await this.repository.add(product.id, { note: '' });
       this.undoAction = () => this.repository.remove(result.item.id);
       this.#finishAdd(`${product.name} angelegt und hinzugefügt`);
     });
   }
 
   async increment(item) {
-    await this.#perform(() => this.repository.setQuantity(item.id, item.quantity + 1));
+    await this.#perform(() => this.repository.setQuantity(item.id, stepUp(item.quantity, unitOf(item))));
   }
 
   /** Bei Menge 1 wird der Eintrag entfernt (mit Rückgängig). */
   async decrement(item) {
-    if (item.quantity > 1) await this.#perform(() => this.repository.setQuantity(item.id, item.quantity - 1));
+    const next = stepDown(item.quantity, unitOf(item));
+    if (next !== null) await this.#perform(() => this.repository.setQuantity(item.id, next));
     else await this.remove(item);
+  }
+
+  /** Kann die Menge noch kleiner werden, ohne den Eintrag zu entfernen? */
+  canDecrease(item) {
+    return stepDown(item.quantity, unitOf(item)) !== null;
+  }
+
+  /** Einheit dieses Eintrags ändern (Menge springt auf den Startwert, z. B. 1 kg). */
+  async setEntryUnit(item, unit) {
+    await this.#perform(async () => {
+      const previous = await this.repository.setEntryUnit(item.id, unit);
+      this.undoAction = () => this.repository.replaceEntry(previous);
+      this.#showToast(`${item.product.name}: jetzt in ${UNITS[unit].label}`, true);
+    });
+  }
+
+  /** Standard-Einheit eines Produkts (Einstellungen) – gilt ab dem nächsten Hinzufügen. */
+  async setProductUnit(product, unit) {
+    await this.#perform(async () => {
+      const previous = await this.repository.setProductUnit(product.id, unit);
+      this.undoAction = () => this.repository.setProductUnit(product.id, previous);
+      this.#showToast(`${product.name}: Einheit ${UNITS[unit].label}`, true);
+    });
   }
 
   async setQuantity(item, quantity) {
@@ -462,7 +487,7 @@ export class ListModel {
 
   #showToast(text, canUndo) {
     clearTimeout(this.toastTimer);
-    this.state.toast = { id: crypto.randomUUID(), text, canUndo };
+    this.state.toast = { id: newId(), text, canUndo };
     this.toastTimer = setTimeout(() => {
       this.undoAction = null;
       this.#set({ toast: null });

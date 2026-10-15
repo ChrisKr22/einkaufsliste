@@ -6,6 +6,8 @@ export const LAST_BACKUP_KEY = 'lastBackupAt';
 const STORES = ['categories', 'products', 'entries', 'meta', 'photos'];
 const OPTIONAL = new Set(['photos']);   // ältere Sicherungen haben noch keine Fotos
 const STATUSES = new Set(['open', 'inCart', 'later']);
+const UNIT_KEYS = new Set(['stk', 'pck', 'g', 'kg', 'ml', 'l']);
+const validUnit = (u) => u === undefined || UNIT_KEYS.has(u);
 
 /** @returns {Promise<object>} vollständige Sicherung */
 export async function createBackup(store, now = Date.now()) {
@@ -54,7 +56,7 @@ export function parseBackup(input) {
     productIds.add(p.id);
   }
   for (const e of data.entries) {
-    if (typeof e?.id !== 'string' || !productIds.has(e.productId) || !(e.quantity >= 1) || !STATUSES.has(e.status)) fail('Listeneintrag');
+    if (typeof e?.id !== 'string' || !productIds.has(e.productId) || !(e.quantity > 0) || !validUnit(e.unit) || !STATUSES.has(e.status)) fail('Listeneintrag');
   }
   for (const m of data.meta) {
     if (typeof m?.key !== 'string') fail('Einstellungen');
