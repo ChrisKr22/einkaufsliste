@@ -285,7 +285,7 @@ Originalfotos in der Inbox werden nicht ins Repository übernommen, die fertigen
 
 - **Neutraler Grund, Karten ohne Rahmen:** Weiße Karten mit weichem Schatten auf leicht grauem Weiß; im Dunkeln fast schwarzer Grund mit dunkelgrauen Karten. Kopf und Abschlussleiste sind Milchglas.
 - **Eine ruhige Bildfläche für alle Produkte** (`Fläche Bild`). Die **Kategoriefarbe** erscheint nur noch als feiner Rahmen um Produktbild bzw. Symbol – dezent, aber beim Einkaufen zur Orientierung lesbar.
-- **Fotos:** Freigestellte Bilder stehen mit Rand auf der Bildfläche; Fotos mit Hintergrund füllen die Fläche randlos (das Build-Skript merkt sich das aus `image-credits.json`).
+- **Fotos:** Freigestellte Bilder (PNG) stehen mit Rand auf der Bildfläche; Fotos mit Hintergrund (JPEG) füllen die Fläche randlos. Damit sie zur App passen, werden sie leicht entsättigt (Sättigung 88 %, Kontrast 94 %, im Dunkeln etwas abgedunkelt) und bekommen oben links einen feinen Glanz. In Kacheln und Fokus läuft das Foto unten weich in die Karte aus; Name und Menge stehen auf diesem Übergang.
 - **Akzent sparsam:** Hauptknopf, Fortschritt, Mengen, „In den Wagen“. Struktur und Steuerelemente bleiben grau.
 - **Typografie:** SF Pro für alles; große Überschrift „Einkaufsliste“ in SF Pro Display (32 pt, fett), Abschnittstitel in normaler Schreibweise statt Großbuchstaben. Wortmarke „Feed“ in Textfarbe, „Yourself“ in Sekundärgrau.
 - **„Zurückstellen“** ist ein gedämpftes Schieferblau, **„Entfernen“** neutral grau mit Rückgängig.

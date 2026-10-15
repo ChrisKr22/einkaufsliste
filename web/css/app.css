@@ -27,6 +27,9 @@
   /* Kategorie-Rahmen um Produktbilder: Kategoriefarbe, dezent mit dem Grund gemischt */
   --ring-pct: 38%;
   --ring-base: #FFFFFF;
+  /* Fotos mit Hintergrund an die App angleichen: leicht entsättigt, feiner Glanz */
+  --photo-filter: saturate(0.88) contrast(0.94) brightness(1.03);
+  --photo-sheen: rgba(255, 255, 255, 0.10);
 
   --radius: 18px;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
@@ -62,6 +65,8 @@
     --shadow-lift: 0 14px 34px rgba(0, 0, 0, 0.6);
     --ring-pct: 55%;
     --ring-base: #9A9E9A;
+    --photo-filter: saturate(0.88) contrast(0.94) brightness(0.92);
+    --photo-sheen: rgba(255, 255, 255, 0.04);
   }
 }
 :root[data-theme="dark"] {
@@ -91,6 +96,8 @@
   --shadow-lift: 0 14px 34px rgba(0, 0, 0, 0.6);
   --ring-pct: 55%;
   --ring-base: #9A9E9A;
+  --photo-filter: saturate(0.88) contrast(0.94) brightness(0.92);
+  --photo-sheen: rgba(255, 255, 255, 0.04);
 }
 
 * { box-sizing: border-box; }
@@ -163,7 +170,16 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .tile-photo.has-photo img { padding: 8%; }
 .focus-photo.has-photo img { padding: 6%; }
 /* Fotos mit Hintergrund: randlos füllen */
-.full-photo img { padding: 0 !important; object-fit: cover; }
+.full-photo img { padding: 0 !important; object-fit: cover; filter: var(--photo-filter); }
+/* Feiner Glanz oben links; in Kacheln und Fokus läuft das Foto unten in die Karte aus. */
+.full-photo::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%); }
+.tile-photo.full-photo::before, .focus-photo.full-photo::before {
+  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%), linear-gradient(to bottom, transparent 55%, var(--surface) 100%); }
+.tile-photo.full-photo::after, .focus-photo.full-photo::after {
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 90%); mask-image: linear-gradient(to bottom, #000 45%, transparent 90%); }
+.tile-photo.full-photo + .tile-body { position: relative; margin-top: -26px; }
+.focus-photo-wrap:has(.full-photo) + .focus-body { position: relative; margin-top: -34px; }
 .thumb.small { width: 40px; height: 40px; border-radius: 10px; }
 .thumb.large { width: 72px; height: 72px; border-radius: 16px; }
 
