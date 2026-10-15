@@ -34,21 +34,35 @@ def app_files():
 
 
 def copy_catalog_images():
-    """Catalog/Images/<id>.png → web/images/<id>.png und Liste der vorhandenen Bilder für die App."""
+    """Catalog/Images/<id>.png|jpg → web/images/ und Liste der vorhandenen Bilder für die App.
+
+    images.json: {"ids": [...], "full": [...]} – „full“ sind Fotos mit Hintergrund (JPEG),
+    die die App randlos zeigt; freigestellte Bilder sind PNG mit Transparenz.
+    """
     source = ROOT / "Catalog" / "Images"
     target = WEB / "images"
     if target.exists():
         shutil.rmtree(target)
     target.mkdir()
     known = {p["id"] for p in json.loads((ROOT / "Catalog" / "catalog.json").read_text(encoding="utf-8"))["products"]}
-    ids = []
-    for f in sorted(source.glob("*.png")) if source.exists() else []:
-        if f.stem in known:
+    ids, full = [], []
+    files = sorted(f for f in source.iterdir() if f.suffix in (".png", ".jpg")) if source.exists() else []
+    for f in files:
+        if f.stem not in known:
+            print(f"Hinweis: {f.name} gehört zu keinem Produkt im Katalog – übersprungen.")
+        elif f.stem in ids:
+            print(f"Hinweis: für {f.stem} gibt es PNG und JPG – nehme {f.stem}.png.")
+        else:
             shutil.copyfile(f, target / f.name)
             ids.append(f.stem)
-        else:
-            print(f"Hinweis: {f.name} gehört zu keinem Produkt im Katalog – übersprungen.")
-    (WEB / "data" / "images.json").write_text(json.dumps(ids) + "\n", encoding="utf-8")
+            if f.suffix == ".jpg":
+                full.append(f.stem)
+    for stem in set(full):
+        if (source / f"{stem}.png").exists():
+            full.remove(stem)
+            (target / f"{stem}.jpg").unlink()
+            shutil.copyfile(source / f"{stem}.png", target / f"{stem}.png")
+    (WEB / "data" / "images.json").write_text(json.dumps({"ids": sorted(ids), "full": sorted(full)}) + "\n", encoding="utf-8")
     return ids
 
 

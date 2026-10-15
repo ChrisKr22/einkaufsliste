@@ -23,13 +23,16 @@ async function openStore() {
   }
 }
 
-/** Katalogfotos, die das Build-Skript nach images/ kopiert hat. */
-async function loadBundledImageIds() {
+/** Katalogfotos, die das Build-Skript nach images/ kopiert hat; „full“ = Fotos mit Hintergrund. */
+async function loadBundledImages() {
   try {
     const response = await fetch('data/images.json');
-    return response.ok ? new Set(await response.json()) : new Set();
+    if (!response.ok) return { bundled: new Set(), full: new Set() };
+    const data = await response.json();
+    if (Array.isArray(data)) return { bundled: new Set(data), full: new Set() };
+    return { bundled: new Set(data.ids ?? []), full: new Set(data.full ?? []) };
   } catch {
-    return new Set();
+    return { bundled: new Set(), full: new Set() };
   }
 }
 
@@ -65,7 +68,9 @@ function mountChrome(model) {
 
   function render() {
     const n = model.plannedItems.length;
-    count.textContent = n === 1 ? '1 Produkt' : `${n} Produkte`;
+    const k = model.sections.length;
+    count.textContent = n === 0 ? 'Noch leer'
+      : `${n === 1 ? '1 Produkt' : `${n} Produkte`} · ${k === 1 ? '1 Kategorie' : `${k} Kategorien`}`;
     const open = model.openCount;
     tabs.find((t) => t.dataset.mode === 'shop').textContent = open ? `Einkaufen · ${open}` : 'Einkaufen';
 
@@ -107,7 +112,7 @@ async function start() {
 
   const model = new ListModel(new ShoppingRepository(store));
   // Bildquellen vor allen Ansichten aktualisieren, damit jede Ansicht schon die neuen Fotos sieht.
-  setPhotoSources({ bundled: await loadBundledImageIds() });
+  setPhotoSources(await loadBundledImages());
   model.subscribe((state) => setPhotoSources({ own: state.photos }));
   await model.load();
   const chrome = mountChrome(model);

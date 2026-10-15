@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#F4F5F4" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#151213" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E0F0E" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -24,7 +24,6 @@
       <div class="header-row">
         <h1 class="wordmark">Feed<span>Yourself</span></h1>
         <div class="header-actions">
-          <span id="count" class="count" aria-live="polite"></span>
           <button type="button" id="open-settings" class="icon-button settings-button" aria-label="Einstellungen">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>
           </button>
@@ -37,6 +36,10 @@
     </header>
 
     <main id="plan-view" class="view" role="tabpanel" aria-labelledby="tab-plan">
+      <div class="page-title">
+        <h2>Einkaufsliste</h2>
+        <p id="count" class="count" aria-live="polite"></p>
+      </div>
       <div class="search">
         <label class="sr-only" for="search">Produkt suchen</label>
         <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>

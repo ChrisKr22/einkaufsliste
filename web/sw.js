@@ -1,7 +1,7 @@
 // Service Worker: speichert die App beim ersten Aufruf, danach läuft sie komplett offline.
 // VERSION und PRECACHE werden von tools/web/build.py gesetzt – nicht von Hand ändern.
 
-const VERSION = 'e03847ecf4a2';
+const VERSION = '930b9e62fddf';
 const PRECACHE = [
   './',
   'index.html',
@@ -32,6 +32,21 @@ const PRECACHE = [
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
+  'images/aepfel.jpg',
+  'images/aufschnitt.jpg',
+  'images/bacon.jpg',
+  'images/bier.jpg',
+  'images/brot.jpg',
+  'images/gurke.jpg',
+  'images/joghurt.jpg',
+  'images/lachs.jpg',
+  'images/milch.jpg',
+  'images/pommes.jpg',
+  'images/salat.jpg',
+  'images/schnitzel.jpg',
+  'images/spaghetti.jpg',
+  'images/tomaten.jpg',
+  'images/wasser.jpg',
 ];
 
 const CACHE = `feedyourself-${VERSION}`;

@@ -12,19 +12,28 @@ export const icon = {
   basket: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5.5 10h13l-1.5 9.5h-10zM8.5 10l3.5-6 3.5 6M10 13.5v3M14 13.5v3"/></svg>',
 };
 
-// Woher Produktbilder kommen: eigene Fotos (Gerät) und Katalogfotos (images/<katalog-id>.png).
-const photoSources = { own: new Map(), bundled: new Set() };
+// Woher Produktbilder kommen: eigene Fotos (Gerät) und Katalogfotos (images/<katalog-id>.png bzw. .jpg für Fotos mit Hintergrund).
+const photoSources = { own: new Map(), bundled: new Set(), full: new Set() };
 
-export function setPhotoSources({ own, bundled }) {
+export function setPhotoSources({ own, bundled, full }) {
   if (own) photoSources.own = own;
   if (bundled) photoSources.bundled = bundled;
+  if (full) photoSources.full = full;
 }
 
 /** Bildadresse für ein Produkt: eigenes Foto vor Katalogfoto; null = Platzhalter. */
 export function photoUrl(product) {
   if (product?.id && photoSources.own.has(product.id)) return photoSources.own.get(product.id);
-  if (product?.catalogId && photoSources.bundled.has(product.catalogId)) return `images/${product.catalogId}.png`;
+  const id = product?.catalogId;
+  if (id && photoSources.bundled.has(id)) return `images/${id}.${photoSources.full.has(id) ? 'jpg' : 'png'}`;
   return null;
+}
+
+/** Klassen für eine Bildfläche: has-photo, bei Fotos mit Hintergrund zusätzlich full-photo (randlos). */
+export function photoClass(product) {
+  if (!photoUrl(product)) return '';
+  const own = product?.id && photoSources.own.has(product.id);
+  return !own && photoSources.full.has(product.catalogId) ? ' has-photo full-photo' : ' has-photo';
 }
 
 /** Bild bzw. Kategorie-Symbol als Inhalt einer Bildfläche. */
@@ -37,8 +46,7 @@ export function photoContent(product, categoryKey) {
 /** Produktbild: eigenes Foto, Katalogfoto oder Kategorie-Fläche mit Symbol. */
 export function thumb(product, categoryKey, size = '') {
   const style = categoryStyle(categoryKey);
-  const hasPhoto = photoUrl(product) ? ' has-photo' : '';
-  return `<span class="thumb ${size}${hasPhoto}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">`
+  return `<span class="thumb ${size}${photoClass(product)}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">`
     + `${photoContent(product, categoryKey)}</span>`;
 }
 

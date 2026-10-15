@@ -17,6 +17,7 @@ import datetime
 import http.server
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -512,6 +513,26 @@ def cmd_process(args):
 
 # ---------------------------------------------------------------- import (eigene Fotos)
 
+def split_inbox_name(stem):
+    """„Äpfel_pexels-max-muster-1234567“ → („Äpfel“, Quellenangabe). Ohne „_“: eigenes Foto.
+
+    Alles vor dem ersten Unterstrich bestimmt das Produkt, der Rest ist die Quelle.
+    Pexels-Dateinamen (pexels-<fotograf>-<nummer>) werden in Fotograf und Link zerlegt.
+    """
+    product, sep, rest = stem.partition("_")
+    if not sep or not rest.strip():
+        return stem, {"source": "eigenes Foto", "license": "eigenes Foto"}
+    # pexels-<fotograf>[-<nutzer-nr>]-<foto-nr>; „pexels“ darf fehlen, wenn der Rest mit „-“ beginnt.
+    m = re.fullmatch(r"(?:pexels-|-)(?:(.+?)-)?(\d+)", rest.strip(), flags=re.IGNORECASE)
+    if m:
+        slug, number = m.group(1), m.group(2)
+        slug = re.sub(r"-\d+$", "", slug) if slug else slug
+        author = " ".join(w.capitalize() for w in slug.split("-")) if slug and slug.lower() != "photo" else None
+        return product, {"source": "Pexels", "author": author, "page": f"https://www.pexels.com/photo/{number}/",
+                         "license": "Pexels License", "license_url": "https://www.pexels.com/license/"}
+    return product, {"source": rest.strip(), "license": "unbekannt – bitte prüfen"}
+
+
 def fold_name(text):
     """Für den Vergleich von Dateinamen: klein, Umlaute vereinfacht, nur Buchstaben und Ziffern."""
     import unicodedata
@@ -551,7 +572,7 @@ def cmd_import(args):
     index, ambiguous = build_name_index(catalog)
     matched, unmatched, unclear = {}, [], []
     for f in files:
-        key = fold_name(f.stem)
+        key = fold_name(split_inbox_name(f.stem)[0])
         if key in index:
             pid = index[key]
             if pid in matched:
@@ -571,7 +592,8 @@ def cmd_import(args):
     modes = {}
     if matched:
         binary = build_cutout()
-        proc = subprocess.run([str(binary), str(IMPORT_STAGE), str(IMAGES_OUT), "--size", str(args.size), "--margin", str(args.margin)],
+        extra = ["--keep-background"] if args.mit_hintergrund else []
+        proc = subprocess.run([str(binary), str(IMPORT_STAGE), str(IMAGES_OUT), "--size", str(args.size), "--margin", str(args.margin), *extra],
                               capture_output=True, text=True)
         if proc.returncode != 0:
             sys.exit("Freistellen fehlgeschlagen:\n" + proc.stderr)
@@ -589,8 +611,10 @@ def cmd_import(args):
         if mode == "error":
             print(f"Fehler: {f.name} konnte nicht gelesen werden.")
             continue
-        credits[pid] = {"product_id": pid, "name": names[pid], "file": f"Images/{pid}.png", "source": "eigenes Foto",
-                        "original_file": f.name, "license": "eigenes Foto", "cutout": mode in FREIGESTELLT}
+        origin = {k: v for k, v in split_inbox_name(f.stem)[1].items() if v}
+        ext = "jpg" if mode == "fallback" else "png"
+        credits[pid] = {"product_id": pid, "name": names[pid], "file": f"Images/{pid}.{ext}", **origin,
+                        "original_file": f.name, "cutout": mode in FREIGESTELLT}
         done.append((pid, f, mode))
         if not args.keep:
             INBOX_DONE.mkdir(exist_ok=True)
@@ -601,7 +625,9 @@ def cmd_import(args):
     label = {"alpha": "schon freigestellt", "cutout": "freigestellt", "whitebg": "freigestellt (heller Hintergrund)", "fallback": "nur zugeschnitten"}
     print(f"\n{len(done)} Foto(s) übernommen → {IMAGES_OUT.relative_to(ROOT)}/")
     for pid, f, mode in done:
-        print(f"  {f.name:30} → {names[pid]:22} {label.get(mode, mode)}")
+        c = credits[pid]
+        source = c["source"] + (f" · {c['author']}" if c.get("author") else "")
+        print(f"  {f.name:40} → {names[pid]:18} {label.get(mode, mode):26} {source}")
     if unclear:
         print("\nNicht eindeutig (bitte genauer benennen):")
         for f, ids in unclear:
@@ -610,7 +636,7 @@ def cmd_import(args):
         print("\nKein passendes Produkt (Tippfehler? Sonst Produkt in catalog.json ergänzen):")
         for f in unmatched:
             print(f"  {f.name}")
-    if any(m == "fallback" for _, _, m in done):
+    if not args.mit_hintergrund and any(m == "fallback" for _, _, m in done):
         print("\nTipp: „nur zugeschnitten“ heißt, der Hintergrund blieb stehen. Auf dem iPhone in Fotos das Motiv lange drücken → „Teilen“ → als PNG sichern, dann erneut importieren.")
     if done:
         print("\nWeiter mit:  python3 tools/web/build.py   (bringt die Fotos in die App)")
@@ -626,7 +652,7 @@ def cmd_status(args):
     for p in catalog["products"]:
         found = sum(len((cached(n, p["id"]) or {}).get("results", [])) for n in SOURCES)
         sel = selection.get(p["id"]) or {}
-        state = ("fertig" if (IMAGES_OUT / f"{p['id']}.png").exists() and p["id"] in manifest
+        state = ("fertig" if any((IMAGES_OUT / f"{p['id']}.{e}").exists() for e in ("png", "jpg")) and p["id"] in manifest
                  else "geladen" if p["id"] in manifest
                  else "ausgewählt" if sel.get("choice")
                  else "keins passt" if sel.get("none")
@@ -813,6 +839,7 @@ def main():
     i.add_argument("--size", type=int, default=480, help="Kantenlänge in Pixeln (Standard 480)")
     i.add_argument("--margin", type=float, default=0.06)
     i.add_argument("--keep", action="store_true", help="Dateien nach dem Import in der Inbox lassen")
+    i.add_argument("--mit-hintergrund", action="store_true", help="nicht freistellen – Fotos randlos mit Hintergrund übernehmen")
     i.set_defaults(func=cmd_import)
 
     s = sub.add_parser("status", help="Stand pro Produkt anzeigen")

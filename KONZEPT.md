@@ -281,37 +281,33 @@ Originalfotos in der Inbox werden nicht ins Repository übernommen, die fertigen
 
 ## 5. Gestaltung & Farbwelt
 
-**Hell: frisches Grün auf neutralem, ganz zart grünlichem Grau · Dunkel: kräftiges Gelb auf warmem Dunkelgrau.**
+**Designrichtung A „Galerie“ (entschieden am 15.10.2026): ruhig, hochwertig, clean. Ein grüner Akzent in beiden Modi – Tannengrün im Hellen, Salbeigrün im Dunkeln. Kein Gelb mehr.**
 
-- **Heller Hintergrund** `#F4F5F4`: neutrales Fast-Weiß, nur ein Hauch Grün, ohne Rotstich. Schalter und Steuerelemente sind deutlich grauer (`#E2E4E2`). Er ist bewusst etwas dunkler als die weißen Karten, damit sich Kacheln und Listen klar abheben. Alle hellen Grautöne (Linien, Steuerelemente, Text sekundär) sind entsprechend neutral-grünlich abgestimmt.
-
-- **Akzent sparsam einsetzen:** Hauptknopf („Einkauf abschließen"), aktive Auswahl, Mengenangabe, Logo. Flächen und Struktur bleiben grau. Die Farbe kommt von den Lebensmittelfotos, und die wirken auf neutralem Grund am besten.
-- **Grün im Hellen** steht für frisch und Lebensmittel und ist auf Weiß gut lesbar. Für Text wird ein etwas dunkleres Grün verwendet als für Knöpfe, damit auch kleine Schrift auf dem grauen Hintergrund 4,5:1 erreicht.
-- **Gelb im Dunkeln** leuchtet auf dunklem Grund sehr gut. Wichtig: Auf gelben Knöpfen steht **dunkle Schrift**, weiße Schrift wäre auf Gelb unlesbar.
-- **Bewusster Moduswechsel:** Weil Hell und Dunkel unterschiedliche Akzente haben, sieht die App im Dunkelmodus deutlich anders aus. Das ist gewollt. Das Logo funktioniert in beiden Varianten (grünes bzw. gelbes „Yourself").
-- **„Zurückstellen" wird blau** dargestellt (in beiden Modi). Blau unterscheidet sich klar von Grün und Gelb, auch bei Rot-Grün-Schwäche, und Ocker wäre im Dunkelmodus zu nah am Gelb.
-- **„Entfernen"** bleibt ein neutraler grauer Knopf mit Rückgängig, ohne Signalrot.
-- **Schrift:** SF Pro (iOS-Systemschrift) für alles, die Wortmarke „FeedYourself" in einer Serifenschrift (Fraunces, frei lizenziert).
+- **Neutraler Grund, Karten ohne Rahmen:** Weiße Karten mit weichem Schatten auf leicht grauem Weiß; im Dunkeln fast schwarzer Grund mit dunkelgrauen Karten. Kopf und Abschlussleiste sind Milchglas.
+- **Eine ruhige Bildfläche für alle Produkte** (`Fläche Bild`). Die **Kategoriefarbe** erscheint nur noch als feiner Rahmen um Produktbild bzw. Symbol – dezent, aber beim Einkaufen zur Orientierung lesbar.
+- **Fotos:** Freigestellte Bilder stehen mit Rand auf der Bildfläche; Fotos mit Hintergrund füllen die Fläche randlos (das Build-Skript merkt sich das aus `image-credits.json`).
+- **Akzent sparsam:** Hauptknopf, Fortschritt, Mengen, „In den Wagen“. Struktur und Steuerelemente bleiben grau.
+- **Typografie:** SF Pro für alles; große Überschrift „Einkaufsliste“ in SF Pro Display (32 pt, fett), Abschnittstitel in normaler Schreibweise statt Großbuchstaben. Wortmarke „Feed“ in Textfarbe, „Yourself“ in Sekundärgrau.
+- **„Zurückstellen“** ist ein gedämpftes Schieferblau, **„Entfernen“** neutral grau mit Rückgängig.
+- **Dichte:** großzügig wie im Mockup (Zeilen 64 pt, Kacheln zweispaltig).
 
 | Rolle | Hell | Dunkel |
 |-------|------|--------|
-| Akzent / Knopf | `#2A7F3F` (Grün) | `#F5C400` (Gelb) |
-| Schrift auf Knopf | `#FFFFFF` | `#1A1606` |
-| Akzent als Text | `#237035` | `#F5C400` |
-| Akzent-Fläche (zart) | `#E2F0E3` | `#3A3110` |
-| Hintergrund | `#F4F5F4` | `#151213` |
-| Fläche (Karten) | `#FFFFFF` | `#211C1D` |
-| Fläche 2 (Steuerelemente) | `#E2E4E2` | `#2C2628` |
-| Linien | `#DADDDA` | `#3A3234` |
-| Text | `#1A1F1B` | `#ECECEA` |
-| Text sekundär | `#5E665F` | `#A9A9A5` |
-| Zurückgestellt (Blau) | `#3F5F8A` | `#9BB8E6` |
-| Einkauf: Produktname | wie „Feed" im Logo (Text) | wie „Feed" im Logo (`#ECECEA`) |
-| Einkauf: Anzahl | wie „Yourself" im Logo (Akzent) | wie „Yourself" im Logo (`#F5C400`) |
+| Akzent / Knopf | `#1F5C3A` (Tannengrün) | `#A7C2A0` (Salbeigrün) |
+| Schrift auf Knopf | `#FFFFFF` | `#161714` |
+| Akzent als Text | `#1F5C3A` | `#B9D1B2` |
+| Akzent-Fläche (zart) | `#E5EEE8` | `#2A3328` |
+| Hintergrund | `#F7F7F5` | `#0E0F0E` |
+| Fläche (Karten) | `#FFFFFF` | `#1A1B1A` |
+| Fläche 2 (Steuerelemente) | `#ECECE9` | `#252725` |
+| Fläche Bild | `#F1F0ED` | `#222422` |
+| Linien | 8 % Schwarz | 7 % Weiß |
+| Text | `#141614` | `#F2F2EF` |
+| Text sekundär | `#6B706C` | `#9A9E9A` |
+| Zurückgestellt | `#56677D` | `#A9B8CC` |
+| Kategorie-Rahmen | Kategoriefarbe 38 % | Kategoriefarbe 55 % |
 
-Im Dunkelmodus ist die Schrift ein helles, neutrales Grau statt reinweiß. Im Einkaufsmodus folgen Produktname und Anzahl den beiden Farben der Wortmarke: Name wie „Feed", Anzahl wie „Yourself".
-
-Alle Textfarben erreichen mindestens 4,5:1 Kontrast (WCAG AA).
+Alle Textfarben erreichen mindestens 4,5:1 Kontrast (WCAG AA). Mockups der drei geprüften Richtungen: Design-Fläche „FeedYourself Designrichtungen“.
 
 ---
 

@@ -19,7 +19,7 @@ func icon(size: Int) -> CGImage {
                         space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     let s = CGFloat(size)
     // Vollflächig: iOS rundet die Ecken selbst ab, „maskable“ braucht Rand ohne Motiv.
-    ctx.setFillColor(color(0x2A7F3F))
+    ctx.setFillColor(color(0x1F5C3A))
     ctx.fill(CGRect(x: 0, y: 0, width: s, height: s))
 
     // Koordinaten von oben links, Motiv innerhalb der sicheren Zone (mittlere 60 %).
@@ -44,7 +44,7 @@ func icon(size: Int) -> CGImage {
     ctx.addPath(basket)
     ctx.fillPath()
     // Flechtlinien
-    ctx.setStrokeColor(color(0x2A7F3F))
+    ctx.setStrokeColor(color(0x1F5C3A))
     ctx.setLineWidth(3)
     for x in [41.0, 50.0, 59.0] {
         ctx.move(to: CGPoint(x: x, y: 49))
@@ -52,7 +52,7 @@ func icon(size: Int) -> CGImage {
     }
     ctx.strokePath()
     // Blatt (Akzent Gelb)
-    ctx.setFillColor(color(0xF5C400))
+    ctx.setFillColor(color(0xA7C2A0))
     ctx.addEllipse(in: CGRect(x: 62, y: 24, width: 12, height: 12))
     ctx.fillPath()
     return ctx.makeImage()!

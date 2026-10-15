@@ -3,7 +3,7 @@
 
 import { categoryStyle } from '../category-style.js';
 import { formatQuantity, spokenQuantity, unitOf } from '../units.js';
-import { buzz, esc, photoContent, photoUrl, thumb } from './dom.js';
+import { buzz, esc, photoClass, photoContent, thumb } from './dom.js';
 
 const VIEW_KEY = 'feedyourself.shopView';
 const VIEWS = ['grid', 'list', 'focus'];
@@ -132,8 +132,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
 
   function photo(item, key, cls) {
     const style = categoryStyle(key);
-    const hasPhoto = photoUrl(item.product) ? ' has-photo' : '';
-    return `<span class="${cls}${hasPhoto}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">`
+    return `<span class="${cls}${photoClass(item.product)}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">`
       + `${photoContent(item.product, key)}</span>`;
   }
 

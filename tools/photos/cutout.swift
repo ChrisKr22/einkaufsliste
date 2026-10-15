@@ -1,6 +1,6 @@
 // FeedYourself – Fotos freistellen und auf ein einheitliches Quadrat bringen.
 //
-// Aufruf:  swift cutout.swift <eingabe-ordner> <ausgabe-ordner> [--size 600] [--margin 0.08]
+// Aufruf:  swift cutout.swift <eingabe-ordner> <ausgabe-ordner> [--size 600] [--margin 0.08] [--keep-background]
 //
 // Für jedes JPG/PNG/HEIC im Eingabe-Ordner:
 //   0. Schon freigestellt (PNG mit transparentem Rand, z. B. vom iPhone „Motiv kopieren“)?
@@ -10,7 +10,8 @@
 //   2. Sonst: heller, einfarbiger Hintergrund wird vom Bildrand her entfernt
 //      (funktioniert auch auf Intel-Macs, ideal für „isolated"-Fotos).
 //   3. Motiv mittig in ein transparentes Quadrat setzen, mit Rand.
-//   4. Klappt das alles nicht: Foto quadratisch zuschneiden (ohne Transparenz).
+//   4. Klappt das alles nicht: Foto quadratisch zuschneiden (ohne Transparenz) und als JPEG
+//      speichern – Fotos mit Hintergrund sind so etwa zehnmal kleiner als als PNG.
 // Pro Datei eine JSON-Zeile auf stdout:
 //   {"file": "...", "mode": "alpha" | "cutout" | "whitebg" | "fallback" | "error"}
 //
@@ -32,8 +33,11 @@ let inDir = URL(fileURLWithPath: args[1])
 let outDir = URL(fileURLWithPath: args[2])
 var size = 600
 var margin = 0.08
+// --keep-background: nicht freistellen, Fotos immer randlos zuschneiden (für Fotos mit Szene/Hintergrund).
+let keepBackground = args.contains("--keep-background")
 var i = 3
 while i < args.count - 1 {
+    if args[i] == "--keep-background" { i += 1; continue }
     if args[i] == "--size", let v = Int(args[i + 1]) { size = v }
     if args[i] == "--margin", let v = Double(args[i + 1]) { margin = v }
     i += 2
@@ -187,10 +191,12 @@ func place(_ image: CGImage, fill: Bool) -> CGImage? {
     return ctx.makeImage()
 }
 
-func writePNG(_ image: CGImage, to url: URL) -> Bool {
-    guard let dest = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil)
+func writeImage(_ image: CGImage, to url: URL, jpeg: Bool) -> Bool {
+    let type = jpeg ? UTType.jpeg : UTType.png
+    guard let dest = CGImageDestinationCreateWithURL(url as CFURL, type.identifier as CFString, 1, nil)
     else { return false }
-    CGImageDestinationAddImage(dest, image, nil)
+    let options = jpeg ? [kCGImageDestinationLossyCompressionQuality: 0.8] as CFDictionary : nil
+    CGImageDestinationAddImage(dest, image, options)
     return CGImageDestinationFinalize(dest)
 }
 
@@ -206,11 +212,13 @@ let files = (try FileManager.default.contentsOfDirectory(at: inDir, includingPro
     .sorted { $0.lastPathComponent < $1.lastPathComponent }
 
 for file in files {
-    let out = outDir.appendingPathComponent(file.deletingPathExtension().lastPathComponent).appendingPathExtension("png")
+    let base = outDir.appendingPathComponent(file.deletingPathExtension().lastPathComponent)
     guard let image = loadImage(file) else { report(file.lastPathComponent, "error"); continue }
     var mode = "fallback"
     var result: CGImage?
-    if let subject = alreadyCutOut(image) {
+    if keepBackground {
+        result = place(image, fill: true)
+    } else if let subject = alreadyCutOut(image) {
         mode = "alpha"; result = place(subject, fill: false)
     } else if let subject = visionCutout(image) {
         mode = "cutout"; result = place(subject, fill: false)
@@ -219,7 +227,11 @@ for file in files {
     } else {
         result = place(image, fill: true)
     }
-    if let result, writePNG(result, to: out) {
+    let jpeg = mode == "fallback"
+    let out = base.appendingPathExtension(jpeg ? "jpg" : "png")
+    // Eine ältere Fassung im jeweils anderen Format entfernen, damit nur ein Bild je Produkt bleibt.
+    try? FileManager.default.removeItem(at: base.appendingPathExtension(jpeg ? "png" : "jpg"))
+    if let result, writeImage(result, to: out, jpeg: jpeg) {
         report(file.lastPathComponent, mode)
     } else {
         report(file.lastPathComponent, "error")

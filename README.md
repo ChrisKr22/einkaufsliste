@@ -96,7 +96,7 @@ Die App wird über GitHub Pages veröffentlicht. Bei jedem Hochladen auf `main` 
 
 ## Fotos für den Katalog
 
-Fotos nach `Catalog/Inbox/` legen, der Dateiname bestimmt das Produkt (z. B. `Olivenöl.jpg`). Dann:
+Fotos nach `Catalog/Inbox/` legen, der Dateiname bestimmt das Produkt (z. B. `Olivenöl.jpg`). Bei Pexels-Fotos den Originalnamen hinter einem Unterstrich stehen lassen (`Olivenöl_pexels-max-muster-1234567.jpg`), dann wird die Quelle automatisch vermerkt. Dann:
 
 ```bash
 python3 tools/photos/photos.py import
