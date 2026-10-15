@@ -382,8 +382,9 @@ body.settings-open { overflow: hidden; }
 .focus { margin-top: 16px; }
 .focus-stack { position: relative; }
 .focus-peek { position: absolute; left: 16px; right: 16px; top: 12px; bottom: -10px; border-radius: 28px; background: var(--surface); box-shadow: var(--shadow); opacity: 0.6; }
-.focus-card { border-radius: 28px; }   /* erbt touch-action: pan-y – senkrecht scrollt */
-.focus-main { display: flex; flex-direction: column; width: 100%; padding: 0; border: 0; border-radius: 28px; background: var(--surface); text-align: left; overflow: hidden; cursor: grab; box-shadow: var(--shadow); }
+.focus-card { border-radius: 28px; }
+.focus-card.skipping { opacity: 0; transform: translateY(-24px) scale(0.97); transition: transform 0.16s ease-in, opacity 0.16s ease-in; }   /* erbt touch-action: pan-y – senkrecht scrollt */
+.focus-main { display: flex; flex-direction: column; width: 100%; padding: 0; border: 0; border-radius: 28px; background: var(--surface); text-align: left; overflow: hidden; cursor: pointer; box-shadow: var(--shadow); }
 .focus-photo-wrap { position: relative; display: block; }
 .focus-photo { position: relative; display: flex; align-items: center; justify-content: center; height: min(46vh, 300px); background: var(--tile); color: var(--icon); border-radius: 28px 28px 0 0; overflow: hidden; }
 .focus-photo svg { width: 42%; height: 56%; stroke-width: 0.9; }

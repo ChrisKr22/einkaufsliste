@@ -12,7 +12,7 @@ const SWIPE_PX = 80;
 const HINTS = {
   grid: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
   list: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
-  focus: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
+  focus: 'Tippen: überspringen · → wischen: in den Wagen · ← wischen: zurückstellen',
 };
 
 const svg = {
@@ -59,13 +59,26 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     const cart = t.closest('[data-cart]');
     const later = t.closest('[data-later]');
     const reopen = t.closest('[data-reopen]');
-    if (later) model.toLater(find(later.dataset.later));
+    const skip = t.closest('[data-skip]');
+    if (skip) skipFocus(skip.dataset.skip);
+    else if (later) model.toLater(find(later.dataset.later));
     else if (cart) model.toCart(find(cart.dataset.cart));
     else if (reopen) model.reopen(find(reopen.dataset.reopen));
     else if (t.closest('[data-toggle-cart]')) { cartOpen = !cartOpen; render(); }
     else if (t.closest('[data-finish]')) model.finishShopping();
     else if (t.closest('[data-to-plan]')) { model.dismissSummary(); onGoToPlanning(); }
   });
+
+  // Überspringen: Karte kurz nach oben ausblenden, dann ist das nächste Produkt dran.
+  function skipFocus(id) {
+    const item = find(id);
+    if (!item) return;
+    if (model.focusQueue.length < 2) { model.notify(`${item.product.name} ist das letzte offene Produkt`); return; }
+    const card = content.querySelector('.focus-card');
+    if (!card || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { model.skip(item); return; }
+    card.classList.add('skipping');
+    setTimeout(() => model.skip(item), 160);
+  }
 
   attachSwipeGestures(content, {
     onCart: (id) => { const item = find(id); if (item) model.toCart(item); },
@@ -171,7 +184,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       <div class="focus-stack">
         ${next ? '<div class="focus-peek" aria-hidden="true"></div>' : ''}
         <div class="focus-card" data-swipe="${item.id}">
-          <button type="button" class="focus-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+          <button type="button" class="focus-main" data-skip="${item.id}" aria-label="${esc(itemLabel(item))} – überspringen">
             <span class="focus-photo-wrap">
               ${photo(item, category?.key, 'focus-photo')}
               <span class="chip">${esc(category?.name ?? 'Sonstiges')}</span>

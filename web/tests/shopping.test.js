@@ -21,6 +21,31 @@ describe('Einkaufsmodus', () => {
     assert.deepEqual(model.focusQueue.map((i) => i.product.name), ['Äpfel', 'Milch', 'Waschmittel']);
   });
 
+  test('Fokus: Überspringen schiebt ans Ende, auch mehrmals', async () => {
+    const { model } = await makeModel(['Äpfel', 'Milch', 'Waschmittel']);
+    const names = () => model.focusQueue.map((i) => i.product.name);
+    model.skip(item(model, 'Äpfel'));
+    assert.deepEqual(names(), ['Milch', 'Waschmittel', 'Äpfel']);
+    model.skip(item(model, 'Milch'));
+    assert.deepEqual(names(), ['Waschmittel', 'Äpfel', 'Milch']);
+    model.skip(item(model, 'Waschmittel'));
+    model.skip(item(model, 'Äpfel'));
+    assert.deepEqual(names(), ['Milch', 'Waschmittel', 'Äpfel']);
+    assert.equal(item(model, 'Äpfel').status, 'open', 'Überspringen ändert den Status nicht');
+    await model.toCart(item(model, 'Milch'));
+    assert.deepEqual(names(), ['Waschmittel', 'Äpfel']);
+  });
+
+  test('Fokus: Überspringen gilt nur für den laufenden Einkauf', async () => {
+    const { model, repository } = await makeModel(['Äpfel', 'Milch']);
+    model.skip(item(model, 'Äpfel'));
+    await model.toCart(item(model, 'Milch'));
+    await model.finishShopping();
+    assert.equal(model.state.skipped.size, 0);
+    await model.add((await productNamed(repository, 'Milch')).id);
+    assert.deepEqual(model.focusQueue.map((i) => i.product.name), ['Äpfel', 'Milch']);
+  });
+
   test('in den Wagen, zurückstellen, Fortschritt', async () => {
     const { model } = await makeModel(['Äpfel', 'Milch', 'Brot']);
     await model.toCart(item(model, 'Äpfel'));

@@ -530,6 +530,8 @@ def split_inbox_name(stem):
         author = " ".join(w.capitalize() for w in slug.split("-")) if slug and slug.lower() != "photo" else None
         return product, {"source": "Pexels", "author": author, "page": f"https://www.pexels.com/photo/{number}/",
                          "license": "Pexels License", "license_url": "https://www.pexels.com/license/"}
+    if rest.strip().lower() == "pexels":
+        return product, {"source": "Pexels", "license": "Pexels License", "license_url": "https://www.pexels.com/license/"}
     return product, {"source": rest.strip(), "license": "unbekannt – bitte prüfen"}
 
 

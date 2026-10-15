@@ -26,6 +26,7 @@ export class ListModel {
       lastBackupAt: null,
       incomingShare: null, // { items } – geteilte Liste, die übernommen werden kann
       photos: new Map(),   // Produkt-ID → eigenes Foto (Data-URL)
+      skipped: new Map(),  // Fokus: Eintrag-ID → Reihenfolge des Überspringens (nur für diesen Einkauf)
     };
     this.listeners = new Set();
     this.undoAction = null;
@@ -293,9 +294,23 @@ export class ListModel {
       .filter((s) => s.items.length > 0);
   }
 
-  /** Fokus-Ansicht: alle offenen Einträge nacheinander, in Laden-Reihenfolge. */
+  /** Fokus-Ansicht: alle offenen Einträge nacheinander, in Laden-Reihenfolge; übersprungene ans Ende
+   *  (in der Reihenfolge, in der sie übersprungen wurden). */
   get focusQueue() {
-    return this.shopSections.flatMap((s) => s.items);
+    const items = this.shopSections.flatMap((s) => s.items);
+    const { skipped } = this.state;
+    const fresh = items.filter((i) => !skipped.has(i.id));
+    const later = items.filter((i) => skipped.has(i.id)).sort((a, b) => skipped.get(a.id) - skipped.get(b.id));
+    return [...fresh, ...later];
+  }
+
+  /** Fokus: einmal tippen – Produkt ans Ende der Reihe, beliebig oft wiederholbar. */
+  skip(item) {
+    if (!item || item.status !== 'open') return;
+    this.skipCounter = (this.skipCounter ?? 0) + 1;
+    const skipped = new Map(this.state.skipped);
+    skipped.set(item.id, this.skipCounter);
+    this.#set({ skipped });
   }
 
   /** Fortschritt: erledigt = im Wagen; Gesamt = offen + im Wagen + zurückgestellt. */
@@ -435,7 +450,7 @@ export class ListModel {
     this.#set({ error: null });
   }
 
-  /** Tippen oder nach rechts (Fokus: auch nach oben) wischen. */
+  /** Tippen (Kacheln, Liste) oder nach rechts wischen. */
   async toCart(item) {
     await this.#changeStatus(item, 'inCart', `${item.product.name} im Wagen`);
     this.state.cartedCount++;
@@ -460,7 +475,7 @@ export class ListModel {
       clearTimeout(this.toastTimer);
       this.state.toast = null;
     });
-    if (summary) this.#set({ summary });
+    if (summary) this.#set({ summary, skipped: new Map() });
     return summary;
   }
 

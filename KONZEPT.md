@@ -94,7 +94,7 @@ Umschalten über einen großen Segment-Schalter oben oder eine Tab-Leiste: **Pla
 
   | Geste | Kacheln & Liste | Fokus |
   |-------|-----------------|-------|
-  | Tippen | in den Wagen | in den Wagen |
+  | Tippen | in den Wagen | **überspringen** – Produkt ans Ende der Reihe, beliebig oft (nur für diesen Einkauf) |
   | → nach rechts wischen | in den Wagen | in den Wagen |
   | ← nach links wischen | zurückstellen / nicht vorhanden | zurückstellen / nicht vorhanden |
 
