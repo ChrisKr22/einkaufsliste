@@ -62,10 +62,10 @@ Die App wird über GitHub Pages veröffentlicht. Bei jedem Hochladen auf `main` 
 1. Konto auf github.com anlegen. Unter *Settings › Emails* „Keep my email addresses private“ einschalten.
 2. **GitHub Desktop** installieren (desktop.github.com) und mit dem Konto anmelden.
 3. In GitHub Desktop: *File › Add Local Repository* → diesen Projektordner wählen → „create a repository“ → bei *Git Ignore* und *License* jeweils **None** lassen → *Create Repository*.
-4. *Publish repository* → Name z. B. `feedyourself` → **„Keep this code private“ ausschalten** (GitHub Pages ist im kostenlosen Konto nur für öffentliche Repositories verfügbar) → *Publish*.
+4. *Publish repository* → Name `einkaufsliste` (klein geschrieben – die Adresse unterscheidet Groß/Klein) → **„Keep this code private“ ausschalten** (GitHub Pages ist im kostenlosen Konto nur für öffentliche Repositories verfügbar) → *Publish*.
 5. Auf github.com im Repository: *Settings › Pages* → bei *Source* **GitHub Actions** wählen.
 6. Unter *Actions* läuft „Web-App veröffentlichen“ (≈ 1 Minute). Danach ist die App erreichbar unter
-   `https://<dein-benutzername>.github.io/feedyourself/`
+   https://chriskr22.github.io/einkaufsliste/
 
 **Schutz-Einstellungen im Repository** (einmalig, unter *Settings*)
 - *General › Features*: **Issues**, Wikis, Projects und Discussions ausschalten.
