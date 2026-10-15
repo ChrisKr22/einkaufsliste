@@ -92,8 +92,21 @@ function mountChrome(model) {
 
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+  // Übernimmt eine neue Fassung die Kontrolle, gleich neu laden – sonst zeigt die
+  // Home-Bildschirm-App die alte Fassung, bis man sie ganz beendet. Die Liste liegt in IndexedDB.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    location.reload();
+  });
   try {
-    await navigator.serviceWorker.register('sw.js');
+    const registration = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+    // iOS holt die App aus dem Hintergrund, ohne sie neu zu starten – dann nach Updates sehen.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') registration.update().catch(() => {});
+    });
   } catch (error) {
     console.warn('Offline-Modus nicht verfügbar:', error);
   }

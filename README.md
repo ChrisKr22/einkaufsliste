@@ -88,7 +88,7 @@ Die App wird über GitHub Pages veröffentlicht. Bei jedem Hochladen auf `main` 
 4. Ab jetzt funktioniert sie auch ohne Netz. Die Daten liegen nur auf diesem iPhone (Sicherung: Einstellungen › Sicherung).
 
 **Aktualisieren**
-Änderungen in GitHub Desktop committen und *Push origin* klicken. Die installierte App holt sich die neue Fassung beim nächsten Öffnen mit Internet und zeigt sie ab dem darauffolgenden Start.
+Änderungen in GitHub Desktop committen und *Push origin* klicken. Die installierte App sieht beim Öffnen (auch aus dem Hintergrund) mit Internet nach einer neuen Fassung, lädt sie und startet sich dann einmal kurz neu.
 
 **Gut zu wissen**
 - Öffentlich sind nur der Code und der Katalog – deine Einkaufsliste nie, sie bleibt auf dem Gerät.

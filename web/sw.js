@@ -1,7 +1,7 @@
 // Service Worker: speichert die App beim ersten Aufruf, danach läuft sie komplett offline.
 // VERSION und PRECACHE werden von tools/web/build.py gesetzt – nicht von Hand ändern.
 
-const VERSION = 'afbb6c352c6e';
+const VERSION = 'd66059c4e8df';
 const PRECACHE = [
   './',
   'index.html',
@@ -86,7 +86,10 @@ const PRECACHE = [
 const CACHE = `feedyourself-${VERSION}`;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
+  // cache: 'reload' umgeht den HTTP-Cache des Browsers – sonst landen nach einem Update evtl. noch alte Dateien im neuen Speicher.
+  event.waitUntil(caches.open(CACHE)
+    .then((cache) => cache.addAll(PRECACHE.map((url) => new Request(url, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
