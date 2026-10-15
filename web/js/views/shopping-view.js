@@ -9,10 +9,11 @@ const VIEW_KEY = 'feedyourself.shopView';
 const VIEWS = ['grid', 'list', 'focus'];
 const SWIPE_PX = 80;
 
+// Kurz halten, damit der Hinweis auf dem iPhone in eine Zeile passt (→ / ← = wischen).
 const HINTS = {
-  grid: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
-  list: 'Tippen oder → wischen: in den Wagen · ← wischen: zurückstellen',
-  focus: 'Tippen: überspringen · → wischen: in den Wagen · ← wischen: zurückstellen',
+  grid: 'Tippen oder →: in den Wagen · ←: zurück',
+  list: 'Tippen oder →: in den Wagen · ←: zurück',
+  focus: 'Tippen: weiter · →: Wagen · ←: zurück',
 };
 
 const svg = {
