@@ -3,7 +3,7 @@
 Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalog.py`.
 Änderungen bitte in `catalog.json` machen (oder mir sagen), nicht hier.
 
-**194 Produkte · 16 Kategorien · 323 Synonyme · 87 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 73 mit Foto**
+**194 Produkte · 16 Kategorien · 323 Synonyme · 87 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 108 mit Foto**
 
 | # | Kategorie | Produkte | davon aus deiner Liste |
 |---|-----------|----------|------------------------|

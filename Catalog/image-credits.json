@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16 07:31",
+  "generated_at": "2026-10-16 08:42",
   "images": [
     {
       "product_id": "aepfel",
@@ -11,6 +11,42 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Apfel_pexels-miguel-paucar-talledo-472765390-18679297.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "alufolie",
+      "name": "Alufolie",
+      "file": "Images/alufolie.jpg",
+      "source": "Pexels",
+      "author": "Msm8",
+      "page": "https://www.pexels.com/photo/6575655/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Alufolie_pexels-msm8-6575655.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "ananas",
+      "name": "Ananas",
+      "file": "Images/ananas.jpg",
+      "source": "Pexels",
+      "author": "Picfoods Com",
+      "page": "https://www.pexels.com/photo/1674574/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Ananas_pexels-picfoods-com-804644-1674574.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "apfelsaft",
+      "name": "Apfelsaft",
+      "file": "Images/apfelsaft.jpg",
+      "source": "Pexels",
+      "author": "Szymon Shields",
+      "page": "https://www.pexels.com/photo/27119207/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Apfelsaft_pexels-szymon-shields-1503561-27119207.jpg",
       "cutout": false
     },
     {
@@ -38,6 +74,30 @@
       "cutout": false
     },
     {
+      "product_id": "backpapier",
+      "name": "Backpapier",
+      "file": "Images/backpapier.jpg",
+      "source": "Pexels",
+      "author": "Felicity Tai",
+      "page": "https://www.pexels.com/photo/7966382/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Backpapier_pexels-felicity-tai-7966382.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "backpulver",
+      "name": "Backpulver",
+      "file": "Images/backpulver.jpg",
+      "source": "Pexels",
+      "author": "Cristian Rojas",
+      "page": "https://www.pexels.com/photo/8477784/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Backpulver_pexels-cristian-rojas-8477784.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "bacon",
       "name": "Bacon",
       "file": "Images/bacon.jpg",
@@ -59,6 +119,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "bananen_pexels-m-catalin-cardei-2171554-5342631.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "basilikum",
+      "name": "Basilikum",
+      "file": "Images/basilikum.jpg",
+      "source": "Pexels",
+      "author": "Katana",
+      "page": "https://www.pexels.com/photo/7382850/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Basilikum_pexels-katana-42038662-7382850.jpg",
       "cutout": false
     },
     {
@@ -95,6 +167,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Blumekohl_pexels-rajesh-s-balouria-1289088-30280330.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "bratwurst",
+      "name": "Bratwurst",
+      "file": "Images/bratwurst.jpg",
+      "source": "Pexels",
+      "author": "Mali",
+      "page": "https://www.pexels.com/photo/929137/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Bratwurst_pexels-mali-929137.jpg",
       "cutout": false
     },
     {
@@ -194,6 +278,42 @@
       "cutout": false
     },
     {
+      "product_id": "deo",
+      "name": "Deo",
+      "file": "Images/deo.jpg",
+      "source": "Pexels",
+      "author": "Abhishek Dinesh",
+      "page": "https://www.pexels.com/photo/30723567/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Deo_pexels-abhishek-dinesh-2149425027-30723567.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "duschgel",
+      "name": "Duschgel",
+      "file": "Images/duschgel.jpg",
+      "source": "Pexels",
+      "author": "Fenn",
+      "page": "https://www.pexels.com/photo/35979964/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Duschgel_pexels-fenn-35979964.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "edamame",
+      "name": "Edamame",
+      "file": "Images/edamame.jpg",
+      "source": "Pexels",
+      "author": "Nano Erdozain",
+      "page": "https://www.pexels.com/photo/28460870/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Edamame_pexels-nano-erdozain-120534369-28460870.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "eier",
       "name": "Eier",
       "file": "Images/eier.jpg",
@@ -230,6 +350,42 @@
       "cutout": false
     },
     {
+      "product_id": "fluessigseife",
+      "name": "Flüssigseife",
+      "file": "Images/fluessigseife.jpg",
+      "source": "Pexels",
+      "author": "Mart Production",
+      "page": "https://www.pexels.com/photo/8217476/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Flüssigseife_pexels-mart-production-8217476.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "frischhaltefolie",
+      "name": "Frischhaltefolie",
+      "file": "Images/frischhaltefolie.jpg",
+      "source": "Pexels",
+      "author": "Karola G",
+      "page": "https://www.pexels.com/photo/4033162/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Frischhaltefolie_pexels-karola-g-4033162.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "frischkaese",
+      "name": "Frischkäse",
+      "file": "Images/frischkaese.jpg",
+      "source": "Pexels",
+      "author": "Guvo59",
+      "page": "https://www.pexels.com/photo/36442795/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Frischkäse_pexels-guvo59-36442795.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "gehackte-tomaten",
       "name": "Gehackte Tomaten",
       "file": "Images/gehackte-tomaten.jpg",
@@ -242,6 +398,18 @@
       "cutout": false
     },
     {
+      "product_id": "gemuesebruehe",
+      "name": "Gemüsebrühe",
+      "file": "Images/gemuesebruehe.jpg",
+      "source": "Pexels",
+      "author": "Alexbayev",
+      "page": "https://www.pexels.com/photo/12077982/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Gemüsebrühe_pexels-alexbayev-12077982.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "geriebener-kaese",
       "name": "Geriebener Käse",
       "file": "Images/geriebener-kaese.jpg",
@@ -251,6 +419,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "geriebenerKäse_pexels-tiago-fagundes-soares-661985253-37145377.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "grillkohle",
+      "name": "Grillkohle",
+      "file": "Images/grillkohle.jpg",
+      "source": "Pexels",
+      "author": "Sarah Claude Levesque St Louis",
+      "page": "https://www.pexels.com/photo/13525910/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Grillkohle_pexels-sarah-claude-levesque-st-louis-156920272-13525910.jpg",
       "cutout": false
     },
     {
@@ -278,6 +458,18 @@
       "cutout": false
     },
     {
+      "product_id": "haferflocken",
+      "name": "Haferflocken",
+      "file": "Images/haferflocken.jpg",
+      "source": "Pexels",
+      "author": "Eva Bronzini",
+      "page": "https://www.pexels.com/photo/5988273/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Haferflocken_pexels-eva-bronzini-5988273.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "hefe",
       "name": "Hefe",
       "file": "Images/hefe.jpg",
@@ -299,6 +491,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Heidelbeeren_pexels-jonathan-david-1312107-31404680.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "himbeeren",
+      "name": "Himbeeren",
+      "file": "Images/himbeeren.jpg",
+      "source": "Pexels",
+      "author": "Larissafarber",
+      "page": "https://www.pexels.com/photo/29214021/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Himbeeren_pexels-larissafarber-29214021.jpg",
       "cutout": false
     },
     {
@@ -398,6 +602,42 @@
       "cutout": false
     },
     {
+      "product_id": "kichererbsen",
+      "name": "Kichererbsen",
+      "file": "Images/kichererbsen.jpg",
+      "source": "Pexels",
+      "author": "Surenukash Chiranjev",
+      "page": "https://www.pexels.com/photo/28110905/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Kichererbsen_pexels-surenukash-chiranjev-122919346-28110905.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "kiwis",
+      "name": "Kiwis",
+      "file": "Images/kiwis.jpg",
+      "source": "Pexels",
+      "author": "Mikhail Nilov",
+      "page": "https://www.pexels.com/photo/7676959/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Kiwis_pexels-mikhail-nilov-7676959.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "kochschinken",
+      "name": "Kochschinken",
+      "file": "Images/kochschinken.jpg",
+      "source": "Pexels",
+      "author": "Adonyi Foto",
+      "page": "https://www.pexels.com/photo/5491291/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Kochschinken_pexels-adonyi-foto-5491291.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "kuerbis",
       "name": "Kürbis",
       "file": "Images/kuerbis.jpg",
@@ -431,6 +671,30 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Lasagneplatten_pexels-augustocarneirojr-31119074.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "limetten",
+      "name": "Limetten",
+      "file": "Images/limetten.jpg",
+      "source": "Pexels",
+      "author": "Anderson Martinsz",
+      "page": "https://www.pexels.com/photo/30741637/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Limetten_pexels-anderson-martinsz-30741637.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "linsen",
+      "name": "Linsen",
+      "file": "Images/linsen.jpg",
+      "source": "Pexels",
+      "author": "Msaimakin",
+      "page": "https://www.pexels.com/photo/36008676/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Linsen_pexels-msaimakin-36008676.jpg",
       "cutout": false
     },
     {
@@ -506,6 +770,18 @@
       "cutout": false
     },
     {
+      "product_id": "mozzarella",
+      "name": "Mozzarella",
+      "file": "Images/mozzarella.jpg",
+      "source": "Pexels",
+      "author": "Nati",
+      "page": "https://www.pexels.com/photo/33573596/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Mozzarella_pexels-nati-87264186-33573596.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "muellbeutel",
       "name": "Müllbeutel",
       "file": "Images/muellbeutel.jpg",
@@ -530,6 +806,18 @@
       "cutout": false
     },
     {
+      "product_id": "nuesse",
+      "name": "Nüsse",
+      "file": "Images/nuesse.jpg",
+      "source": "Pexels",
+      "author": "Sylwester Ficek",
+      "page": "https://www.pexels.com/photo/34148605/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Nüsse_pexels-sylwester-ficek-154797634-34148605.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "olivenoel",
       "name": "Olivenöl",
       "file": "Images/olivenoel.jpg",
@@ -551,6 +839,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "orangen_pexels-bertellifotografia-30893264.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "orangensaft",
+      "name": "Orangensaft",
+      "file": "Images/orangensaft.jpg",
+      "source": "Pexels",
+      "author": "Stephen Leonardi",
+      "page": "https://www.pexels.com/photo/30900665/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Orangensaft_pexels-stephen-leonardi-587681991-30900665.jpg",
       "cutout": false
     },
     {
@@ -602,6 +902,18 @@
       "cutout": false
     },
     {
+      "product_id": "proteinriegel",
+      "name": "Proteinriegel",
+      "file": "Images/proteinriegel.jpg",
+      "source": "Pexels",
+      "author": "Esra Afsar",
+      "page": "https://www.pexels.com/photo/14416430/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Proteinriegel_pexels-esra-afsar-123882149-14416430.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "putenbrust",
       "name": "Putenbrust",
       "file": "Images/putenbrust.jpg",
@@ -626,6 +938,18 @@
       "cutout": false
     },
     {
+      "product_id": "rasierklingen",
+      "name": "Rasierklingen",
+      "file": "Images/rasierklingen.jpg",
+      "source": "Pexels",
+      "author": "Alipli",
+      "page": "https://www.pexels.com/photo/13813862/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Rasierklingen_pexels-alipli-13813862.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "reis",
       "name": "Reis",
       "file": "Images/reis.jpg",
@@ -645,6 +969,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Steak_pexels.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "sahne",
+      "name": "Sahne",
+      "file": "Images/sahne.jpg",
+      "source": "Pexels",
+      "author": "Katerina Holmes",
+      "page": "https://www.pexels.com/photo/5908003/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Sahne_pexels-katerina-holmes-5908003.jpg",
       "cutout": false
     },
     {
@@ -768,6 +1104,18 @@
       "cutout": false
     },
     {
+      "product_id": "speckwuerfel",
+      "name": "Speckwürfel",
+      "file": "Images/speckwuerfel.jpg",
+      "source": "Pexels",
+      "author": "Karola G",
+      "page": "https://www.pexels.com/photo/4202892/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Speckwürfel_pexels-karola-g-4202892.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "spinat",
       "name": "Spinat",
       "file": "Images/spinat.jpg",
@@ -789,6 +1137,42 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Spüulmaschinentabs_pexels-frentescuphotography-12785272.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "tee",
+      "name": "Tee",
+      "file": "Images/tee.jpg",
+      "source": "Pexels",
+      "author": "Rahimegul",
+      "page": "https://www.pexels.com/photo/18785047/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "tee_pexels-rahimegul-18785047.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "thunfisch",
+      "name": "Thunfisch",
+      "file": "Images/thunfisch.jpg",
+      "source": "Pexels",
+      "author": "Towfiqu Barbhuiya",
+      "page": "https://www.pexels.com/photo/12001951/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Thunfisch_pexels-towfiqu-barbhuiya-3440682-12001951.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "toast",
+      "name": "Toast",
+      "file": "Images/toast.jpg",
+      "source": "Pexels",
+      "author": "Christina99999",
+      "page": "https://www.pexels.com/photo/30904194/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Toast_pexels-christina99999-30904194.jpg",
       "cutout": false
     },
     {
@@ -852,6 +1236,18 @@
       "cutout": false
     },
     {
+      "product_id": "whisky",
+      "name": "Whisky",
+      "file": "Images/whisky.jpg",
+      "source": "Pexels",
+      "author": "Nano Erdozain",
+      "page": "https://www.pexels.com/photo/28180093/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Whisky_pexels-nano-erdozain-120534369-28180093.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "wischlappen",
       "name": "Wischlappen",
       "file": "Images/wischlappen.jpg",
@@ -873,6 +1269,30 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Wraps_pexels-shameel-mukkath-3421394-5112589.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "zahnpasta",
+      "name": "Zahnpasta",
+      "file": "Images/zahnpasta.jpg",
+      "source": "Pexels",
+      "author": "Miriam Alonso",
+      "page": "https://www.pexels.com/photo/7622555/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Zahnpaster_pexels-miriam-alonso-7622555.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "zucker",
+      "name": "Zucker",
+      "file": "Images/zucker.jpg",
+      "source": "Pexels",
+      "author": "Mikhail Nilov",
+      "page": "https://www.pexels.com/photo/8670506/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Zucker_pexels-mikhail-nilov-8670506.jpg",
       "cutout": false
     }
   ]
