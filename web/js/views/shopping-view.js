@@ -36,6 +36,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   finishButton?.addEventListener('click', () => { if (!finishButton.disabled) model.finishShopping(); });
   const choice = mountViewChoice(root, { views: VIEWS, storageKey: VIEW_KEY, fallback: 'grid', onChange: () => render() });
   let cartOpen = false;
+  let lastInputs = null;   // Stand beim letzten Zeichnen (siehe render)
   let lastCarted = model.state.cartedCount;
 
   const find = (id) => model.state.items.find((i) => i.id === id);
@@ -92,17 +93,17 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       // Kurzes Zittern (2× links/rechts, 0,42 s); der Hinweis verschwindet 0,25 s danach.
       const SHAKE_MS = 420;
       const hideNotice = () => setTimeout(() => model.dismissToast(), 250);
-      (window.requestAnimationFrame ?? setTimeout)(() => {
-        const card = content.querySelector('.focus-card');
-        if (!card || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { setTimeout(hideNotice, SHAKE_MS); return; }
+      const card = content.querySelector('.focus-card');
+      if (!card || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { setTimeout(hideNotice, SHAKE_MS); }
+      else {
         card.classList.remove('shake');
         void card.offsetWidth;   // Animation neu starten
         card.classList.add('shake');
         let done = false;
         const finish = () => { if (done) return; done = true; card.classList.remove('shake'); hideNotice(); };
         card.addEventListener('animationend', finish, { once: true });
-        setTimeout(finish, SHAKE_MS + 50);   // falls animationend ausbleibt
-      });
+        setTimeout(finish, SHAKE_MS + 80);   // falls animationend ausbleibt
+      }
       buzz();
       return;
     }
@@ -138,12 +139,20 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     if (finishButton) finishButton.hidden = Boolean(summary) || model.state.items.length === 0;
     if (summary) {
       content.innerHTML = summaryView(summary);
+      lastInputs = null;
       return;
     }
 
     const { done, total } = model.progress;
     hint.textContent = HINTS[view];
     if (finishButton) finishButton.disabled = done === 0;
+
+    // Nur neu zeichnen, wenn sich etwas Sichtbares geändert hat – ein bloßer Hinweis (Toast) soll
+    // die Karten nicht ersetzen (sonst flackern Fotos und laufende Animationen brechen ab).
+    const { items, skipped, categories, photos } = model.state;
+    const inputs = [items, skipped, categories, photos, view, focusCategoryId, cartOpen];
+    if (lastInputs && inputs.every((v, i) => v === lastInputs[i])) return;
+    lastInputs = inputs;
 
     if (total === 0) {
       content.innerHTML = `<div class="empty">${svg.cart}<h2>Die Liste ist leer</h2>`
