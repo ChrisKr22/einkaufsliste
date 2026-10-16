@@ -68,6 +68,40 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
     if (event.key === 'Escape') close();
   });
 
+  // Nach unten wischen schließt das Fenster – vom Griff oder vom Kopf (Foto, Name) aus.
+  const DISMISS_PX = 90;
+  let drag = null;
+  root.addEventListener('pointerdown', (event) => {
+    const zone = event.target.closest('.sheet-grabber, .sheet-head, .sheet-drag');
+    if (!zone || event.button > 0) return;
+    const sheet = root.querySelector('.sheet');
+    drag = { sheet, backdrop: root.querySelector('.sheet-backdrop'), y: event.clientY, t: event.timeStamp, dy: 0 };
+    sheet.setPointerCapture?.(event.pointerId);
+  });
+  root.addEventListener('pointermove', (event) => {
+    if (!drag) return;
+    drag.dy = Math.max(0, event.clientY - drag.y);
+    drag.sheet.classList.add('dragging');
+    drag.sheet.style.transform = `translateY(${drag.dy}px)`;
+    if (drag.backdrop) drag.backdrop.style.opacity = String(Math.max(0.2, 1 - drag.dy / 400));
+  });
+  const endDrag = (event) => {
+    if (!drag) return;
+    const { sheet, backdrop, dy, t } = drag;
+    drag = null;
+    sheet.classList.remove('dragging');
+    const fast = dy > 30 && dy / Math.max(1, event.timeStamp - t) > 0.6;   // kurzer, schneller Wisch
+    if (dy > DISMISS_PX || fast) {
+      sheet.style.transform = 'translateY(100%)';
+      setTimeout(() => close(), 180);
+    } else {
+      sheet.style.transform = '';
+      if (backdrop) backdrop.style.opacity = '';
+    }
+  };
+  root.addEventListener('pointerup', endDrag);
+  root.addEventListener('pointercancel', endDrag);
+
   function updatePhoto(item, category) {
     const head = root.querySelector('.sheet-head .thumb');
     if (head) head.outerHTML = thumb(item.product, category?.key, 'large');

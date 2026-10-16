@@ -7,7 +7,7 @@ import { buzz, esc, photoClass, photoContent, thumb } from './dom.js';
 import { mountViewChoice } from './view-choice.js';
 
 const VIEW_KEY = 'feedyourself.shopView';
-const VIEWS = ['grid', 'list', 'focus'];
+const VIEWS = ['list', 'grid', 'focus'];   // Reihenfolge beim Durchschalten
 const SWIPE_PX = 80;
 
 // Kurz halten, damit der Hinweis auf dem iPhone in eine Zeile passt (→ / ← = wischen).

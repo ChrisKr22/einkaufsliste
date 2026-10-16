@@ -22,7 +22,7 @@ export function mountPlanningView(root, model) {
   const recentEl = root.querySelector('#recent');
   let lastAddedCount = model.state.addedCount;
   let recentOrder = readRecentOrder();
-  const choice = mountViewChoice(root, { views: ['grid', 'list'], storageKey: VIEW_KEY, fallback: 'list', onChange: () => renderList() });
+  const choice = mountViewChoice(root, { views: ['list', 'grid'], storageKey: VIEW_KEY, fallback: 'list', onChange: () => renderList() });
 
   // --- Zuletzt gekauft
   recentEl.addEventListener('click', (event) => {
