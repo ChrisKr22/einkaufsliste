@@ -51,8 +51,11 @@ function mountChrome(model) {
   const views = { plan: document.querySelector('#plan-view'), shop: document.querySelector('#shop-view') };
   const toast = document.querySelector('#toast');
 
+  const modeBar = document.querySelector('.mode');
+
   function setMode(mode) {
     for (const t of tabs) t.setAttribute('aria-selected', String(t.dataset.mode === mode));
+    if (modeBar) modeBar.dataset.mode = mode;
     for (const [key, view] of Object.entries(views)) view.hidden = key !== mode;
     document.body.classList.toggle('shopping', mode === 'shop');
     const win = document.defaultView ?? globalThis;   // auch in Testumgebungen das passende Event
@@ -62,25 +65,48 @@ function mountChrome(model) {
 
   for (const tab of tabs) tab.addEventListener('click', () => setMode(tab.dataset.mode));
 
-  // Waagerecht über die Leiste wischen wechselt den Modus (nach links → Einkaufen, nach rechts → Planen).
+  // Waagerecht über die Leiste wischen schiebt die Linse mit dem Finger; beim Loslassen rastet sie
+  // auf der näheren Seite ein. Kurzes Tippen wählt wie gewohnt den Reiter.
   const dock = document.querySelector('.dock-pill');
+  const lens = modeBar?.querySelector('.mode-lens');
   let swipe = null;
-  dock?.addEventListener('pointerdown', (event) => { swipe = { x: event.clientX, y: event.clientY }; });
-  dock?.addEventListener('pointerup', (event) => {
+  dock?.addEventListener('pointerdown', (event) => {
+    if (!modeBar || !lens || event.button > 0) return;
+    const span = modeBar.clientWidth - lens.offsetWidth;   // Weg der Linse von links nach rechts
+    swipe = { x: event.clientX, y: event.clientY, span, start: modeBar.dataset.mode === 'shop' ? span : 0, active: false };
+  });
+  dock?.addEventListener('pointermove', (event) => {
     if (!swipe) return;
     const dx = event.clientX - swipe.x;
-    const dy = event.clientY - swipe.y;
+    if (!swipe.active) {
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(event.clientY - swipe.y)) return;
+      swipe.active = true;
+      modeBar.classList.add('dragging');
+      dock.setPointerCapture?.(event.pointerId);
+    }
+    swipe.pos = Math.max(0, Math.min(swipe.span, swipe.start + dx));
+    modeBar.style.setProperty('--drag-x', `${swipe.pos}px`);
+    const toShop = swipe.pos > swipe.span / 2;
+    for (const t of tabs) t.setAttribute('aria-selected', String(t.dataset.mode === (toShop ? 'shop' : 'plan')));
+  });
+  const endSwipe = () => {
+    if (!swipe) return;
+    const { active, pos, span } = swipe;
     swipe = null;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    const current = tabs.find((t) => t.getAttribute('aria-selected') === 'true')?.dataset.mode;
-    const next = dx < 0 ? 'shop' : 'plan';
-    // Der Klick, den das Loslassen auf einem Reiter auslöst, soll das Wischen nicht wieder umkehren.
+    if (!active) return;
+    // Der Klick, den das Loslassen auf einem Reiter auslöst, soll die Wahl nicht wieder umkehren.
     const block = (e) => { e.stopPropagation(); e.preventDefault(); };
     dock.addEventListener('click', block, { capture: true });
     setTimeout(() => dock.removeEventListener('click', block, { capture: true }), 350);
+    const next = pos > span / 2 ? 'shop' : 'plan';
+    // Linse von der Fingerposition aus weich einrasten lassen.
+    modeBar.classList.remove('dragging');
+    const current = document.body.classList.contains('shopping') ? 'shop' : 'plan';
     if (next !== current) setMode(next);
-  });
-  dock?.addEventListener('pointercancel', () => { swipe = null; });
+    else for (const t of tabs) t.setAttribute('aria-selected', String(t.dataset.mode === current));
+  };
+  dock?.addEventListener('pointerup', endSwipe);
+  dock?.addEventListener('pointercancel', endSwipe);
 
   toast.addEventListener('click', (event) => {
     if (event.target.closest('[data-undo]')) model.undo();

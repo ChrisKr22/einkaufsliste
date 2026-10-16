@@ -3,7 +3,7 @@
 import { categoryStyle } from '../category-style.js';
 import { esc, icon, photoClass, photoContent, stepper, thumb, buzz } from './dom.js';
 import { mountViewChoice } from './view-choice.js';
-import { spokenQuantity, unitOf } from '../units.js';
+import { formatQuantity, spokenQuantity, unitOf } from '../units.js';
 
 const SWIPE_DELETE_PX = 90;
 const RECENT_ORDER_KEY = 'feedyourself.recentOrder';
@@ -162,27 +162,31 @@ export function mountPlanningView(root, model) {
   function noteFor(item) {
     if (item.status === 'later') return `<span class="list-tile-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
     if (item.note) return `<span class="list-tile-note">${esc(item.note)}</span>`;
-    return '<span class="list-tile-note placeholder">Anmerkung hinzufügen</span>';
+    return '<span class="list-tile-note is-placeholder">Anmerkung hinzufügen</span>';
   }
 
   function labelFor(item) {
     return [`${item.product.name}, ${spokenQuantity(item.quantity, unitOf(item))}`, item.note].filter(Boolean).join(', ');
   }
 
-  /** Kachel (zweispaltig): genau wie im Einkauf (Foto, Name, Anmerkung) – gleiche Höhe.
-   *  Die Mengen-Knöpfe liegen unten auf dem Foto, im Verlauf. */
+  /** Kachel (zweispaltig): genau wie im Einkauf (Foto, Name + Menge, Anmerkung) – gleiche Höhe.
+   *  Plus und Minus sind runde Glasknöpfe oben rechts im Foto. */
   function tile(item, categoryKey) {
     const style = categoryStyle(categoryKey);
     let note;
     if (item.status === 'later') note = `<span class="item-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
     else if (item.note) note = `<span class="item-note">${esc(item.note)}</span>`;
-    else note = '<span class="item-note placeholder">Anmerkung hinzufügen</span>';
+    else note = '<span class="item-note is-placeholder">Anmerkung hinzufügen</span>';
     return `<div class="tile plan-tile">
       <button type="button" class="tile-main" data-edit="${item.id}" aria-label="${esc(labelFor(item))} – bearbeiten">
         <span class="tile-photo${photoClass(item.product)}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">${photoContent(item.product, categoryKey)}</span>
-        <span class="tile-body"><span class="tile-head"><span class="item-name">${esc(item.product.name)}</span></span>${note}</span>
+        <span class="tile-body"><span class="tile-head"><span class="item-name">${esc(item.product.name)}</span>`
+          + `<span class="qty-lens" aria-hidden="true">${formatQuantity(item.quantity, unitOf(item))}</span></span>${note}</span>
       </button>
-      <div class="plan-tile-stepper">${stepper(item)}</div>
+      <div class="tile-ctl">
+        <button type="button" class="glass-button" data-inc="${item.id}" aria-label="${esc(item.product.name)} mehr">${icon.plus}</button>
+        <button type="button" class="glass-button" data-dec="${item.id}" aria-label="${esc(item.product.name)} weniger">${icon.minus}</button>
+      </div>
     </div>`;
   }
 
