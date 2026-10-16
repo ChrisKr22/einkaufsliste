@@ -1,6 +1,6 @@
 // FeedYourself – Fotos freistellen und auf ein einheitliches Quadrat bringen.
 //
-// Aufruf:  swift cutout.swift <eingabe-ordner> <ausgabe-ordner> [--size 600] [--margin 0.08] [--keep-background]
+// Aufruf:  swift cutout.swift <eingabe-ordner> <ausgabe-ordner> [--size 600] [--margin 0.08] [--keep-background] [--jpeg-quality 0.6]
 //
 // Für jedes JPG/PNG/HEIC im Eingabe-Ordner:
 //   0. Schon freigestellt (PNG mit transparentem Rand, z. B. vom iPhone „Motiv kopieren“)?
@@ -11,7 +11,8 @@
 //      (funktioniert auch auf Intel-Macs, ideal für „isolated"-Fotos).
 //   3. Motiv mittig in ein transparentes Quadrat setzen, mit Rand.
 //   4. Klappt das alles nicht: Foto quadratisch zuschneiden (ohne Transparenz) und als JPEG
-//      speichern – Fotos mit Hintergrund sind so etwa zehnmal kleiner als als PNG.
+//      speichern (Qualität 60 %, --jpeg-quality) – auf dem iPhone ohne sichtbaren Unterschied
+//      zu 80 %, aber gut ein Drittel kleiner.
 // Pro Datei eine JSON-Zeile auf stdout:
 //   {"file": "...", "mode": "alpha" | "cutout" | "whitebg" | "fallback" | "error"}
 //
@@ -35,11 +36,13 @@ var size = 600
 var margin = 0.08
 // --keep-background: nicht freistellen, Fotos immer randlos zuschneiden (für Fotos mit Szene/Hintergrund).
 let keepBackground = args.contains("--keep-background")
+var jpegQuality = 0.6
 var i = 3
 while i < args.count - 1 {
     if args[i] == "--keep-background" { i += 1; continue }
     if args[i] == "--size", let v = Int(args[i + 1]) { size = v }
     if args[i] == "--margin", let v = Double(args[i + 1]) { margin = v }
+    if args[i] == "--jpeg-quality", let v = Double(args[i + 1]) { jpegQuality = v }
     i += 2
 }
 
@@ -195,7 +198,7 @@ func writeImage(_ image: CGImage, to url: URL, jpeg: Bool) -> Bool {
     let type = jpeg ? UTType.jpeg : UTType.png
     guard let dest = CGImageDestinationCreateWithURL(url as CFURL, type.identifier as CFString, 1, nil)
     else { return false }
-    let options = jpeg ? [kCGImageDestinationLossyCompressionQuality: 0.8] as CFDictionary : nil
+    let options = jpeg ? [kCGImageDestinationLossyCompressionQuality: jpegQuality] as CFDictionary : nil
     CGImageDestinationAddImage(dest, image, options)
     return CGImageDestinationFinalize(dest)
 }

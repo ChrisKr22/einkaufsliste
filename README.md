@@ -106,7 +106,13 @@ python3 tools/photos/photos.py import
 python3 tools/web/build.py
 ```
 
-Details: [Catalog/Inbox/LIESMICH.md](Catalog/Inbox/LIESMICH.md). Eigene Fotos einzelner Produkte nimmt man direkt in der App auf (Bearbeiten-Fenster › „Foto ändern“).
+Fotos mit Hintergrund werden als JPEG mit 60 % Qualität gespeichert (480 × 480 px). Alle Fotos aus den Originalen in `Catalog/Inbox/erledigt/` neu erzeugen, z. B. nach einer Änderung der Qualität:
+
+```bash
+python3 tools/photos/photos.py recompress
+```
+
+Ein zugeschnittenes Original (`…_zugeschnitten.jpg` daneben) hat dabei Vorrang. Details: [Catalog/Inbox/LIESMICH.md](Catalog/Inbox/LIESMICH.md). Eigene Fotos einzelner Produkte nimmt man direkt in der App auf (Bearbeiten-Fenster › „Foto ändern“).
 
 ## Katalog ändern
 

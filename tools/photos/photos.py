@@ -677,6 +677,44 @@ def cmd_import(args):
 
 # ---------------------------------------------------------------- status
 
+def cmd_recompress(args):
+    """Fotos mit Hintergrund aus den Originalen in Inbox/erledigt/ neu erzeugen (z. B. mit neuer JPEG-Qualität)."""
+    credits = load_json(CREDITS, {"images": []}).get("images", [])
+    photos = [c for c in credits if c.get("cutout") is False and c.get("original_file")]
+    stage = WORK / "recompress"
+    if stage.exists():
+        shutil.rmtree(stage)
+    stage.mkdir(parents=True)
+    missing, before = [], 0
+    for c in photos:
+        original = INBOX_DONE / c["original_file"]
+        cropped = original.with_name(f"{original.stem}_zugeschnitten{original.suffix}")
+        source = cropped if cropped.exists() else original
+        if not source.exists():
+            missing.append(c["name"])
+            continue
+        current = IMAGES_OUT / f"{c['product_id']}.jpg"
+        before += current.stat().st_size if current.exists() else 0
+        shutil.copyfile(source, stage / f"{c['product_id']}{source.suffix.lower()}")
+    staged = len(list(stage.iterdir()))
+    if not staged:
+        sys.exit("Keine Originale gefunden – sie liegen nach dem Import in Catalog/Inbox/erledigt/.")
+    binary = build_cutout()
+    proc = subprocess.run([str(binary), str(stage), str(IMAGES_OUT), "--size", str(args.size), "--margin", "0",
+                           "--keep-background", "--jpeg-quality", str(args.quality)], capture_output=True, text=True)
+    if proc.returncode != 0:
+        sys.exit("Neu komprimieren fehlgeschlagen:\n" + proc.stderr)
+    errors = [json.loads(l)["file"] for l in proc.stdout.splitlines() if l.startswith("{") and json.loads(l).get("mode") == "error"]
+    after = sum((IMAGES_OUT / f"{f.stem}.jpg").stat().st_size for f in stage.iterdir() if (IMAGES_OUT / f"{f.stem}.jpg").exists())
+    print(f"{staged - len(errors)} Fotos neu komprimiert (Qualität {round(args.quality * 100)} %): "
+          f"{before / 1024:.0f} KB → {after / 1024:.0f} KB")
+    for name in missing:
+        print(f"  Original fehlt, unverändert: {name}")
+    for name in errors:
+        print(f"  Fehler beim Lesen: {name}")
+    print("Weiter mit:  python3 tools/web/build.py")
+
+
 def cmd_status(args):
     catalog = load_catalog()
     selection = load_json(SELECTION, {})
@@ -874,6 +912,11 @@ def main():
     i.add_argument("--keep", action="store_true", help="Dateien nach dem Import in der Inbox lassen")
     i.add_argument("--mit-hintergrund", action="store_true", help="nicht freistellen – Fotos randlos mit Hintergrund übernehmen")
     i.set_defaults(func=cmd_import)
+
+    c = sub.add_parser("recompress", help="Fotos mit Hintergrund aus den Originalen neu erzeugen (JPEG-Qualität)")
+    c.add_argument("--quality", type=float, default=0.6, help="JPEG-Qualität 0–1 (Standard 0.6)")
+    c.add_argument("--size", type=int, default=480, help="Kantenlänge in Pixeln (Standard 480)")
+    c.set_defaults(func=cmd_recompress)
 
     s = sub.add_parser("status", help="Stand pro Produkt anzeigen")
     s.set_defaults(func=cmd_status)
