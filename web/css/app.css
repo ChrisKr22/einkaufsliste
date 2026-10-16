@@ -224,31 +224,26 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .focus-photo.has-photo img { padding: 6%; }
 /* Fotos mit Hintergrund: randlos füllen */
 .full-photo img { padding: 0 !important; object-fit: cover; filter: var(--photo-filter); }
-/* Feiner Glanz oben links; in Kacheln und Fokus läuft das Foto unten in die Karte aus.
-   Der Filter hebt das Bild in eine eigene Ebene – darum liegen Verlauf (z 1) und Rahmen (z 2) ausdrücklich darüber,
-   eingeschlossen in die Bildfläche (isolation), damit Wisch-Hinweise und Chip weiterhin obenauf liegen. */
+/* Feiner Glanz oben links. Der Filter hebt das Bild in eine eigene Ebene – darum liegen Glanz (z 1) und Rahmen (z 2)
+   ausdrücklich darüber, eingeschlossen in die Bildfläche (isolation), damit Wisch-Hinweise und Chip weiterhin obenauf liegen. */
 .full-photo { isolation: isolate; }
 .full-photo::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none; border-radius: inherit;
   background: linear-gradient(160deg, var(--photo-sheen), transparent 45%); }
-.tile-photo.full-photo::before, .focus-photo.full-photo::before {
-  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%), linear-gradient(to bottom, transparent 55%, var(--surface) 94%); }
 .full-photo::after { z-index: 2; }
-.tile-photo.full-photo::after, .focus-photo.full-photo::after {
+/* Kacheln und Fokus: jedes Bild (Foto, freigestelltes Bild oder Kategorie-Symbol) läuft unten in die Karte aus –
+   so sind alle Kacheln gleich hoch, auch ohne Foto. Das Bild selbst wird ausgeblendet (Maske), die Fläche dahinter
+   endet in der Kartenfarbe bzw. ist durchsichtig. Keine eigene Verlaufsebene über dem Bild: die setzte Safari um
+   Bruchteile eines Pixels versetzt, und am Rand blitzte das Foto als feiner Strich durch. */
+.tile-photo, .focus-photo { isolation: isolate; }
+.tile-photo img, .tile-photo svg, .focus-photo img, .focus-photo svg {
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 94%); mask-image: linear-gradient(to bottom, #000 55%, transparent 94%); }
+.tile-photo:not(.full-photo), .focus-photo:not(.full-photo) { background: linear-gradient(to bottom, var(--tile) 55%, var(--surface) 94%); }
+.tile-photo.full-photo, .focus-photo.full-photo { background: transparent; }
+.tile-photo::after, .focus-photo::after {
   -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
-/* Jede Kachel (Foto, freigestelltes Bild oder Kategorie-Symbol) läuft unten gleich in den Text aus –
-   so sind alle Kacheln gleich hoch, auch ohne Foto. */
 .tile-photo + .tile-body { position: relative; margin-top: -26px; }
-.tile-photo:not(.full-photo) { isolation: isolate; }
-.tile-photo:not(.full-photo)::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 55%, var(--surface) 94%); }
-.tile-photo:not(.full-photo)::after { z-index: 2; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
 .tile-photo svg { margin-bottom: 12%; }
-/* Fokus: wie die Kacheln – jedes Bild (auch das Kategorie-Symbol) läuft unten in den Text aus, gleiche Höhe. */
 .focus-photo-wrap + .focus-body { position: relative; margin-top: -34px; }
-.focus-photo:not(.full-photo) { isolation: isolate; }
-.focus-photo:not(.full-photo)::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 55%, var(--surface) 94%); }
-.focus-photo:not(.full-photo)::after { z-index: 2; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
 .thumb.small { width: 40px; height: 40px; border-radius: 10px; }
 .thumb.large { width: 72px; height: 72px; border-radius: 16px; }
 
@@ -288,8 +283,11 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .thumb.wide svg { width: 34%; height: 34%; margin-right: 12%; stroke-width: 1.3; }
 .thumb.wide.has-photo img { padding: 10% 18% 10% 6%; }
 .thumb.wide.full-photo img { padding: 0 !important; }
-.thumb.wide::before { content: ""; position: absolute; z-index: 1; inset: 0 -1px 0 0; pointer-events: none;
-  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%), linear-gradient(to right, transparent 42%, var(--surface) 94%); }
+/* Listenkachel: Bild läuft nach rechts aus – wie oben über die Maske des Bildes selbst, ohne Verlaufsebene darüber. */
+.thumb.wide img, .thumb.wide svg {
+  -webkit-mask-image: linear-gradient(to right, #000 42%, transparent 94%); mask-image: linear-gradient(to right, #000 42%, transparent 94%); }
+.thumb.wide:not(.full-photo) { background: linear-gradient(to right, var(--tile) 42%, var(--surface) 94%); }
+.thumb.wide.full-photo { background: transparent; }
 .thumb.wide::after { z-index: 2; -webkit-mask-image: linear-gradient(to right, #000 35%, transparent 80%); mask-image: linear-gradient(to right, #000 35%, transparent 80%); }
 
 /* Planung: Wischen zum Entfernen legt „Entfernen“ unter die Kachel. */
