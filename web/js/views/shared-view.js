@@ -1,4 +1,4 @@
-// Gemeinsame Liste: Abschnitt in den Einstellungen, Hinweis im Kopf, Dialoge für Beitritt und Beitrittsanfragen.
+// Listen: Abschnitt in den Einstellungen, Listenwechsler im Kopf, Dialoge für Beitritt und Beitrittsanfragen.
 
 import { esc } from './dom.js';
 
@@ -30,11 +30,21 @@ function ago(time, now = Date.now()) {
 
 const clock = (time) => new Date(time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
-/** Einstellungen › „Gemeinsame Liste“ */
-export function mountSharedSection(root, shared, model) {
+const lock = '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
+const check = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const chevron = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>';
+
+/**
+ * Einstellungen › „Listen“: Übersicht (gemeinsam, privat), die geöffnete gemeinsame Liste (Mitglieder, Einladen,
+ * Verlassen), „Neue Liste“ (privat oder gemeinsam) und „Einladung erhalten?“.
+ */
+export function mountListsSection(root, lists, shared, model) {
   let invite = null;          // { link, text, expires } – vorbereitet, damit „Teilen“ direkt nach dem Tippen kommt
   let confirmLeave = false;
   let confirmRemove = null;   // Mitglieds-ID, die der Admin entfernen möchte
+  let confirmDelete = null;   // private Liste, die gelöscht werden soll
+  let renaming = null;        // private Liste, die gerade umbenannt wird
+  let newKind = 'private';
   let busy = false;
   let error = '';
   let joinError = '';
@@ -62,12 +72,43 @@ export function mountSharedSection(root, shared, model) {
 
   root.addEventListener('click', async (event) => {
     const t = event.target;
-    if (t.closest('[data-shared-create]')) {
-      const name = root.querySelector('#shared-name').value;
-      const deviceName = root.querySelector('#shared-device').value;
-      const adopt = root.querySelector('#shared-adopt')?.checked ?? false;
-      rememberDeviceName(deviceName.trim());
-      await run(() => shared.create({ name, deviceName, adopt }));
+    const listButton = t.closest('[data-list-open]');
+    if (listButton) {
+      invite = null;
+      confirmLeave = false;
+      await run(() => lists.switchTo(listButton.dataset.listOpen));
+    } else if (t.closest('[data-list-kind]')) {
+      newKind = t.closest('[data-list-kind]').dataset.listKind;
+      render();
+    } else if (t.closest('[data-list-create]')) {
+      const name = root.querySelector('#new-list-name').value;
+      if (newKind === 'private') {
+        await run(async () => { await lists.createPrivate(name); root.querySelector('#new-list-name').value = ''; });
+      } else {
+        const deviceName = root.querySelector('#shared-device').value;
+        const adopt = root.querySelector('#shared-adopt')?.checked ?? false;
+        rememberDeviceName(deviceName.trim());
+        await run(() => lists.createShared({ name, deviceName, adopt }));
+      }
+    } else if (t.closest('[data-list-rename]')) {
+      renaming = t.closest('[data-list-rename]').dataset.listRename;
+      render();
+      root.querySelector('#rename-list')?.select();
+    } else if (t.closest('[data-list-rename-save]')) {
+      const id = renaming;
+      const name = root.querySelector('#rename-list').value;   // vor dem Neuzeichnen lesen
+      renaming = null;
+      await run(() => lists.rename(id, name));
+    } else if (t.closest('[data-list-delete]')) {
+      confirmDelete = t.closest('[data-list-delete]').dataset.listDelete;
+      render();
+    } else if (t.closest('[data-list-delete-cancel]')) {
+      confirmDelete = null;
+      render();
+    } else if (t.closest('[data-list-delete-confirm]')) {
+      const id = confirmDelete;
+      confirmDelete = null;
+      await run(() => lists.deletePrivate(id));
     } else if (t.closest('[data-shared-join]')) {
       useInvite(root.querySelector('#shared-invite').value);
     } else if (t.closest('[data-shared-paste]')) {
@@ -116,6 +157,9 @@ export function mountSharedSection(root, shared, model) {
       await run(() => shared.leave());
     }
   });
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && event.target.id === 'rename-list') root.querySelector('[data-list-rename-save]')?.click();
+  });
 
   async function copyInvite() {
     try {
@@ -126,40 +170,33 @@ export function mountSharedSection(root, shared, model) {
     }
   }
 
-  function build() {
-    const s = shared.state;
-    if (invite && invite.expires <= Date.now()) invite = null;
-    const errorHtml = error ? `<p class="backup-error" role="alert">${esc(error)}</p>` : '';
-    if (s.status === 'none') {
-      const count = model.state.items.length;
-      return `
-        <h3 class="section-title" id="shared-title">Gemeinsame Liste</h3>
-        <p class="section-note">Eine Liste für mehrere Geräte – Änderungen erscheinen nach wenigen Sekunden bei allen, solange die App offen ist. Höchstens 5 Geräte; die Inhalte sind verschlüsselt, nur die Mitglieder können sie lesen.</p>
-        <div class="card shared-card">
-          <label class="shared-field"><span>Name der Liste</span><input id="shared-name" type="text" maxlength="40" value="Zuhause" autocomplete="off"></label>
-          <label class="shared-field"><span>Name dieses Geräts</span><input id="shared-device" type="text" maxlength="40" value="${esc(defaultDeviceName())}" autocomplete="off"></label>
-          ${count ? `<label class="shared-check"><input id="shared-adopt" type="checkbox" checked><span>Meine bisherige Liste übernehmen (${count === 1 ? '1 Artikel' : `${count} Artikel`})</span></label>` : ''}
-          <button type="button" class="button primary" data-shared-create ${busy ? 'disabled' : ''}>${busy ? 'Wird angelegt …' : 'Gemeinsame Liste anlegen'}</button>
-          ${errorHtml}
-        </div>
-        <div class="card shared-card shared-join">
-          <strong>Einladung erhalten?</strong>
-          <p class="shared-confirm">Nachricht oder Link aus der Einladung kopieren und hier einfügen – dann den Prüfcode vergleichen.</p>
-          <label class="sr-only" for="shared-invite">Einladung</label>
-          <input id="shared-invite" class="shared-invite" type="text" placeholder="Einladung hier einfügen" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-          <div class="backup-actions">
-            <button type="button" class="button secondary" data-shared-paste>Aus Zwischenablage</button>
-            <button type="button" class="button primary" data-shared-join>Einladung einfügen</button>
-          </div>
-          ${joinError ? `<p class="backup-error" role="alert">${esc(joinError)}</p>` : ''}
-        </div>`;
+  function listRow(list) {
+    const active = list.id === lists.state.activeId;
+    const icon = list.kind === 'shared' ? people : lock;
+    if (renaming === list.id) {
+      return `<li class="list-row editing">${icon}<input id="rename-list" type="text" maxlength="40" value="${esc(list.name)}" aria-label="Name der Liste" autocomplete="off">
+        <button type="button" class="text-button" data-list-rename-save>Fertig</button></li>`;
     }
+    if (confirmDelete === list.id) {
+      return `<li class="list-row member-confirm"><span class="member-name">„${esc(list.name)}“ mit allen Einträgen löschen?</span>
+        <span class="member-actions"><button type="button" class="text-button" data-list-delete-cancel>Abbrechen</button>
+        <button type="button" class="text-button danger" data-list-delete-confirm>Löschen</button></span></li>`;
+    }
+    const canDelete = list.kind === 'private' && lists.state.lists.length > 1;
+    return `<li class="list-row${active ? ' active' : ''}">
+      <button type="button" class="list-open" data-list-open="${esc(list.id)}" aria-pressed="${active}" ${busy ? 'disabled' : ''}>${icon}<span>${esc(list.name)}</span>${active ? `<i class="list-check">${check}</i>` : ''}</button>
+      ${list.kind === 'private' ? `<button type="button" class="text-button" data-list-rename="${esc(list.id)}">Umbenennen</button>` : ''}
+      ${canDelete ? `<button type="button" class="text-button danger" data-list-delete="${esc(list.id)}" aria-label="${esc(list.name)} löschen">Löschen</button>` : ''}
+    </li>`;
+  }
+
+  function sharedDetail() {
+    const s = shared.state;
+    const errorHtml = error ? `<p class="backup-error" role="alert">${esc(error)}</p>` : '';
     if (s.status === 'lost') {
-      return `
-        <h3 class="section-title" id="shared-title">Gemeinsame Liste</h3>
-        <div class="card shared-card">
+      return `<div class="card shared-card">
           <p class="shared-lost"><strong>${esc(s.name)}</strong>: ${esc(s.error ?? 'Kein Zugang mehr.')}</p>
-          <button type="button" class="button secondary" data-shared-leave-confirm ${busy ? 'disabled' : ''}>Liste entfernen und eigene Liste zurückholen</button>
+          <button type="button" class="button secondary" data-shared-leave-confirm ${busy ? 'disabled' : ''}>Liste von diesem Gerät entfernen</button>
           ${errorHtml}
         </div>`;
     }
@@ -185,14 +222,13 @@ export function mountSharedSection(root, shared, model) {
       </div>` : '';
     const full = s.memberCount >= s.maxMembers;
     return `
-      <h3 class="section-title" id="shared-title">Gemeinsame Liste</h3>
       <div class="card shared-card">
         <div class="shared-head">${people}<div><strong>${esc(s.name)}</strong>
           <span>${s.memberCount} von ${s.maxMembers} Geräten · abgeglichen ${ago(s.lastSync)}${s.error ? ' · offline' : ''}</span></div></div>
         <ul class="shared-members">${members}</ul>
         ${inviteHtml}
         ${confirmLeave ? `
-          <p class="shared-confirm">Liste auf diesem Gerät verlassen? Die anderen behalten sie; deine bisherige eigene Liste kommt zurück.</p>
+          <p class="shared-confirm">„${esc(s.name)}“ auf diesem Gerät verlassen? Die anderen behalten die Liste.</p>
           <div class="backup-actions">
             <button type="button" class="button secondary" data-shared-leave-cancel>Abbrechen</button>
             <button type="button" class="button primary" data-shared-leave-confirm>Verlassen</button>
@@ -203,11 +239,62 @@ export function mountSharedSection(root, shared, model) {
           </div>`}
         ${errorHtml}
       </div>
-      <p class="section-note">Eine Einladung gilt 30 Minuten. Beim Beitritt zeigen beide Geräte einen Prüfcode – vergleicht ihn, bevor du bestätigst. ${s.isAdmin ? 'Du bist Admin dieser Liste und kannst Mitglieder entfernen.' : 'Mitglieder entfernen kann der Admin der Liste.'}</p>`;
+      <p class="section-note">Eine Einladung gilt 30 Minuten; beim Beitritt zeigen beide Geräte einen Prüfcode. ${s.isAdmin ? 'Du bist Admin dieser Liste und kannst Mitglieder entfernen.' : 'Mitglieder entfernen kann der Admin der Liste.'}</p>`;
+  }
+
+  function newListCard() {
+    const active = lists.active;
+    const count = model.state.items.length;
+    const canAdopt = newKind === 'shared' && active?.kind === 'private' && count > 0;
+    return `
+      <div class="card shared-card">
+        <strong>Neue Liste</strong>
+        <div class="theme-choice list-kind" role="radiogroup" aria-label="Art der Liste">
+          <button type="button" role="radio" data-list-kind="private" aria-checked="${newKind === 'private'}">Privat</button>
+          <button type="button" role="radio" data-list-kind="shared" aria-checked="${newKind === 'shared'}">Gemeinsam</button>
+        </div>
+        <p class="shared-confirm">${newKind === 'private'
+          ? 'Nur auf diesem Gerät – nichts verlässt das iPhone.'
+          : 'Für mehrere Geräte (höchstens 5) – Änderungen erscheinen nach wenigen Sekunden bei allen. Die Inhalte sind verschlüsselt, nur die Mitglieder können sie lesen.'}</p>
+        <label class="shared-field"><span>Name der Liste</span><input id="new-list-name" type="text" maxlength="40" placeholder="${newKind === 'private' ? 'z. B. Baumarkt' : 'z. B. Zuhause'}" autocomplete="off"></label>
+        ${newKind === 'shared' ? `<label class="shared-field"><span>Name dieses Geräts</span><input id="shared-device" type="text" maxlength="40" value="${esc(defaultDeviceName())}" autocomplete="off"></label>` : ''}
+        ${canAdopt ? `<label class="shared-check"><input id="shared-adopt" type="checkbox"><span>Einträge aus „${esc(active.name)}“ übernehmen (${count === 1 ? '1 Artikel' : `${count} Artikel`})</span></label>` : ''}
+        <button type="button" class="button primary" data-list-create ${busy ? 'disabled' : ''}>${busy ? 'Wird angelegt …' : 'Liste anlegen'}</button>
+      </div>`;
+  }
+
+  function build() {
+    if (invite && invite.expires <= Date.now()) invite = null;
+    const all = lists.state.lists;
+    const sharedLists = all.filter((l) => l.kind === 'shared');
+    const privateLists = all.filter((l) => l.kind === 'private');
+    const activeShared = lists.active?.kind === 'shared' && shared.state.status !== 'none';
+    return `
+      <h3 class="section-title" id="lists-title">Listen</h3>
+      ${sharedLists.length ? `<p class="list-group">Gemeinsam</p><ul class="card list-rows">${sharedLists.map(listRow).join('')}</ul>` : ''}
+      ${activeShared ? sharedDetail() : ''}
+      <p class="list-group">Privat</p>
+      <ul class="card list-rows">${privateLists.map(listRow).join('')}</ul>
+      ${!activeShared && error ? `<p class="backup-error" role="alert">${esc(error)}</p>` : ''}
+      ${newListCard()}
+      <div class="card shared-card shared-join">
+        <strong>Einladung erhalten?</strong>
+        <p class="shared-confirm">Nachricht oder Link aus der Einladung kopieren und hier einfügen – dann den Prüfcode vergleichen.</p>
+        <label class="sr-only" for="shared-invite">Einladung</label>
+        <input id="shared-invite" class="shared-invite" type="text" placeholder="Einladung hier einfügen" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div class="backup-actions">
+          <button type="button" class="button secondary" data-shared-paste>Aus Zwischenablage</button>
+          <button type="button" class="button primary" data-shared-join>Einladung einfügen</button>
+        </div>
+        ${joinError ? `<p class="backup-error" role="alert">${esc(joinError)}</p>` : ''}
+      </div>`;
   }
 
   let last = '';
   function render() {
+    // Beim Tippen in ein Feld nicht neu zeichnen – sonst wäre die Eingabe weg
+    const typing = root.contains(document.activeElement) && document.activeElement.matches?.('input');
+    if (typing && !busy) return;
     const html = build();
     if (html === last) return;   // nichts geändert – Fokus und VoiceOver-Position bleiben
     last = html;
@@ -215,21 +302,97 @@ export function mountSharedSection(root, shared, model) {
   }
 
   shared.subscribe(() => { if (!busy) render(); });
-  model.subscribe(() => { if (shared.state.status === 'none' && !busy && !root.contains(document.activeElement)) render(); });
-  setInterval(() => { if (shared.state.status === 'active' && !busy && !root.contains(document.activeElement)) render(); }, 15_000).unref?.();
+  lists.subscribe(() => { if (!busy) render(); });
+  model.subscribe(() => { if (!busy) render(); });
+  setInterval(() => { if (shared.state.status === 'active' && !busy) render(); }, 15_000).unref?.();
   render();
 }
 
-/** Kleiner Hinweis im Kopf: Name der gemeinsamen Liste; Tippen öffnet die Einstellungen. */
-export function mountSharedChip(button, shared) {
-  function render() {
-    const s = shared.state;
-    button.hidden = s.status === 'none';
-    if (button.hidden) return;
-    button.innerHTML = `${people}<span>${esc(s.name)}</span>${s.requests.length ? '<i aria-hidden="true"></i>' : ''}`;
-    button.classList.toggle('problem', s.status === 'lost');
-    button.setAttribute('aria-label', `Gemeinsame Liste ${s.name}${s.requests.length ? ', Beitrittsanfrage offen' : ''}`);
+/**
+ * Listenwechsler im Kopf: zeigt die geöffnete Liste. Tippen öffnet die Auswahl, langes Drücken die Einstellungen.
+ * @param {{openSettings: (focus?: string) => void}} options
+ */
+export function mountListSwitch(button, menu, lists, shared, { openSettings }) {
+  let pressTimer = null;
+  let longPressed = false;
+
+  const close = () => {
+    menu.hidden = true;
+    button.setAttribute('aria-expanded', 'false');
+  };
+  const open = () => {
+    renderMenu();
+    menu.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+    menu.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+  };
+
+  button.addEventListener('pointerdown', () => {
+    longPressed = false;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      close();
+      navigator.vibrate?.(10);
+      openSettings('#lists-section');
+    }, 500);
+  });
+  const cancelPress = () => clearTimeout(pressTimer);
+  button.addEventListener('pointerup', cancelPress);
+  button.addEventListener('pointerleave', cancelPress);
+  button.addEventListener('pointercancel', cancelPress);
+  button.addEventListener('contextmenu', (event) => event.preventDefault());   // kein Kontextmenü beim langen Drücken
+  button.addEventListener('click', (event) => {
+    if (longPressed) {
+      longPressed = false;
+      event.preventDefault();
+      return;
+    }
+    if (menu.hidden) open();
+    else close();
+  });
+
+  menu.addEventListener('click', async (event) => {
+    const item = event.target.closest('[data-switch-list]');
+    if (item) {
+      close();
+      await lists.switchTo(item.dataset.switchList);
+    } else if (event.target.closest('[data-new-list]')) {
+      close();
+      openSettings('#lists-section');
+    }
+  });
+  document.addEventListener('click', (event) => {
+    if (!menu.hidden && !menu.contains(event.target) && !button.contains(event.target)) close();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !menu.hidden) {
+      close();
+      button.focus();
+    }
+  });
+
+  function renderMenu() {
+    const items = lists.state.lists.map((l) => {
+      const active = l.id === lists.state.activeId;
+      return `<button type="button" role="menuitemradio" aria-checked="${active}" data-switch-list="${esc(l.id)}">
+        ${l.kind === 'shared' ? people : lock}<span>${esc(l.name)}</span>${active ? `<i class="list-check">${check}</i>` : ''}</button>`;
+    }).join('');
+    menu.innerHTML = `${items}<hr><button type="button" role="menuitem" data-new-list><span>Neue Liste …</span></button>`;
   }
+
+  function render() {
+    const list = lists.active;
+    if (!list) return;
+    const s = shared.state;
+    const requests = list.kind === 'shared' && s.requests.length > 0;
+    button.innerHTML = `${list.kind === 'shared' ? people : lock}<span>${esc(list.name)}</span>${chevron}${requests ? '<i aria-hidden="true"></i>' : ''}`;
+    button.classList.toggle('shared', list.kind === 'shared');
+    button.classList.toggle('problem', list.kind === 'shared' && s.status === 'lost');
+    button.setAttribute('aria-label', `Liste: ${list.name}${list.kind === 'shared' ? ' (gemeinsam)' : ''}${requests ? ', Beitrittsanfrage offen' : ''} – tippen zum Wechseln, lange drücken für die Einstellungen`);
+    if (!menu.hidden) renderMenu();
+  }
+  lists.subscribe(render);
   shared.subscribe(render);
   render();
 }

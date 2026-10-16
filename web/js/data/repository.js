@@ -253,8 +253,13 @@ export class ShoppingRepository {
 
   // ---------------------------------------------------------------- Sicherung
 
+  /** Gerätespeicher ohne Listen-Weiche – die Sicherung umfasst alle Listen. */
+  get #deviceStore() {
+    return this.store.base ?? this.store;
+  }
+
   exportBackup() {
-    return createBackup(this.store, this.now());
+    return createBackup(this.#deviceStore, this.now());
   }
 
   async markBackedUp() {
@@ -268,14 +273,15 @@ export class ShoppingRepository {
 
   /** Ersetzt alle Daten; liefert den vorherigen Stand zum Rückgängigmachen. */
   async importBackup(backup) {
-    const previous = await createBackup(this.store, this.now());
+    const previous = await createBackup(this.#deviceStore, this.now());
     const lastBackupAt = await this.lastBackupAt();
-    await restoreBackup(this.store, backup, { lastBackupAt });
-    return { previous, lastBackupAt };
+    await restoreBackup(this.#deviceStore, backup, { lastBackupAt });
+    return { previous, lastBackupAt, whole: true };
   }
 
-  async undoImport({ previous, lastBackupAt }) {
-    await restoreBackup(this.store, previous, { lastBackupAt });
+  /** Macht ein Einspielen rückgängig – eine ganze Sicherung im Gerätespeicher, eine geteilte Liste in der aktiven Liste. */
+  async undoImport({ previous, lastBackupAt, whole = false }) {
+    await restoreBackup(whole ? this.#deviceStore : this.store, previous, { lastBackupAt });
   }
 
   // ---------------------------------------------------------------- Geteilte Liste übernehmen

@@ -25,7 +25,10 @@
     <header class="header">
       <div class="header-row">
         <h1 class="wordmark">Feed<span>Yourself</span></h1>
-        <button type="button" id="shared-chip" class="shared-chip" data-open-settings hidden></button>
+        <div class="list-switch-wrap">
+          <button type="button" id="list-switch" class="list-switch" aria-haspopup="menu" aria-expanded="false" aria-controls="list-menu"></button>
+          <div id="list-menu" class="list-menu" role="menu" aria-label="Liste wechseln" hidden></div>
+        </div>
         <button type="button" id="view-switch" class="view-toggle" aria-label="Ansicht wechseln"></button>
       </div>
       <!-- Nur in der Liste (Planen): Suche fest im Kopf, daneben die Zahl der Artikel -->
@@ -84,7 +87,6 @@
           <h2 id="settings-title">Einstellungen</h2>
           <button type="button" class="text-button strong" data-close-settings>Fertig</button>
         </div>
-        <section id="shared-section" class="settings-section" aria-labelledby="shared-title"></section>
         <section id="theme-section" aria-labelledby="theme-title">
           <h3 class="section-title" id="theme-title">Darstellung</h3>
           <div class="theme-choice" role="radiogroup" aria-labelledby="theme-title">
@@ -94,6 +96,7 @@
           </div>
           <p class="section-note">„System“ folgt der Einstellung des iPhones. Gilt nur auf diesem Gerät.</p>
         </section>
+        <section id="lists-section" class="settings-section" aria-labelledby="lists-title"></section>
         <section class="settings-section" aria-labelledby="categories-title">
           <h3 class="section-title" id="categories-title">Kategorien</h3>
           <p class="section-note">Die Reihenfolge ist dein Weg durch den Laden. Zum Sortieren am Griff ziehen, Namen antippen zum Umbenennen.</p>
@@ -103,7 +106,7 @@
         </section>
         <section id="product-units" class="settings-section" aria-labelledby="units-title">
           <h3 class="section-title" id="units-title">Einheiten je Produkt</h3>
-          <p class="section-note">In welcher Einheit kommt ein Produkt auf die Liste – z. B. Äpfel in Kilogramm, Eier in Stück? Gilt ab dem nächsten Hinzufügen; Einträge auf der Liste änderst du im Bearbeiten-Fenster.</p>
+          <p class="section-note">Änderungen hier gelten dauerhaft.</p>
           <div class="card unit-card">
             <label class="sr-only" for="unit-search">Produkt suchen</label>
             <input id="unit-search" type="text" placeholder="Produkt suchen …" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -112,7 +115,6 @@
         </section>
         <section id="suggest" class="settings-section" aria-labelledby="suggest-title">
           <h3 class="section-title" id="suggest-title">Für den Katalog vorschlagen</h3>
-          <p class="section-note">Produkte, die du selbst angelegt hast, kannst du für den gemeinsamen Katalog vorschlagen. Die Nachricht geht an die Person, die FeedYourself pflegt; übernommene Produkte haben nach dem nächsten Update alle. Vorausgewählt ist, was du mindestens zweimal gekauft hast.</p>
           <div class="card unit-card">
             <div id="suggest-list" class="unit-list" role="list"></div>
             <button type="button" class="button primary suggest-button" data-suggest-share disabled>Vorschlag teilen</button>
@@ -145,11 +147,7 @@
             <p id="backup-error" class="backup-error" role="alert" hidden></p>
           </div>
         </section>
-        <footer class="settings-signature">
-          <p><strong>FeedYourself</strong> · © 2026 ChrisKr22</p>
-          <p>Alle Rechte vorbehalten. Der Code ist öffentlich einsehbar, steht aber unter keiner Open-Source-Lizenz.</p>
-          <p>Produktfotos: Pexels (Pexels-Lizenz).</p>
-        </footer>
+        <footer class="settings-signature"><strong>FeedYourself</strong> © 2026 ChrisKr22. Alle Rechte vorbehalten; der Code ist öffentlich einsehbar, steht aber unter keiner Open-Source-Lizenz. Produktfotos: Pexels (Pexels-Lizenz).</footer>
       </div>
     </div>
 

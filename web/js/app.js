@@ -14,7 +14,8 @@ import { mountSettingsView } from './views/settings-view.js';
 import { appUrl, mountIncomingDialog, mountPasteSection, mountShareButton, receiveFromLocation } from './views/share-view.js';
 import { mountShoppingView } from './views/shopping-view.js';
 import { SharedList } from './sync/shared-list.js';
-import { mountSharedChip, mountSharedDialogs, mountSharedSection } from './views/shared-view.js';
+import { mountListsSection, mountListSwitch, mountSharedDialogs } from './views/shared-view.js';
+import { ListsManager } from './lists.js';
 import { mountSuggestSection } from './views/suggest-view.js';
 import { MODE_EVENT } from './views/view-choice.js';
 import { mountProductUnits } from './views/units-view.js';
@@ -186,7 +187,15 @@ async function start() {
   // Bildquellen vor allen Ansichten aktualisieren, damit jede Ansicht schon die neuen Fotos sieht.
   setPhotoSources(await loadBundledImages());
   model.subscribe((state) => setPhotoSources({ own: state.photos }));
-  await model.load();
+  // Listen (private und gemeinsame): öffnet die zuletzt benutzte und lädt deren Einträge.
+  const shared = new SharedList(model, store, { appUrl });
+  const lists = new ListsManager(model, store, shared);
+  try {
+    await lists.init();
+  } catch (error) {
+    console.warn('Listen konnten nicht geöffnet werden:', error);
+    await model.load();
+  }
   const chrome = mountChrome(model);
   mountPlanningView(document.querySelector('#plan-view'), model);
   mountShoppingView(document.querySelector('#shop-view'), model, { onGoToPlanning: () => chrome.setMode('plan') });
@@ -197,18 +206,16 @@ async function start() {
   mountProductUnits(document.querySelector('#product-units'), model);
   mountSuggestSection(document.querySelector('#suggest'), model);
   mountShareButton(document.querySelector('#plan-view'), model);
-  // Gemeinsame Liste: tauscht beim Start ggf. den Speicher der Einträge aus und gleicht ab.
-  const shared = new SharedList(model, store, { appUrl });
-  mountSharedSection(document.querySelector('#shared-section'), shared, model);
-  mountSharedChip(document.querySelector('#shared-chip'), shared);
+  mountListsSection(document.querySelector('#lists-section'), lists, shared, model);
+  mountListSwitch(document.querySelector('#list-switch'), document.querySelector('#list-menu'), lists, shared, {
+    openSettings: (focus) => {
+      document.querySelector('#open-settings').click();
+      document.querySelector(focus)?.scrollIntoView?.({ block: 'start' });
+    },
+  });
   mountSharedDialogs(document.querySelector('#shared-root'), shared, model);
   mountPasteSection(document.querySelector('#paste-share'), model, shared);
   mountIncomingDialog(document.querySelector('#incoming-root'), model);
-  try {
-    await shared.init();
-  } catch (error) {
-    console.warn('Gemeinsame Liste nicht verfügbar:', error);
-  }
   await receiveFromLocation(model, shared);
   registerServiceWorker();
 }

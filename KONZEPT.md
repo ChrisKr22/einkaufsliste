@@ -571,8 +571,16 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 1. ✅ **Kern** ohne Netz: Änderungs-Log, Zusammenführen, Verschlüsselung – mit Tests, die zwei Geräte simulieren.
 2. ✅ **Briefkasten** (Worker) schreiben; Christopher richtet ihn einmal ein; Abgleich mit zwei Browsern testen.
 3. ✅ **Eine gemeinsame Liste** mit Anlegen (inkl. private Liste übernehmen), Einladen, Beitreten mit Bestätigung (16.10.2026, Stand siehe unten).
-4. **Mehrere Listen** mit Auswahl, Mitgliederansicht, Verlassen, Entfernen.
+4. ✅ **Mehrere Listen** mit Auswahl, Mitgliederansicht, Verlassen, Entfernen (17.10.2026; neuer Schlüssel nach dem Entfernen steht noch aus).
 5. Sicherung mit Schlüsseln, Wake Lock, Feinschliff; Test auf mehreren iPhones.
+
+#### Umgesetzt: mehrere Listen, privat und gemeinsam (17.10.2026)
+
+- **Listenarten:** *privat* (nur auf diesem Gerät, nichts geht an den Briefkasten) und *gemeinsam* (über den Briefkasten). Beliebig viele von beiden; ein Gerät kann in mehreren gemeinsamen Listen sein. Abgeglichen wird die gerade geöffnete gemeinsame Liste; beim Wechsel wirft sie ihre Änderungen noch ein.
+- **Wechsel:** Tippen auf den Listennamen im Kopf öffnet eine Auswahl (Schloss = privat, Personen = gemeinsam, Haken = geöffnet) mit *Neue Liste …*. **Langes Drücken** auf den Listennamen öffnet die Einstellungen (Haptic Touch; echtes 3D Touch und Schnellaktionen am App-Symbol bietet iOS Web-Apps nicht an).
+- **Einstellungen:** Reihenfolge *Darstellung › Listen (Gemeinsam, Privat, Neue Liste, Einladung erhalten?) › Kategorien › Einheiten je Produkt › Für den Katalog vorschlagen › Geteilte Liste einfügen › Sicherung*. Private Listen lassen sich umbenennen und löschen (die letzte Liste bleibt immer); *Neue Liste* fragt nach Art und Namen, bei gemeinsamen zusätzlich nach dem Gerätenamen und ob die Einträge der geöffneten privaten Liste übernommen werden.
+- **Speicher:** Alle privaten Listen liegen im Gerätespeicher, jeder Eintrag trägt seine Listen-ID (`data/private-store.js`); Einträge ohne ID gehören zu „Meine Liste“. Die Listenverwaltung (`js/lists.js`) merkt sich Listen und geöffnete Liste und übernimmt beim ersten Start eine bestehende gemeinsame Liste. Kategorien, Produkte, Fotos und „Zuletzt gekauft“ teilen sich alle Listen.
+- **Sicherung:** umfasst alle privaten Listen und die Zugänge der gemeinsamen (Schlüssel, Entscheidung 7); nach dem Einspielen werden die Listen neu eingelesen.
 
 #### Umgesetzt: eine gemeinsame Liste (16.10.2026)
 

@@ -1,6 +1,7 @@
-// Steuerung der gemeinsamen Liste (KONZEPT.md 8.4): anlegen, einladen, beitreten, bestätigen, verlassen, abgleichen.
+// Steuerung der gemeinsamen Listen (KONZEPT.md 8.4): anlegen, einladen, beitreten, bestätigen, verlassen, abgleichen.
+// Ein Gerät kann in mehreren gemeinsamen Listen sein; aktiv (abgeglichen, angezeigt) ist immer die gerade geöffnete.
+// Welche Listen es gibt und welche offen ist, verwaltet die Listenverwaltung (lists.js) – sie wird als `lists` gesetzt.
 // Hält ihren eigenen Zustand (für die Ansichten) und tauscht beim Aktivieren den Speicher des Repositorys aus.
-// Dieses Gerät ist in höchstens einer gemeinsamen Liste (mehrere Listen mit Auswahl folgen später).
 
 import { newListId, newListKey } from './crypto.js';
 import { JoinConnection, ListConnection, SYNC_URL } from './client.js';
@@ -9,7 +10,8 @@ import { Replica } from './replica.js';
 import { productRef, SharedStore } from './shared-store.js';
 import { newId } from '../data/repository.js';
 
-export const SESSION_KEY = 'sharedList';
+export const LEGACY_SESSION_KEY = 'sharedList';   // vor mehreren Listen: die eine gemeinsame Liste
+export const sessionKey = (listId) => `shared:${listId}`;
 export const JOIN_KEY = 'sharedJoin';
 const SYNC_MS = 5_000;
 const PUSH_DELAY_MS = 1_200;
@@ -43,6 +45,7 @@ export class SharedList {
     this.pushTimer = null;
     this.interval = null;
     this.joinTimer = null;
+    this.lists = null;          // Listenverwaltung: has(listId), added(session), removed(listId), renamed(listId, name)
   }
 
   subscribe(listener) {
@@ -61,16 +64,38 @@ export class SharedList {
 
   // ---------------------------------------------------------------- Start
 
+  /** Beim Start: auf Rückkehr in die App achten, ein noch offenes Beitreten fortsetzen. Öffnen übernimmt `activate`. */
   async init() {
     if (this.timers) this.#watchVisibility();
-    const session = (await this.base.get('meta', SESSION_KEY))?.value;
-    if (session) await this.#activate(session);
     const join = (await this.base.get('meta', JOIN_KEY))?.value;
-    if (join && !session) {
+    if (join) {
       this.joinData = join;
       this.#set({ join: { phase: 'waiting', name: join.name, code: join.code } });
       this.#pollJoin();
     }
+  }
+
+  /** Gemeinsame Liste öffnen (Stand vom Gerät, danach Abgleich). @returns {Promise<boolean>} ob es sie gab */
+  async activate(listId) {
+    if (this.session?.listId === listId) return true;
+    const session = (await this.base.get('meta', sessionKey(listId)))?.value;
+    if (!session) return false;
+    await this.suspend();
+    await this.#activate(session);
+    return true;
+  }
+
+  /** Aktive Liste schließen (z. B. Wechsel in eine andere Liste): Eigenes noch einwerfen, dann ruhen lassen. */
+  async suspend() {
+    if (!this.session) return;
+    try { await this.#flush(); } catch { /* offline – wird beim nächsten Öffnen nachgeholt */ }
+    await this.#save();
+    this.#stopTimers();
+    this.session = null;
+    this.replica = null;
+    this.connection = null;
+    this.seats = null;
+    this.#set({ status: 'none', name: '', members: [], memberCount: 1, isAdmin: false, requests: [], error: null, lastSync: null });
   }
 
   async #activate(session) {
@@ -84,16 +109,21 @@ export class SharedList {
     this.sync();
   }
 
-  async #deactivate() {
+  /** Liste auf diesem Gerät vergessen (nach dem Verlassen). Die Listenverwaltung öffnet danach eine andere. */
+  async #forget() {
+    const { listId } = this.session;
     this.#stopTimers();
     this.session = null;
     this.replica = null;
     this.connection = null;
-    this.model.repository.store = this.base;
-    await this.base.delete('meta', SESSION_KEY);
     this.seats = null;
+    await this.base.delete('meta', sessionKey(listId));
     this.#set({ status: 'none', name: '', members: [], memberCount: 1, isAdmin: false, requests: [], error: null, lastSync: null });
-    await this.model.load();
+    if (this.lists) await this.lists.removed(listId);
+    else {
+      this.model.repository.store = this.base;
+      await this.model.load();
+    }
   }
 
   /**
@@ -118,17 +148,17 @@ export class SharedList {
   async #save() {
     if (!this.session) return;
     this.session = { ...this.session, replica: this.replica.toJSON() };
-    await this.base.put('meta', { key: SESSION_KEY, value: this.session });
+    await this.base.put('meta', { key: sessionKey(this.session.listId), value: this.session });
   }
 
   // ---------------------------------------------------------------- Anlegen
 
   /**
-   * Neue gemeinsame Liste; wahlweise wandert die bisherige private Liste hinein.
+   * Neue gemeinsame Liste; wahlweise wandern die Einträge der gerade offenen privaten Liste hinein.
    * @param {{name: string, deviceName: string, adopt?: boolean}} options
    */
   async create({ name, deviceName, adopt = true }) {
-    if (this.session) throw new Error('Dieses Gerät ist schon in einer gemeinsamen Liste.');
+    const source = adopt && !(this.model.repository.store instanceof SharedStore) ? this.model.repository.store : null;
     const session = {
       listId: newListId(), listKey: newListKey(), memberId: crypto.randomUUID(), deviceId: newId().slice(0, 8),
       name: cleanName(name, 'Gemeinsame Liste'), deviceName: cleanName(deviceName, 'Mein Gerät'), seen: 0, snapshotUpto: 0, replica: null,
@@ -138,12 +168,14 @@ export class SharedList {
     replica.set('list', 'info', { name: session.name });
     replica.set('member', session.memberId, { name: session.deviceName, joinedAt: this.now() });
     session.replica = replica.toJSON();
-    const privateEntries = adopt ? await this.base.getAll('entries') : [];
-    await this.base.put('meta', { key: SESSION_KEY, value: session });
+    const privateEntries = source ? await source.getAll('entries') : [];
+    await this.base.put('meta', { key: sessionKey(session.listId), value: session });
+    await this.suspend();
+    await this.lists?.added(session);
     await this.#activate(session);
     if (privateEntries.length) {
-      await this.model.repository.store.putMany('entries', privateEntries);
-      for (const entry of privateEntries) await this.base.delete('entries', entry.id);
+      await this.model.repository.store.putMany('entries', privateEntries.map(({ listId, ...entry }) => entry));
+      for (const entry of privateEntries) await source.delete('entries', entry.id);
       await this.model.load();
     }
     await this.sync();
@@ -206,7 +238,7 @@ export class SharedList {
     } catch (error) {
       if (![401, 404].includes(error.status)) throw error;   // ohne Zugang ist man ohnehin draußen
     }
-    await this.#deactivate();
+    await this.#forget();
   }
 
   // ---------------------------------------------------------------- Beitreten (neues Gerät)
@@ -220,8 +252,8 @@ export class SharedList {
   receiveInvite(text, { elsewhere = false } = {}) {
     const invite = parseInvite(text);
     if (!invite) return false;
-    if (this.session) {
-      this.#set({ join: { phase: 'failed', name: invite.name, message: 'Dieses Gerät ist schon in einer gemeinsamen Liste. Erst verlassen, dann beitreten.' } });
+    if (this.lists?.has(invite.listId) || this.session?.listId === invite.listId) {
+      this.#set({ join: { phase: 'failed', name: invite.name, message: `Dieses Gerät ist schon in „${invite.name || 'dieser Liste'}“.` } });
       return true;
     }
     this.pendingInvite = invite;
@@ -270,8 +302,10 @@ export class SharedList {
         listId: data.listId, listKey: payload.listKey, memberId: data.rid, deviceId: newId().slice(0, 8),
         name: cleanName(payload.name, data.name || 'Gemeinsame Liste'), deviceName: data.deviceName, seen: 0, snapshotUpto: 0, replica: null,
       };
-      await this.base.put('meta', { key: SESSION_KEY, value: session });
+      await this.base.put('meta', { key: sessionKey(session.listId), value: session });
       this.#set({ join: null });
+      await this.suspend();
+      await this.lists?.added(session);
       await this.#activate(session);
       await this.sync();
       this.model.notify(`Du bist jetzt in „${session.name}“`);
@@ -372,6 +406,7 @@ export class SharedList {
       this.#cleanupInvites();
       await this.#save();
       this.#set({ status: 'active', lastSync: this.session.lastSync, error: null, ...this.#summary() });
+      this.lists?.renamed(this.session.listId, this.state.name);
       if (changes.length) await this.model.load();
     } catch (error) {
       if (error.status === 401 || error.status === 404) this.#set({ status: 'lost', error: error.message });

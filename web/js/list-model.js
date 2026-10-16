@@ -30,6 +30,7 @@ export class ListModel {
       skipped: new Map(),  // Fokus: Eintrag-ID → Reihenfolge des Überspringens (nur für diesen Einkauf)
     };
     this.listeners = new Set();
+    this.onDataReplaced = null;   // nach dem Einspielen einer Sicherung: Listen neu einlesen (setzt die Listenverwaltung)
     this.undoAction = null;
     this.toastTimer = null;
   }
@@ -180,8 +181,12 @@ export class ListModel {
       const snapshot = await this.repository.importBackup(backup);
       this.state.editingId = null;
       this.state.summary = null;
-      this.undoAction = () => this.repository.undoImport(snapshot);
+      this.undoAction = async () => {
+        await this.repository.undoImport(snapshot);
+        await this.onDataReplaced?.();
+      };
       this.#showToast(`Sicherung eingespielt: ${products} Produkte, ${entries} auf der Liste`, true);
+      await this.onDataReplaced?.();
     });
   }
 

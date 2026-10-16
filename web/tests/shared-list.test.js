@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
 import { ListModel } from '../js/list-model.js';
-import { JOIN_KEY, SESSION_KEY, SharedList } from '../js/sync/shared-list.js';
+import { JOIN_KEY, sessionKey, SharedList } from '../js/sync/shared-list.js';
+import { ListsManager } from '../js/lists.js';
 import { checkCode, inviteLink, newDeviceKeys, newInviteSecret, openForDevice, parseInvite, sealForDevice } from '../js/sync/join.js';
 import { Mailbox } from '../../tools/sync/src/mailbox.js';
 import { makeStore, productNamed } from './helpers.js';
@@ -35,8 +36,9 @@ async function device(cloud, { items = [] } = {}) {
   for (const name of items) await repository.add((await productNamed(repository, name)).id);
   await model.load();
   const shared = new SharedList(model, store, { fetch: cloud.fetch, timers: false, appUrl: () => 'https://app.example/' });
-  await shared.init();
-  return { store, repository, model, shared };
+  const lists = new ListsManager(model, store, shared);
+  await lists.init();
+  return { store, repository, model, shared, lists };
 }
 
 const names = (model) => model.state.items.map((i) => i.product.name).sort();
@@ -102,7 +104,9 @@ test('Anlegen: die private Liste wandert in die gemeinsame', async () => {
   assert.equal(a.shared.state.name, 'Zuhause');
   assert.deepEqual(names(a.model), ['Brot', 'Milch']);
   assert.deepEqual(await a.store.getAll('entries'), [], 'privater Speicher ist leer');
-  assert.ok((await a.store.get('meta', SESSION_KEY)).value.listKey);
+  assert.ok((await a.store.get('meta', sessionKey(a.shared.session.listId))).value.listKey);
+  assert.deepEqual(a.lists.state.lists.map((l) => [l.name, l.kind]), [['Meine Liste', 'private'], ['Zuhause', 'shared']]);
+  assert.equal(a.lists.active.name, 'Zuhause');
 });
 
 test('Beitritt mit Bestätigung: B sieht danach die Liste von A', async () => {
@@ -212,7 +216,7 @@ test('Noch nicht bestätigt: Warten übersteht einen Neustart der App', async ()
   assert.equal(await b.shared.checkJoin(), false);
   // Neustart: neue Steuerung auf demselben Speicher
   const restarted = new SharedList(b.model, b.store, { fetch: cloud.fetch, timers: false });
-  await restarted.init();
+  await new ListsManager(b.model, b.store, restarted).init();
   assert.equal(restarted.state.join.phase, 'waiting');
   await a.shared.sync();
   await a.shared.approve(a.shared.state.requests[0].rid);
@@ -241,7 +245,7 @@ test('Volle Liste: das sechste Gerät bekommt eine verständliche Meldung', asyn
   }
 });
 
-test('Schon in einer Liste: Einladung wird nicht still übernommen', async () => {
+test('Schon in dieser Liste: Einladung wird nicht still übernommen', async () => {
   const cloud = fakeCloud();
   const { a, b } = await pair(cloud);
   const { link } = await a.shared.invite();
@@ -255,7 +259,7 @@ test('Neustart mit aktiver Liste: Stand und Abgleich gehen weiter', async () => 
   const { a, b } = await pair(cloud);
   const restarted = new SharedList(b.model, b.store, { fetch: cloud.fetch, timers: false });
   b.model.repository.store = b.store;   // wie beim Start der App
-  await restarted.init();
+  await new ListsManager(b.model, b.store, restarted).init();
   assert.equal(restarted.state.status, 'active');
   assert.deepEqual(names(b.model), ['Brot', 'Milch']);
   await a.model.add((await productNamed(a.repository, 'Reis')).id);
