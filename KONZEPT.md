@@ -452,6 +452,10 @@ Quellen: [Apple Developer Forums – SwiftData & CloudKit Sharing](https://devel
 
 ---
 
+### Katalog-Vorschläge (umgesetzt 16.10.2026)
+
+Eigene Produkte können Nutzer für den gemeinsamen Katalog vorschlagen – ohne Server: Die App erzeugt eine Nachricht mit lesbarer Liste und Code (`FY-KATALOG:…`), die über das Teilen-Menü an die Person geht, die den Katalog pflegt. `tools/catalog/vorschlaege.py` liest die Nachrichten, fasst gleiche Vorschläge zusammen, zeigt Doppelte und übernimmt ausgewählte Produkte in `catalog.json`. Die Entscheidung bleibt beim Pflegenden; Nachrichten liegen nur lokal (`Catalog/Vorschlaege/` ist von Git ausgenommen). Verworfen: öffentliche GitHub-Issues (Konto nötig, Vorschläge öffentlich) und ein eigener Sammeldienst (Server, Datenschutz, Kosten).
+
 ## 10. Entscheidungen & offene Fragen
 
 **Entschieden (v0.6)**

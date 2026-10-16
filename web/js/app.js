@@ -13,6 +13,7 @@ import { mountPlanningView } from './views/planning-view.js';
 import { mountSettingsView } from './views/settings-view.js';
 import { mountIncomingDialog, mountPasteSection, mountShareButton, receiveFromLocation } from './views/share-view.js';
 import { mountShoppingView } from './views/shopping-view.js';
+import { mountSuggestSection } from './views/suggest-view.js';
 import { mountProductUnits } from './views/units-view.js';
 
 async function openStore() {
@@ -137,6 +138,7 @@ async function start() {
   mountThemeSection(document.querySelector('#theme-section'));
   mountBackupSection(document.querySelector('#backup'), model);
   mountProductUnits(document.querySelector('#product-units'), model);
+  mountSuggestSection(document.querySelector('#suggest'), model);
   mountShareButton(document.querySelector('#plan-view'), model);
   mountPasteSection(document.querySelector('#paste-share'), model);
   mountIncomingDialog(document.querySelector('#incoming-root'), model);

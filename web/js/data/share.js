@@ -25,6 +25,26 @@ async function pipe(bytes, stream) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
+/** Objekt → kompakter Text-Code (z… = deflate-raw, j… = unkomprimiert, beides base64url). */
+export async function packJson(payload) {
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  if (typeof CompressionStream === 'function') {
+    return `z${toBase64Url(await pipe(bytes, new CompressionStream('deflate-raw')))}`;
+  }
+  return `j${toBase64Url(bytes)}`;
+}
+
+/** Gegenstück zu packJson; wirft bei kaputtem Code, mit eigener Meldung für alte Browser. */
+export async function unpackJson(code) {
+  if (typeof code !== 'string' || code.length < 2 || !'zj'.includes(code[0])) throw new Error('ungültiger Code');
+  let bytes = fromBase64Url(code.slice(1));
+  if (code[0] === 'z') {
+    if (typeof DecompressionStream !== 'function') throw new Error('Dieser Browser kann den Link nicht lesen. Bitte Safari aktualisieren.');
+    bytes = await pipe(bytes, new DecompressionStream('deflate-raw'));
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 // ---------------------------------------------------------------- Kodieren / Dekodieren
 
 /**
@@ -43,11 +63,7 @@ export async function encodeShare(items) {
       return row;
     }),
   };
-  const bytes = new TextEncoder().encode(JSON.stringify(payload));
-  if (typeof CompressionStream === 'function') {
-    return `z${toBase64Url(await pipe(bytes, new CompressionStream('deflate-raw')))}`;
-  }
-  return `j${toBase64Url(bytes)}`;
+  return packJson(payload);
 }
 
 /** @returns {Promise<Array<{catalogId, name, categoryKey, quantity, note}>>} */
@@ -56,12 +72,7 @@ export async function decodeShare(code) {
   if (typeof code !== 'string' || code.length < 2) fail();
   let payload;
   try {
-    let bytes = fromBase64Url(code.slice(1));
-    if (code[0] === 'z') {
-      if (typeof DecompressionStream !== 'function') throw new Error('Dieser Browser kann den Link nicht lesen. Bitte Safari aktualisieren.');
-      bytes = await pipe(bytes, new DecompressionStream('deflate-raw'));
-    } else if (code[0] !== 'j') fail();
-    payload = JSON.parse(new TextDecoder().decode(bytes));
+    payload = await unpackJson(code);
   } catch (error) {
     if (error.message.startsWith('Dieser Browser')) throw error;
     fail();

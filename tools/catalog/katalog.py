@@ -73,8 +73,9 @@ def render(catalog, notes):
         by_cat[p["category"]].append(p)
     total = len(catalog["products"])
     syn_total = sum(len(p.get("synonyms", [])) for p in catalog["products"])
-    with_img = sum(1 for p in catalog["products"] if (IMAGES / f"{p['id']}.png").exists())
+    with_img = sum(1 for p in catalog["products"] if any((IMAGES / f"{p['id']}.{e}").exists() for e in ("png", "jpg")))
     from_user = sum(1 for p in catalog["products"] if p.get("origin") == "nutzer")
+    suggested = sum(1 for p in catalog["products"] if p.get("origin") == "vorschlag")
 
     out = [
         "# Produktkatalog – Übersicht",
@@ -83,7 +84,7 @@ def render(catalog, notes):
         "Änderungen bitte in `catalog.json` machen (oder mir sagen), nicht hier.",
         "",
         f"**{total} Produkte · {len(catalog['categories'])} Kategorien · {syn_total} Synonyme · "
-        f"{from_user} aus deiner Liste (●) · {with_img} mit Foto**",
+        f"{from_user} aus deiner Liste (●) · {suggested} aus Vorschlägen (◆) · {with_img} mit Foto**",
         "",
         "| # | Kategorie | Produkte | davon aus deiner Liste |",
         "|---|-----------|----------|------------------------|",
@@ -98,7 +99,7 @@ def render(catalog, notes):
                 "|---|---------|------------------------|----|-----------------------|"]
         for p in items:
             syn = ", ".join(p.get("synonyms", [])) or "–"
-            mark = "●" if p.get("origin") == "nutzer" else ""
+            mark = {"nutzer": "●", "vorschlag": "◆"}.get(p.get("origin"), "")
             out.append(f"| {mark} | **{p['name']}** | {syn} | `{p['id']}` | {p.get('query_en', '')} |")
     if notes:
         out += ["", "## Hinweise zur Suche", "",

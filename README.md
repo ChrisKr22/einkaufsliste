@@ -122,6 +122,28 @@ python3 tools/web/build.py
 
 Beim nächsten Start ergänzt die App neue Produkte und Kategorien und aktualisiert Synonyme. Umbenennungen und die Reihenfolge, die man in der App geändert hat, bleiben erhalten.
 
+## Katalog-Vorschläge von Nutzern
+
+In der App unter *Einstellungen › Für den Katalog vorschlagen* wählt man eigene Produkte aus und teilt sie als Nachricht (vorausgewählt: mindestens zweimal gekauft). Die Nachricht enthält eine lesbare Liste und einen Code `FY-KATALOG:…`.
+
+Ankommende Nachricht als `.txt` nach `Catalog/Vorschlaege/` legen (der Ordner wird nicht hochgeladen) oder direkt aus der Zwischenablage lesen:
+
+```bash
+pbpaste | python3 tools/catalog/vorschlaege.py -
+```
+
+```bash
+python3 tools/catalog/vorschlaege.py
+```
+
+Das zeigt alle Vorschläge nummeriert, gleiche Produkte aus mehreren Nachrichten zusammengefasst, und was schon im Katalog steht. Übernehmen:
+
+```bash
+python3 tools/catalog/vorschlaege.py --uebernehmen 1,3
+```
+
+Das trägt die Produkte in `catalog.json` ein (origin `vorschlag`, Version +1), aktualisiert `KATALOG.md` und legt erledigte Nachrichten nach `Catalog/Vorschlaege/erledigt/`. Danach `python3 tools/web/build.py`, committen und pushen.
+
 ## Rechte
 
 © 2026 ChrisKr22. Alle Rechte vorbehalten.

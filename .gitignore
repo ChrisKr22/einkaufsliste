@@ -20,3 +20,5 @@ Catalog/Inbox/*
 # Python-Zwischenspeicher
 __pycache__/
 *.pyc
+# Katalog-Vorschläge von Nutzern (enthalten fremde Nachrichten)
+Catalog/Vorschlaege/

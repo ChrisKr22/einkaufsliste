@@ -149,6 +149,14 @@ export class ShoppingRepository {
     return unitOf(product);
   }
 
+  /** Merkt sich, dass eigene Produkte für den Katalog vorgeschlagen wurden. */
+  async markSuggested(productIds, at = new Date().toISOString()) {
+    for (const id of productIds) {
+      const product = await this.store.get('products', id);
+      if (product) await this.store.put('products', { ...product, suggestedAt: at });
+    }
+  }
+
   async setNote(entryId, note) {
     await this.#update(entryId, { note });
   }

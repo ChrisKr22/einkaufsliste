@@ -481,3 +481,9 @@ body.shopping .toast { bottom: calc(92px + env(safe-area-inset-bottom)); }
 .unit-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; }
 .unit-name span { display: block; font-size: 12px; font-weight: 400; color: var(--text2); }
 .unit-hint { margin: 8px 2px 4px; font-size: 13px; color: var(--text2); }
+
+/* ---------------------------------------------------------------- Katalog-Vorschläge */
+.suggest-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--border); cursor: pointer; }
+.unit-list .suggest-row:first-child { border-top: 0; }
+.suggest-row input { flex: none; width: 22px; height: 22px; margin: 0 2px 0 0; accent-color: var(--accent); }
+.suggest-button { margin-top: 8px; }

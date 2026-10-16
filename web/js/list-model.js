@@ -4,6 +4,7 @@
 import { backupFileName, parseBackup, summarize } from './data/backup.js';
 import { FALLBACK_CATEGORY, newId } from './data/repository.js';
 import { decodeShare, encodeShare, extractShareCode, shareText, shareUrl } from './data/share.js';
+import { suggestionCandidates, suggestionMessage } from './data/suggest.js';
 import { fold, searchProducts } from './search.js';
 import { formatQuantity, stepDown, stepUp, UNITS, unitOf } from './units.js';
 
@@ -209,6 +210,28 @@ export class ListModel {
   // ---------------------------------------------------------------- Liste teilen / übernehmen
 
   /** Text + Link mit der aktuellen Liste (ohne bereits Gekauftes im Wagen). */
+  // ---------------------------------------------------------------- Katalog-Vorschläge
+
+  /** Eigene Produkte, die man für den gemeinsamen Katalog vorschlagen kann. */
+  get catalogCandidates() {
+    return suggestionCandidates(this.state.products);
+  }
+
+  /** Nachricht für die ausgewählten Produkte (null, wenn keins ausgewählt ist). */
+  async suggestionText(productIds) {
+    const wanted = new Set(productIds);
+    const products = this.catalogCandidates.filter((p) => wanted.has(p.id));
+    if (!products.length) return null;
+    return suggestionMessage(products, (p) => this.categoryFor(p));
+  }
+
+  async confirmSuggested(productIds) {
+    await this.#perform(async () => {
+      await this.repository.markSuggested(productIds);
+      this.#showToast(productIds.length === 1 ? 'Vorschlag geteilt' : `${productIds.length} Vorschläge geteilt`, false);
+    });
+  }
+
   async shareList(baseUrl) {
     const sections = this.sections;
     const items = sections.flatMap(({ category, items: list }) => list.map((item) => ({
