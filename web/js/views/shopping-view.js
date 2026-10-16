@@ -4,6 +4,7 @@
 import { categoryStyle } from '../category-style.js';
 import { formatQuantity, spokenQuantity, unitOf } from '../units.js';
 import { buzz, esc, photoClass, photoContent, thumb } from './dom.js';
+import { mountViewChoice } from './view-choice.js';
 
 const VIEW_KEY = 'feedyourself.shopView';
 const VIEWS = ['grid', 'list', 'focus'];
@@ -23,37 +24,19 @@ const svg = {
   chevron: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
 };
 
-function readView() {
-  try { return VIEWS.includes(localStorage.getItem(VIEW_KEY)) ? localStorage.getItem(VIEW_KEY) : 'grid'; } catch { return 'grid'; }
-}
-
-function saveView(view) {
-  try { localStorage.setItem(VIEW_KEY, view); } catch { /* Ansicht wird dann nicht gemerkt */ }
-}
-
 export function mountShoppingView(root, model, { onGoToPlanning }) {
-  const top = root.querySelector('#shop-top');
-  const bar = root.querySelector('#progress-bar');
-  const progressEl = root.querySelector('.progress');
-  const progressLabel = root.querySelector('#progress-label');
-  const switchButtons = [...root.querySelectorAll('[data-view]')];
+  // Fortschritt sitzt als Linie unter den Modus-Reitern im Kopf und ist in beiden Modi sichtbar.
+  const bar = document.querySelector('#progress-bar');
+  const progressEl = bar?.parentElement;
   const hint = root.querySelector('#shop-hint');
   const content = root.querySelector('#shop-content');
   const finishBar = root.querySelector('#finish-bar');
   const finishButton = root.querySelector('#finish');
-  let view = readView();
+  const choice = mountViewChoice(root, { views: VIEWS, storageKey: VIEW_KEY, fallback: 'grid', onChange: () => render() });
   let cartOpen = false;
   let lastCarted = model.state.cartedCount;
 
   const find = (id) => model.state.items.find((i) => i.id === id);
-
-  for (const button of switchButtons) {
-    button.addEventListener('click', () => {
-      view = button.dataset.view;
-      saveView(view);
-      render();
-    });
-  }
 
   root.addEventListener('click', (event) => {
     const t = event.target;
@@ -89,12 +72,19 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   // ---------------------------------------------------------------- Darstellen
 
   function render() {
+    const progress = model.progress;
+    if (bar) {
+      bar.style.width = `${Math.round(progress.ratio * 100)}%`;
+      progressEl.setAttribute('aria-valuemax', String(progress.total));
+      progressEl.setAttribute('aria-valuenow', String(progress.done));
+      progressEl.setAttribute('aria-valuetext', `${progress.done} von ${progress.total} im Wagen`);
+    }
     if (model.state.cartedCount !== lastCarted) {
       lastCarted = model.state.cartedCount;
       buzz();
     }
     const { summary } = model.state;
-    top.hidden = Boolean(summary);
+    const view = choice.current;
     hint.hidden = Boolean(summary);
     finishBar.hidden = Boolean(summary) || model.state.items.length === 0;
     if (summary) {
@@ -102,12 +92,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       return;
     }
 
-    const { done, total, ratio } = model.progress;
-    bar.style.width = `${Math.round(ratio * 100)}%`;
-    progressEl.setAttribute('aria-valuemax', String(total));
-    progressEl.setAttribute('aria-valuenow', String(done));
-    progressLabel.textContent = `${done} / ${total}`;
-    for (const b of switchButtons) b.setAttribute('aria-checked', String(b.dataset.view === view));
+    const { done, total } = model.progress;
     hint.textContent = HINTS[view];
     finishButton.disabled = done === 0;
 

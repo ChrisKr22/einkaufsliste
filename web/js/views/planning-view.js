@@ -1,10 +1,13 @@
-// Planungsmodus: Suche mit Vorschlägen, Liste nach Kategorien, Menge, Wischen zum Entfernen.
+// Planungsmodus: Suche mit Vorschlägen, „Zuletzt gekauft“, Liste oder Kacheln nach Kategorien, Menge, Wischen zum Entfernen.
 
-import { esc, icon, stepper, thumb, buzz } from './dom.js';
+import { categoryStyle } from '../category-style.js';
+import { esc, icon, photoClass, photoContent, stepper, thumb, buzz } from './dom.js';
+import { mountViewChoice } from './view-choice.js';
 import { spokenQuantity, unitOf } from '../units.js';
 
 const SWIPE_DELETE_PX = 90;
 const RECENT_ORDER_KEY = 'feedyourself.recentOrder';
+const VIEW_KEY = 'feedyourself.planView';
 const check = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
 function readRecentOrder() {
@@ -19,6 +22,7 @@ export function mountPlanningView(root, model) {
   const recentEl = root.querySelector('#recent');
   let lastAddedCount = model.state.addedCount;
   let recentOrder = readRecentOrder();
+  const choice = mountViewChoice(root, { views: ['grid', 'list'], storageKey: VIEW_KEY, fallback: 'list', onChange: () => renderList() });
 
   // --- Zuletzt gekauft
   recentEl.addEventListener('click', (event) => {
@@ -145,19 +149,41 @@ export function mountPlanningView(root, model) {
         + `<p>Tippe oben ein, was du brauchst – mit Enter landet es auf der Liste.${hasRecent ? ' Oder wähle unten aus „Zuletzt gekauft“.' : ''}</p></div>`;
       return;
     }
+    const grid = choice.current === 'grid';
     listEl.innerHTML = sections.map(({ category, items }) => `
       <section class="section" aria-label="${esc(category.name)}">
         <h2 class="section-title">${esc(category.name)} <span>· ${items.length}</span></h2>
-        <div class="rows">${items.map((item) => row(item, category.key)).join('')}</div>
+        ${grid
+          ? `<div class="tiles">${items.map((item) => tile(item, category.key)).join('')}</div>`
+          : `<div class="rows">${items.map((item) => row(item, category.key)).join('')}</div>`}
       </section>`).join('');
   }
 
+  function noteFor(item) {
+    if (item.status === 'later') return `<span class="list-tile-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
+    if (item.note) return `<span class="list-tile-note">${esc(item.note)}</span>`;
+    return '<span class="list-tile-note placeholder">Anmerkung hinzufügen</span>';
+  }
+
+  function labelFor(item) {
+    return [`${item.product.name}, ${spokenQuantity(item.quantity, unitOf(item))}`, item.note].filter(Boolean).join(', ');
+  }
+
+  /** Kachel (zweispaltig): Foto oben, darunter Name, Anmerkung und Mengen-Knöpfe. */
+  function tile(item, categoryKey) {
+    const style = categoryStyle(categoryKey);
+    return `<div class="tile plan-tile">
+      <button type="button" class="tile-main" data-edit="${item.id}" aria-label="${esc(labelFor(item))} – bearbeiten">
+        <span class="tile-photo${photoClass(item.product)}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">${photoContent(item.product, categoryKey)}</span>
+        <span class="tile-body plan-tile-body"><span class="item-name">${esc(item.product.name)}</span>${noteFor(item)}</span>
+      </button>
+      ${stepper(item)}
+    </div>`;
+  }
+
   function row(item, categoryKey) {
-    let note;
-    if (item.status === 'later') note = `<span class="list-tile-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
-    else if (item.note) note = `<span class="list-tile-note">${esc(item.note)}</span>`;
-    else note = '<span class="list-tile-note placeholder">Anmerkung hinzufügen</span>';
-    const label = [`${item.product.name}, ${spokenQuantity(item.quantity, unitOf(item))}`, item.note].filter(Boolean).join(', ');
+    const note = noteFor(item);
+    const label = labelFor(item);
     return `<div class="row" data-row="${item.id}">
       <div class="row-delete" aria-hidden="true">Entfernen</div>
       <div class="row-inner list-tile">

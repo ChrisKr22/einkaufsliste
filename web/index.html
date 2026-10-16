@@ -25,15 +25,24 @@
     <header class="header">
       <div class="header-row">
         <h1 class="wordmark">Feed<span>Yourself</span></h1>
-        <div class="header-actions">
-          <button type="button" id="open-settings" class="icon-button settings-button" aria-label="Einstellungen">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>
+        <div id="view-switch" class="view-switch" role="radiogroup" aria-label="Ansicht">
+          <button type="button" role="radio" data-view="grid" aria-label="Kacheln" aria-checked="true">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+          </button>
+          <button type="button" role="radio" data-view="list" aria-label="Liste" aria-checked="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="5" width="4" height="4" rx="1"/><rect x="4" y="15" width="4" height="4" rx="1"/><path d="M11 7h9M11 17h9"/></svg>
+          </button>
+          <button type="button" role="radio" data-view="focus" aria-label="Fokus" aria-checked="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="17" rx="2.5"/><path d="M3 7v10M21 7v10"/></svg>
           </button>
         </div>
       </div>
-      <div class="mode" role="tablist" aria-label="Modus">
-        <button type="button" role="tab" id="tab-plan" aria-controls="plan-view" aria-selected="true" data-mode="plan">Planen</button>
-        <button type="button" role="tab" id="tab-shop" aria-controls="shop-view" aria-selected="false" data-mode="shop">Einkaufen</button>
+      <div class="mode-wrap">
+        <div class="mode" role="tablist" aria-label="Modus">
+          <button type="button" role="tab" id="tab-plan" aria-controls="plan-view" aria-selected="true" data-mode="plan">Planen</button>
+          <button type="button" role="tab" id="tab-shop" aria-controls="shop-view" aria-selected="false" data-mode="shop">Einkaufen</button>
+        </div>
+        <div class="progress" role="progressbar" aria-label="Im Wagen" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-bar"></span></div>
       </div>
     </header>
 
@@ -52,6 +61,7 @@
         </button>
       </div>
       <section id="suggestions" class="card suggestions" aria-label="Vorschläge" hidden></section>
+      <section id="recent" class="section recent" aria-labelledby="recent-title" hidden></section>
       <div id="list" class="list"></div>
       <div id="share-row" class="share-row" hidden>
         <button type="button" class="button secondary share-button" data-share>
@@ -59,27 +69,13 @@
           Liste teilen
         </button>
       </div>
-      <section id="recent" class="section recent" aria-labelledby="recent-title" hidden></section>
+      <button type="button" id="open-settings" class="settings-link" data-open-settings><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>Einstellungen</button>
     </main>
 
     <main id="shop-view" class="view shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
-      <div id="shop-top" class="shop-top">
-        <div class="progress" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-bar"></span></div>
-        <span id="progress-label" class="progress-label"></span>
-        <div class="view-switch" role="radiogroup" aria-label="Ansicht">
-          <button type="button" role="radio" data-view="grid" aria-label="Kacheln" aria-checked="true">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
-          </button>
-          <button type="button" role="radio" data-view="list" aria-label="Liste" aria-checked="false">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="5" width="4" height="4" rx="1"/><rect x="4" y="15" width="4" height="4" rx="1"/><path d="M11 7h9M11 17h9"/></svg>
-          </button>
-          <button type="button" role="radio" data-view="focus" aria-label="Fokus" aria-checked="false">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="17" rx="2.5"/><path d="M3 7v10M21 7v10"/></svg>
-          </button>
-        </div>
-      </div>
       <p id="shop-hint" class="shop-hint"></p>
       <div id="shop-content"></div>
+      <button type="button" id="open-settings-shop" class="settings-link" data-open-settings><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>Einstellungen</button>
       <div id="finish-bar" class="finish-bar">
         <button type="button" id="finish" class="button primary" data-finish>Einkauf abschließen</button>
       </div>

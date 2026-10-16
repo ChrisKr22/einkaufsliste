@@ -30,6 +30,9 @@
   /* Fotos mit Hintergrund an die App angleichen: leicht entsättigt, feiner Glanz */
   --photo-filter: saturate(0.88) contrast(0.94) brightness(1.03);
   --photo-sheen: rgba(255, 255, 255, 0.10);
+  /* Einkaufsmodus (Variante D): Fläche minimal ins Grüne getönt */
+  --shop-bg: #EEF3EF;
+  --shop-glass: rgba(238, 243, 239, 0.82);
 
   --radius: 18px;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
@@ -67,6 +70,8 @@
     --ring-base: #9A9E9A;
     --photo-filter: saturate(0.88) contrast(0.94) brightness(0.92);
     --photo-sheen: rgba(255, 255, 255, 0.04);
+    --shop-bg: #0C130E;
+    --shop-glass: rgba(12, 19, 14, 0.8);
   }
 }
 :root[data-theme="dark"] {
@@ -98,6 +103,8 @@
   --ring-base: #9A9E9A;
   --photo-filter: saturate(0.88) contrast(0.94) brightness(0.92);
   --photo-sheen: rgba(255, 255, 255, 0.04);
+  --shop-bg: #0C130E;
+  --shop-glass: rgba(12, 19, 14, 0.8);
 }
 
 * { box-sizing: border-box; }
@@ -132,6 +139,14 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .page-title h2 { margin: 0; font: 700 32px/1.1 var(--font-display); letter-spacing: -0.8px; }
 .count { margin: 4px 0 0; font-size: 15px; color: var(--text2); font-variant-numeric: tabular-nums; }
 
+/* Einkaufsmodus erkennbar: getönte Fläche, „Yourself“ in Grün */
+body.shopping { --bg: var(--shop-bg); --glass: var(--shop-glass); }
+body.shopping .wordmark span { color: var(--accent-ink); }
+.wordmark span { transition: color 0.2s ease; }
+
+/* Modus-Reiter mit Fortschrittslinie darunter (in beiden Modi) */
+.mode-wrap { display: flex; flex-direction: column; gap: 6px; }
+.mode-wrap .progress { flex: none; height: 3px; margin: 0 6px; }
 .mode { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 11px; background: var(--surface2); }
 .mode button { min-height: 34px; border: 0; border-radius: 9px; background: transparent; color: var(--text2); font-size: 15px; font-weight: 500; cursor: pointer; }
 .mode button[aria-selected="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow-sm); }
@@ -279,10 +294,11 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .button.secondary { border: 0; background: var(--surface2); color: var(--text); }
 
 /* ---------------------------------------------------------------- Einstellungen */
-.header-actions { display: flex; align-items: center; gap: 2px; }
-.settings-button { margin-right: -10px; color: var(--text2); }
-.settings-button svg { width: 22px; height: 22px; }
 body.settings-open { overflow: hidden; }
+/* Einstellungen am Seitenende (Planen und Einkaufen) */
+.settings-link { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin-top: 28px; border: 0;
+  border-radius: var(--radius); background: var(--surface2); color: var(--text2); font-size: 15px; font-weight: 600; cursor: pointer; }
+.settings-link svg { width: 18px; height: 18px; }
 .settings { position: fixed; inset: 0; z-index: 15; overflow-y: auto; background: var(--bg);
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 .settings[hidden] { display: none; }
@@ -351,7 +367,7 @@ body.settings-open { overflow: hidden; }
 .incoming-tag { flex: none; padding: 3px 8px; border-radius: 999px; background: var(--surface2); color: var(--text2); font-size: 12px; }
 
 /* ---------------------------------------------------------------- Zuletzt gekauft */
-.recent { margin-top: 30px; }
+.recent { margin-top: 18px; }
 .recent[hidden] { display: none; }
 .recent-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
 .recent-head .section-title { margin-bottom: 0; }
@@ -380,16 +396,15 @@ body.settings-open { overflow: hidden; }
 .item-qty { flex: none; font-weight: 600; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
 .item-note { display: block; min-height: 18px; font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.shop-top { display: flex; align-items: center; gap: 12px; margin: 2px 0 0 4px; }
-.shop-top[hidden], .shop-hint[hidden], .finish-bar[hidden] { display: none; }
+.shop-hint[hidden], .finish-bar[hidden] { display: none; }
 .progress { flex: 1; height: 4px; border-radius: 2px; background: var(--surface2); overflow: hidden; }
 .progress span { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width 0.3s ease; }
-.progress-label { font-size: 13px; color: var(--text2); font-variant-numeric: tabular-nums; }
 .view-switch { display: flex; padding: 2px; border-radius: 10px; background: var(--surface2); }
 .view-switch button { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text2); cursor: pointer; }
 .view-switch button svg { width: 18px; height: 18px; }
 .view-switch button[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
-.shop-hint { margin: 10px 4px 0; font-size: 12px; color: var(--text2); }
+.view-switch button[hidden] { display: none; }
+.shop-hint { margin: 4px 4px 0; font-size: 12px; color: var(--text2); }
 
 [data-swipe] { position: relative; touch-action: pan-y; transition: transform 0.2s ease, opacity 0.2s ease; user-select: none; -webkit-user-select: none; }
 [data-swipe].dragging { transition: none; z-index: 3; box-shadow: var(--shadow-lift); }
@@ -415,6 +430,12 @@ body.settings-open { overflow: hidden; }
 .tile-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .tile-head .item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Planung, Kacheln: wie im Einkauf, darunter die Mengen-Knöpfe */
+.plan-tile { display: flex; flex-direction: column; background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+.plan-tile .tile-main { box-shadow: none; border-radius: 0; }
+.plan-tile-body { display: flex !important; flex-direction: column; align-items: center; gap: 2px; text-align: center; padding-bottom: 2px !important; }
+.plan-tile-body .item-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
+.plan-tile .stepper { align-self: center; margin: 2px 0 10px; }
 /* Einkauf, Liste: dieselbe Listenkachel; Zurückstellen unten rechts. */
 .srows { display: flex; flex-direction: column; gap: 10px; }
 .srow { border-radius: var(--radius); box-shadow: var(--shadow); }

@@ -7,7 +7,8 @@ const icons = {
   trash: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>',
 };
 
-export function mountSettingsView(root, model, { opener }) {
+export function mountSettingsView(root, model, { openers }) {
+  let opener = openers[0];   // zum Zurückspringen nach dem Schließen
   const list = root.querySelector('#category-list');
   const closeButton = root.querySelector('[data-close-settings]');
   let dragging = false;
@@ -30,7 +31,9 @@ export function mountSettingsView(root, model, { opener }) {
     opener.focus({ preventScroll: true });
   }
 
-  opener.addEventListener('click', open);
+  for (const button of openers) {
+    button.addEventListener('click', () => { opener = button; open(); });
+  }
   root.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') close();
   });

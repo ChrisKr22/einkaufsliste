@@ -14,6 +14,7 @@ import { mountSettingsView } from './views/settings-view.js';
 import { mountIncomingDialog, mountPasteSection, mountShareButton, receiveFromLocation } from './views/share-view.js';
 import { mountShoppingView } from './views/shopping-view.js';
 import { mountSuggestSection } from './views/suggest-view.js';
+import { MODE_EVENT } from './views/view-choice.js';
 import { mountProductUnits } from './views/units-view.js';
 
 async function openStore() {
@@ -54,6 +55,8 @@ function mountChrome(model) {
     for (const t of tabs) t.setAttribute('aria-selected', String(t.dataset.mode === mode));
     for (const [key, view] of Object.entries(views)) view.hidden = key !== mode;
     document.body.classList.toggle('shopping', mode === 'shop');
+    const win = document.defaultView ?? globalThis;   // auch in Testumgebungen das passende Event
+    document.dispatchEvent(new win.CustomEvent(MODE_EVENT, { detail: mode }));
     window.scrollTo({ top: 0 });
   }
 
@@ -134,7 +137,7 @@ async function start() {
   mountPlanningView(document.querySelector('#plan-view'), model);
   mountShoppingView(document.querySelector('#shop-view'), model, { onGoToPlanning: () => chrome.setMode('plan') });
   mountEditSheet(document.querySelector('#sheet-root'), model);
-  mountSettingsView(document.querySelector('#settings'), model, { opener: document.querySelector('#open-settings') });
+  mountSettingsView(document.querySelector('#settings'), model, { openers: [...document.querySelectorAll('[data-open-settings]')] });
   mountThemeSection(document.querySelector('#theme-section'));
   mountBackupSection(document.querySelector('#backup'), model);
   mountProductUnits(document.querySelector('#product-units'), model);
