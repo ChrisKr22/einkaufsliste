@@ -169,15 +169,20 @@ export function mountPlanningView(root, model) {
     return [`${item.product.name}, ${spokenQuantity(item.quantity, unitOf(item))}`, item.note].filter(Boolean).join(', ');
   }
 
-  /** Kachel (zweispaltig): Foto oben, darunter Name, Anmerkung und Mengen-Knöpfe. */
+  /** Kachel (zweispaltig): genau wie im Einkauf (Foto, Name, Anmerkung) – gleiche Höhe.
+   *  Die Mengen-Knöpfe liegen unten auf dem Foto, im Verlauf. */
   function tile(item, categoryKey) {
     const style = categoryStyle(categoryKey);
+    let note;
+    if (item.status === 'later') note = `<span class="item-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
+    else if (item.note) note = `<span class="item-note">${esc(item.note)}</span>`;
+    else note = '<span class="item-note placeholder">Anmerkung hinzufügen</span>';
     return `<div class="tile plan-tile">
       <button type="button" class="tile-main" data-edit="${item.id}" aria-label="${esc(labelFor(item))} – bearbeiten">
         <span class="tile-photo${photoClass(item.product)}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">${photoContent(item.product, categoryKey)}</span>
-        <span class="tile-body plan-tile-body"><span class="item-name">${esc(item.product.name)}</span>${noteFor(item)}</span>
+        <span class="tile-body"><span class="tile-head"><span class="item-name">${esc(item.product.name)}</span></span>${note}</span>
       </button>
-      ${stepper(item)}
+      <div class="plan-tile-stepper">${stepper(item)}</div>
     </div>`;
   }
 

@@ -316,7 +316,11 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .button.secondary { border: 0; background: var(--surface2); color: var(--text); }
 
 /* ---------------------------------------------------------------- Einstellungen */
-body.settings-open { overflow: hidden; }
+body.settings-open, body.sheet-open { overflow: hidden; }
+/* Hinter dem Detailfenster scrollt nichts: Wischen auf dem Hintergrund gehört dem Fenster. */
+.sheet-backdrop, .sheet { touch-action: none; overscroll-behavior: contain; }
+.sheet textarea, .sheet select, .sheet input { touch-action: auto; }
+body.sheet-open { overscroll-behavior: none; }
 /* Einstellungen am Seitenende (Planen und Einkaufen) */
 .settings-link { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin-top: 28px; border: 0;
   border-radius: var(--radius); background: var(--surface2); color: var(--text2); font-size: 15px; font-weight: 600; cursor: pointer; }
@@ -456,16 +460,17 @@ body.settings-open { overflow: hidden; }
 .tile-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .tile-head .item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Planung, Kacheln: wie im Einkauf, darunter die Mengen-Knöpfe */
-.plan-tile { display: flex; flex-direction: column; background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
-.plan-tile .tile-main { box-shadow: none; border-radius: 0; }
-/* Gleiche Gesamthöhe wie die Einkaufskachel: etwas flacheres Foto, einzeilige Texte, kompakte Knöpfe. */
-.plan-tile .tile-photo { aspect-ratio: 6 / 5; }
-.plan-tile-body { display: flex !important; flex-direction: column; align-items: center; gap: 1px; text-align: center; padding: 8px 10px 0 !important; }
-.plan-tile-body .item-name, .plan-tile-body .list-tile-note { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-.plan-tile .stepper { align-self: center; margin: 0 0 6px; }
-.plan-tile .stepper button { width: 36px; height: 36px; }
-.plan-tile .stepper button::before { width: 28px; height: 28px; border-radius: 14px; }
+/* Planung, Kacheln: baugleich zur Einkaufskachel (gleiche Höhe); Mengen-Knöpfe schweben unten auf dem Foto.
+   Lage über Container-Einheiten: Das Foto ist quadratisch, also so hoch wie die Kachel breit (100cqw). */
+.plan-tile { position: relative; container-type: inline-size; }
+.plan-tile-stepper { position: absolute; left: 0; right: 0; bottom: 44px; display: flex; justify-content: center; pointer-events: none; }
+@supports (top: 1cqw) { .plan-tile-stepper { top: calc(100cqw - 50px); bottom: auto; } }
+.plan-tile-stepper .stepper { pointer-events: auto; padding: 0 2px; border-radius: 22px; background: color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: var(--shadow-sm); }
+.plan-tile-stepper .stepper button { width: 36px; height: 36px; }
+.plan-tile-stepper .stepper button::before { width: 28px; height: 28px; border-radius: 14px; }
+.item-note.placeholder { color: var(--placeholder); font-style: italic; }
+.item-note.later { color: var(--later); }
 /* Einkauf, Liste: dieselbe Listenkachel; Zurückstellen unten rechts. */
 .srows { display: flex; flex-direction: column; gap: 10px; }
 .srow { border-radius: var(--radius); box-shadow: var(--shadow); }

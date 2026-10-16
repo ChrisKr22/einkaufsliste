@@ -72,10 +72,11 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
   const DISMISS_PX = 90;
   let drag = null;
   root.addEventListener('pointerdown', (event) => {
-    const zone = event.target.closest('.sheet-grabber, .sheet-head, .sheet-drag');
+    // Vom Griff, vom Kopf oder vom abgedunkelten Hintergrund außerhalb des Fensters aus
+    const zone = event.target.closest('.sheet-grabber, .sheet-head, .sheet-backdrop');
     if (!zone || event.button > 0) return;
     const sheet = root.querySelector('.sheet');
-    drag = { sheet, backdrop: root.querySelector('.sheet-backdrop'), y: event.clientY, t: event.timeStamp, dy: 0 };
+    drag = { sheet, backdrop: root.querySelector('.sheet-backdrop'), y: event.clientY, t: event.timeStamp, dy: 0, outside: zone.classList.contains('sheet-backdrop') };
     sheet.setPointerCapture?.(event.pointerId);
   });
   root.addEventListener('pointermove', (event) => {
@@ -87,11 +88,12 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
   });
   const endDrag = (event) => {
     if (!drag) return;
-    const { sheet, backdrop, dy, t } = drag;
+    const { sheet, backdrop, dy, t, outside } = drag;
     drag = null;
     sheet.classList.remove('dragging');
     const fast = dy > 30 && dy / Math.max(1, event.timeStamp - t) > 0.6;   // kurzer, schneller Wisch
-    if (dy > DISMISS_PX || fast) {
+    // Außerhalb begonnen: jedes deutliche Wischen nach unten schließt (Tippen schließt ohnehin).
+    if (dy > DISMISS_PX || fast || (outside && dy > 24)) {
       sheet.style.transform = 'translateY(100%)';
       setTimeout(() => close(), 180);
     } else {
@@ -115,6 +117,7 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
       if (openId) {
         root.innerHTML = '';
         openId = null;
+        document.body.classList.remove('sheet-open');
       }
       return;
     }
@@ -132,6 +135,7 @@ export function mountEditSheet(root, model, { processPhoto = defaultProcessPhoto
       return;
     }
     openId = item.id;
+    document.body.classList.add('sheet-open');   // Seite dahinter scrollt nicht mit
     const name = esc(item.product.name);
     root.innerHTML = `
       <button type="button" class="sheet-backdrop" data-close aria-label="Schließen"></button>
