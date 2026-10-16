@@ -5,6 +5,12 @@
   "description": "Briefkasten für gemeinsame FeedYourself-Listen (Cloudflare Worker).",
   "scripts": {
     "test": "node --test test/*.test.js",
-    "deploy": "npx wrangler@4 deploy"
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.148.0"
+  },
+  "overrides": {
+    "sharp": "0.35.5"
   }
 }

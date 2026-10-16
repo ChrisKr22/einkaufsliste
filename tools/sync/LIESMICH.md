@@ -3,28 +3,49 @@
 Ein kleines Programm bei Cloudflare, das für jede gemeinsame Liste verschlüsselte Änderungen aufbewahrt
 (KONZEPT.md, Abschnitt 8.4). Es kann keine Inhalte lesen, speichert keine IP-Adressen und führt kein Protokoll.
 
-## Einmalige Einrichtung (ca. 15 Minuten)
+## Einmalige Einrichtung – nur im Browser (ca. 15 Minuten)
 
-1. **Konto anlegen:** <https://dash.cloudflare.com/sign-up> – kostenlos, nur E-Mail-Adresse, keine Kreditkarte.
-   Empfehlung: unter *My Profile › Authentication* die Zwei-Faktor-Anmeldung einschalten.
-2. **Im Terminal anmelden** (öffnet den Browser; dort „Allow“ bestätigen):
+Cloudflare holt den Code aus GitHub und baut den Worker auf den eigenen Servern. Auf dem Mac wird nichts
+installiert, und dort liegt kein Zugang zum Cloudflare-Konto.
 
-   ```bash
-   cd tools/sync && npx wrangler@4 login
-   ```
+1. **Anmelden** auf <https://dash.cloudflare.com>. Empfehlung: unter *My Profile › Authentication* die
+   Zwei-Faktor-Anmeldung einschalten.
+2. **Workers & Pages › Create › Import a repository** (bzw. „Mit Git verbinden“) › **GitHub** verbinden.
+   Bei der Freigabe auf GitHub **„Only select repositories“** wählen und nur `einkaufsliste` freigeben.
+3. **Repository `ChrisKr22/einkaufsliste`** wählen und einstellen:
 
-3. **Online stellen:**
+   | Feld | Wert |
+   |---|---|
+   | Project name / Worker-Name | `feedyourself-sync` (muss zu `name` in `wrangler.toml` passen) |
+   | Production branch | `main` |
+   | Root directory (Pfad) | `tools/sync` |
+   | Build command | leer lassen |
+   | Deploy command | `npx wrangler deploy` |
 
-   ```bash
-   cd tools/sync && npx wrangler@4 deploy
-   ```
+   Cloudflare installiert dabei die festgelegte Wrangler-Version aus `package-lock.json`.
+4. **Deploy** – der erste Durchlauf dauert 1–2 Minuten. Danach unter *Settings › Build › Build watch paths*
+   `tools/sync/*` eintragen, damit nur Änderungen am Briefkasten einen neuen Durchlauf auslösen.
+5. **Prüfen:** Die Adresse steht beim Worker unter *Domains & Routes*, etwa
+   `https://feedyourself-sync.<name>.workers.dev`. Im Browser öffnen – es erscheint
+   `{"service":"feedyourself-sync","ok":true}`.
+6. **Adresse an Claude geben.** Sie ist kein Geheimnis; sie kommt in den Code der App.
 
-   Beim ersten Mal fragt Cloudflare nach einem Namen für die eigene `workers.dev`-Adresse (z. B. `chriskr22`).
-   Am Ende steht die Adresse des Briefkastens, etwa `https://feedyourself-sync.chriskr22.workers.dev`.
-4. **Prüfen:** die Adresse im Browser öffnen – es erscheint `{"service":"feedyourself-sync","ok":true}`.
-5. **Adresse an Claude geben.** Sie ist kein Geheimnis; sie kommt in den Code der App.
+Spätere Änderungen am Worker: committen und pushen – Cloudflare baut und veröffentlicht von selbst.
 
-Spätere Änderungen am Worker: Schritt 3 wiederholen.
+### Alternative: aus dem Terminal
+
+Nur falls der Weg über GitHub nicht geht. Lädt Wrangler auf den Mac und legt dort beim Anmelden einen
+Zugang zum ganzen Cloudflare-Konto ab – darum danach wieder abmelden.
+
+```bash
+cd tools/sync && npm ci && npx wrangler login && npx wrangler deploy && npx wrangler logout
+```
+
+## Werkzeug-Version
+
+Wrangler ist auf **4.148.0** festgelegt (`package.json`), alle mitgeladenen Pakete über `package-lock.json`;
+`sharp` ist auf 0.35.5 angehoben (CVE-2026-96889 in 0.35.4). Stand der Prüfung gegen die OSV-Datenbank:
+16.10.2026, keine bekannten Lücken. Neue Versionen nur gezielt übernehmen, nicht am Tag ihres Erscheinens.
 
 ## Kosten und Grenzen
 

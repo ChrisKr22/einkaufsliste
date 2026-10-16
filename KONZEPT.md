@@ -464,7 +464,8 @@ Ein kleines Programm (ca. 150 Zeilen, liegt im Repository unter `tools/sync/`), 
 | Plätze | Höchstens 5 pro Liste. Ein Platz entsteht beim Anlegen und beim bestätigten Beitritt; Austreten oder Entfernen gibt ihn frei, der Zugang dieses Geräts endet sofort. |
 | Bremse | Begrenzung pro Gerät/IP, damit niemand die Gratis-Menge leer fragen kann |
 | Kosten | **0 €** – Gratis-Tarif (rund 100 000 Anfragen pro Tag; 3 Geräte × 1 Stunde × alle 5 s ≈ 2 000–3 000). Über der Grenze entstehen keine Kosten, der Abgleich pausiert bis zum Folgetag. Grenzen vor der Umsetzung aktuell prüfen. |
-| Einrichtung | Einmalig durch Christopher: kostenloses Cloudflare-Konto (ohne Kreditkarte), `npx wrangler deploy` im Ordner `tools/sync/` (Anmeldung im Browser). Danach wartungsfrei; die Adresse `…workers.dev` wird in der App hinterlegt. |
+| Einrichtung | Einmalig durch Christopher, **nur im Browser**: Cloudflare baut den Worker selbst aus dem GitHub-Repository (Workers Builds, Stammverzeichnis `tools/sync`). Auf dem Mac wird nichts installiert, dort liegt kein Kontozugang; spätere Änderungen gehen beim Push automatisch online. Die Adresse `…workers.dev` wird in der App hinterlegt. |
+| Werkzeug | **Wrangler 4.148.0** (vom 6.10.2026), fest in `tools/sync/package.json`, alle 91 Pakete per `package-lock.json` festgelegt und gegen die OSV-Datenbank geprüft (16.10.2026: keine bekannten Lücken; `sharp` dafür auf 0.35.5 gehoben, CVE-2026-96889). Bewusst nicht die allerneueste Version – frische Veröffentlichungen sind das größte Risiko für verseuchte Pakete. Aktualisieren nur gezielt und nach erneuter Prüfung. |
 | Später möglich | Statt alle 5 s fragen: offene Verbindung (WebSocket) – der Briefkasten schickt Änderungen sofort an alle offenen Apps. |
 
 **Was ist öffentlich?**
