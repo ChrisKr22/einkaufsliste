@@ -563,6 +563,32 @@ def build_name_index(catalog):
     return index, ambiguous
 
 
+def edit_distance(a, b, limit=2):
+    """Damerau-Levenshtein (mit Vertauschung), bricht ab, sobald limit überschritten ist."""
+    if abs(len(a) - len(b)) > limit:
+        return limit + 1
+    prev2, prev = None, list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i] + [0] * len(b)
+        for j, cb in enumerate(b, 1):
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb))
+            if prev2 is not None and i > 1 and j > 1 and ca == b[j - 2] and a[i - 2] == cb:
+                cur[j] = min(cur[j], prev2[j - 2] + 1)
+        if min(cur) > limit:
+            return limit + 1
+        prev2, prev = prev, cur
+    return prev[-1]
+
+
+def fuzzy_match(key, index):
+    """Tippfehler im Dateinamen (z. B. „Blumekohl“): eindeutiges Produkt mit 1–2 Fehlern, sonst None."""
+    if len(key) < 5:
+        return None
+    limit = 1 if len(key) < 8 else 2
+    hits = {pid for k, pid in index.items() if edit_distance(key, k, limit) <= limit}
+    return next(iter(hits)) if len(hits) == 1 else None
+
+
 def cmd_import(args):
     catalog = load_catalog()
     names = {p["id"]: p["name"] for p in catalog["products"]}
@@ -582,6 +608,11 @@ def cmd_import(args):
             matched[pid] = f
         elif key in ambiguous:
             unclear.append((f, ambiguous[key]))
+        elif (pid := fuzzy_match(key, index)) is not None:
+            print(f"Hinweis: {f.name} → {names[pid]} (Tippfehler im Namen angenommen).")
+            if pid in matched:
+                print(f"Hinweis: {f.name} und {matched[pid].name} gehören beide zu {names[pid]} – nehme {f.name}.")
+            matched[pid] = f
         else:
             unmatched.append(f)
 
