@@ -239,8 +239,12 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 94%); mask-image: linear-gradient(to bottom, #000 55%, transparent 94%); }
 .tile-photo:not(.full-photo), .focus-photo:not(.full-photo) { background: linear-gradient(to bottom, var(--tile) 55%, var(--surface) 94%); }
 .tile-photo.full-photo, .focus-photo.full-photo { background: transparent; }
-.tile-photo::after, .focus-photo::after {
-  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
+.tile-photo::after, .focus-photo::after { bottom: -8px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 80%); mask-image: linear-gradient(to bottom, #000 40%, transparent 80%); }
+/* Auslaufende Kante gar nicht erst zeichnen: Safari setzt Masken um Bruchteile eines Pixels versetzt, dann blieb ganz unten
+   eine Pixelzeile von Foto bzw. Rahmen stehen – auf dunklen Fotos (Salami, Aufschnitt) als heller Strich sichtbar.
+   Darum endet das Bild 2px vor der Kante (clip-path) und der Rahmen ragt unten aus der Bildfläche heraus (abgeschnitten). */
+.tile-photo img, .tile-photo svg, .focus-photo img, .focus-photo svg { clip-path: inset(0 0 2px 0); }
 .tile-photo + .tile-body { position: relative; margin-top: -26px; }
 .tile-photo svg { margin-bottom: 12%; }
 .focus-photo-wrap + .focus-body { position: relative; margin-top: -34px; }
@@ -288,7 +292,8 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
   -webkit-mask-image: linear-gradient(to right, #000 42%, transparent 94%); mask-image: linear-gradient(to right, #000 42%, transparent 94%); }
 .thumb.wide:not(.full-photo) { background: linear-gradient(to right, var(--tile) 42%, var(--surface) 94%); }
 .thumb.wide.full-photo { background: transparent; }
-.thumb.wide::after { z-index: 2; -webkit-mask-image: linear-gradient(to right, #000 35%, transparent 80%); mask-image: linear-gradient(to right, #000 35%, transparent 80%); }
+.thumb.wide::after { z-index: 2; right: -8px; -webkit-mask-image: linear-gradient(to right, #000 35%, transparent 76%); mask-image: linear-gradient(to right, #000 35%, transparent 76%); }
+.thumb.wide img, .thumb.wide svg { clip-path: inset(0 2px 0 0); }
 
 /* Planung: Wischen zum Entfernen legt „Entfernen“ unter die Kachel. */
 .row { position: relative; border-radius: var(--radius); overflow: hidden; background: var(--text2); box-shadow: var(--shadow); }
