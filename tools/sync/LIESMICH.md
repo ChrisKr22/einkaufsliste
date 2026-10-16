@@ -3,7 +3,22 @@
 Ein kleines Programm bei Cloudflare, das für jede gemeinsame Liste verschlüsselte Änderungen aufbewahrt
 (KONZEPT.md, Abschnitt 8.4). Es kann keine Inhalte lesen, speichert keine IP-Adressen und führt kein Protokoll.
 
+## In Betrieb
+
+**Adresse:** <https://feedyourself-sync.ck-lists.workers.dev> – eingerichtet am 16.10.2026 über Workers Builds
+(Wrangler 4.148.0, Speicherort EU, keine Vorschau-Adressen, keine Protokolle der Anfragen). Am selben Tag mit
+17 Prüfungen gegen den echten Briefkasten getestet (Anlegen, Zugang, Änderungen, Gesamtstand, Beitritt, 5 Plätze,
+Einladung 30 Minuten, Löschen).
+
 ## Einmalige Einrichtung – nur im Browser (ca. 15 Minuten)
+
+> **Wichtig:** Die Einstellungen aus Schritt 3 (vor allem *Root directory* `tools/sync`) müssen stehen, bevor der
+> erste Durchlauf läuft. Cloudflare startet beim Import sofort einen; im Hauptordner rät Wrangler dann selbst,
+> lädt `web/` als statische Website hoch und nimmt die neueste statt der festgelegten Version. Passiert das:
+> Einstellungen nachtragen und erneut bereitstellen – der richtige Durchlauf ersetzt die Version.
+> Die Adresse `<name>.workers.dev` wird aus dem Konto abgeleitet und kann den bürgerlichen Namen enthalten –
+> unter *Workers & Pages › Account details › Subdomain* vorher einen neutralen Namen wählen.
+
 
 Cloudflare holt den Code aus GitHub und baut den Worker auf den eigenen Servern. Auf dem Mac wird nichts
 installiert, und dort liegt kein Zugang zum Cloudflare-Konto.
