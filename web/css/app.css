@@ -120,7 +120,7 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; touch-action: pan-x pan-y; }   /* kein Pinch-Zoom, kein Doppeltipp-Zoom */
 body {
   margin: 0;
   background: var(--bg);
@@ -143,12 +143,18 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 }
 
 /* Kopf */
-.header { position: sticky; top: 0; z-index: 5; padding: 12px 20px 12px; background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px); }
+/* Schwebender Kopf mit runden Ecken (Radius wie die Kacheln); darüber bleibt die Statusleiste ruhig. */
+.app::before { content: ""; position: fixed; z-index: 6; left: 0; right: 0; top: 0; height: env(safe-area-inset-top); background: var(--bg); pointer-events: none; }
+.header { position: sticky; top: calc(env(safe-area-inset-top) + 6px); z-index: 5; margin: 6px 12px 0; padding: 12px 14px; border-radius: var(--radius);
+  background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px); box-shadow: var(--shadow); }
+.header-search { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.header-search .search { flex: 1; min-width: 0; margin: 0; background: var(--surface2); }
+.header-search .count { flex: none; min-width: 32px; height: 32px; padding: 0 9px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;
+  margin: 0; background: var(--accent-soft); color: var(--accent-ink); font-size: 15px; font-weight: 700; }
+body.shopping .header-search { display: none; }
 .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
 .wordmark { margin: 0; font: 700 21px/1.1 var(--font-display); letter-spacing: -0.4px; }
 .wordmark span { color: var(--text2); font-weight: 600; }
-.page-title { margin: 6px 0 16px; }
-.page-title h2 { margin: 0; font: 700 32px/1.1 var(--font-display); letter-spacing: -0.8px; }
 .count { margin: 4px 0 0; font-size: 15px; color: var(--text2); font-variant-numeric: tabular-nums; }
 
 /* Einkaufsmodus erkennbar: getönte Fläche, „Yourself“ in Grün */
@@ -183,7 +189,7 @@ body.shopping .wordmark span { color: var(--accent-ink); }
 .dock-finish:disabled { background: var(--dock-glass); color: var(--placeholder); cursor: default; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 
-.view { padding: 6px 20px calc(110px + env(safe-area-inset-bottom)); }
+.view { padding: 14px 20px calc(110px + env(safe-area-inset-bottom)); }
 .view[hidden] { display: none; }
 
 /* Suche */

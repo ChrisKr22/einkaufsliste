@@ -99,7 +99,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
 
     if (total === 0) {
       content.innerHTML = `<div class="empty">${svg.cart}<h2>Die Liste ist leer</h2>`
-        + '<p>Plane zuerst, was du brauchst.</p><button type="button" class="button secondary inline" data-to-plan>Zur Planung</button></div>';
+        + '<p>Plane zuerst, was du brauchst.</p><button type="button" class="button secondary inline" data-to-plan>Zur Liste</button></div>';
       return;
     }
 
@@ -235,7 +235,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       <h2>Einkauf erledigt</h2>
       <p>${boughtText} – beim nächsten Mal mit Menge und Anmerkung vorausgefüllt.</p>
       <p>${keptText}</p>
-      <button type="button" class="button primary inline" data-to-plan>Zur Planung</button>
+      <button type="button" class="button primary inline" data-to-plan>Zur Liste</button>
     </div>`;
   }
 

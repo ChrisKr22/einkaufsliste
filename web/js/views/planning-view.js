@@ -17,8 +17,9 @@ function readRecentOrder() {
 }
 
 export function mountPlanningView(root, model) {
-  const input = root.querySelector('#search');
-  const clearButton = root.querySelector('#search-clear');
+  // Suche sitzt fest im Kopf (außerhalb der Planungsansicht).
+  const input = document.querySelector('#search');
+  const clearButton = document.querySelector('#search-clear');
   const suggestionsEl = root.querySelector('#suggestions');
   const listEl = root.querySelector('#list');
   const recentEl = root.querySelector('#recent');

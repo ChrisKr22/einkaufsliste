@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0E0F0E" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,22 +27,22 @@
         <h1 class="wordmark">Feed<span>Yourself</span></h1>
         <button type="button" id="view-switch" class="view-toggle" aria-label="Ansicht wechseln"></button>
       </div>
+      <!-- Nur in der Liste (Planen): Suche fest im Kopf, daneben die Zahl der Artikel -->
+      <div class="header-search">
+        <div class="search">
+          <label class="sr-only" for="search">Artikel suchen</label>
+          <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="search" type="text" inputmode="search" enterkeyhint="enter" autocomplete="off" autocorrect="off"
+                 autocapitalize="off" spellcheck="false" placeholder="Artikel suchen">
+          <button type="button" id="search-clear" class="icon-button search-clear" aria-label="Suche leeren" hidden>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          </button>
+        </div>
+        <span id="count" class="count" aria-live="polite"></span>
+      </div>
     </header>
 
     <main id="plan-view" class="view" role="tabpanel" aria-labelledby="tab-plan">
-      <div class="page-title">
-        <h2>Einkaufsliste</h2>
-        <p id="count" class="count" aria-live="polite"></p>
-      </div>
-      <div class="search">
-        <label class="sr-only" for="search">Produkt suchen</label>
-        <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input id="search" type="text" inputmode="search" enterkeyhint="enter" autocomplete="off" autocorrect="off"
-               autocapitalize="off" spellcheck="false" placeholder="Was brauchst du?">
-        <button type="button" id="search-clear" class="icon-button search-clear" aria-label="Suche leeren" hidden>
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
-        </button>
-      </div>
       <section id="suggestions" class="card suggestions" aria-label="Vorschläge" hidden></section>
       <section id="recent" class="section recent" aria-labelledby="recent-title" hidden></section>
       <div id="list" class="list"></div>
@@ -67,7 +67,7 @@
       <div class="dock-pill">
         <div class="mode" role="tablist" aria-label="Modus" data-mode="plan">
           <span class="mode-lens" aria-hidden="true"></span>
-          <button type="button" role="tab" id="tab-plan" aria-controls="plan-view" aria-selected="true" data-mode="plan">Planen</button>
+          <button type="button" role="tab" id="tab-plan" aria-controls="plan-view" aria-selected="true" data-mode="plan">Liste</button>
           <button type="button" role="tab" id="tab-shop" aria-controls="shop-view" aria-selected="false" data-mode="shop">Einkaufen</button>
         </div>
         <div class="progress" role="progressbar" aria-label="Im Wagen" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-bar"></span></div>

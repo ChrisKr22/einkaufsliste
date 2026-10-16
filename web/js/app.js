@@ -120,9 +120,8 @@ function mountChrome(model) {
 
   function render() {
     const n = model.plannedItems.length;
-    const k = model.sections.length;
-    count.textContent = n === 0 ? 'Noch leer'
-      : `${n === 1 ? '1 Produkt' : `${n} Produkte`} · ${k === 1 ? '1 Kategorie' : `${k} Kategorien`}`;
+    count.textContent = String(n);
+    count.setAttribute('aria-label', n === 1 ? '1 Artikel auf der Liste' : `${n} Artikel auf der Liste`);
     const open = model.openCount;
     tabs.find((t) => t.dataset.mode === 'shop').textContent = open ? `Einkaufen · ${open}` : 'Einkaufen';
 
@@ -162,6 +161,11 @@ async function registerServiceWorker() {
   } catch (error) {
     console.warn('Offline-Modus nicht verfügbar:', error);
   }
+}
+
+// Kein Zoomen per Pinch (iOS ignoriert user-scalable=no in Safari teilweise).
+for (const type of ['gesturestart', 'gesturechange']) {
+  document.addEventListener(type, (event) => event.preventDefault(), { passive: false });
 }
 
 async function start() {
