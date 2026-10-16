@@ -9,13 +9,13 @@ const MAX_ITEMS = 300;
 
 // ---------------------------------------------------------------- Base64url
 
-function toBase64Url(bytes) {
+export function toBase64Url(bytes) {
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function fromBase64Url(text) {
+export function fromBase64Url(text) {
   const base64 = text.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((text.length + 3) % 4);
   return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }

@@ -1,7 +1,7 @@
 // Service Worker: speichert die App beim ersten Aufruf, danach läuft sie komplett offline.
 // VERSION und PRECACHE werden von tools/web/build.py gesetzt – nicht von Hand ändern.
 
-const VERSION = '5b6b1fad2fac';
+const VERSION = '3bf03c537a0a';
 const PRECACHE = [
   './',
   'index.html',
@@ -19,6 +19,9 @@ const PRECACHE = [
   'js/search.js',
   'js/storage/idb-store.js',
   'js/storage/memory-store.js',
+  'js/sync/clock.js',
+  'js/sync/crypto.js',
+  'js/sync/replica.js',
   'js/theme.js',
   'js/units.js',
   'js/views/backup-view.js',
