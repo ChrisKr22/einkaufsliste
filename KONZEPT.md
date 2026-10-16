@@ -424,6 +424,150 @@ Daraus folgt:
 - **iPhone-Besonderheit:** Links aus Nachrichten öffnen sich in Safari, nicht in der App auf dem Home-Bildschirm, und beide haben getrennte Speicher. Deshalb gibt es in den Einstellungen **„Geteilte Liste einfügen“**: Nachricht oder Link kopieren, einfügen (oder „Aus Zwischenablage“), fertig.
 - **Grenze:** Das ist eine Übergabe, kein laufender Abgleich. Änderungen danach werden nicht automatisch synchronisiert; dafür bräuchte es Weg B oder C.
 
+### 8.4 Konzept (entschieden 16.10.2026): Gemeinsame Listen per „Briefkasten“ bei Cloudflare
+
+**Ziel:** Mehrere Personen bearbeiten dieselbe Liste und sehen Änderungen nach wenigen Sekunden – **ohne zusätzliche Klicks**, solange die App offen ist. Es gibt **mehrere gemeinsame Listen mit jeweils eigenen Mitgliedern** (z. B. „Zuhause“, „WG“, „Eltern“) – wer in der WG-Liste ist, sieht die Zuhause-Liste nicht. Die eigene, private Liste bleibt wie heute nur auf dem Gerät.
+
+#### Grundidee
+
+- Jede gemeinsame Liste hat einen **Briefkasten** bei Cloudflare: ein kleiner Speicher, in den jedes Gerät seine Änderungen einwirft und aus dem es die Änderungen der anderen abholt.
+- **Der Briefkasten kann nichts lesen.** Alles wird auf dem Gerät verschlüsselt (Ende-zu-Ende, AES-GCM über die WebCrypto-Schnittstelle des Browsers). Der Listenschlüssel liegt nur auf den Geräten der Mitglieder.
+- **Mitglied ist, wer den Schlüssel der Liste hat.** Keine Konten, keine Passwörter, keine E-Mail-Adressen. Ein Gerät kann in beliebig vielen Listen sein; jede Liste hat ihren eigenen Schlüssel.
+- **Abgleich automatisch:** Solange die App offen ist, sofort beim Öffnen, nach jeder eigenen Änderung (gebündelt nach 1–2 s) und sonst alle 5 Sekunden. Im Hintergrund passiert nichts – iOS lässt Web-Apps dort nicht arbeiten; wer die App öffnet, ist nach einer Sekunde aktuell.
+- **Offline zuerst:** Die App arbeitet immer mit ihrem lokalen Stand. Fällt der Briefkasten aus, fehlt nur der Abgleich.
+
+#### Was im Briefkasten liegt
+
+Keine ganze Liste, sondern **Änderungen** („Milch hinzugefügt“, „Menge Äpfel → 1,5 kg“, „Brot in den Wagen“). Jede Änderung trägt Gerät, Zeitstempel und eine laufende Nummer.
+
+```
+Änderung (verschlüsselt im Briefkasten)
+  geraet: zufällige Geräte-ID
+  zeit:   Hybrid-Uhr (Uhrzeit + Zähler, robust gegen falsch gehende Uhren)
+  art:    hinzufügen | ändern | entfernen | abschließen | umbenennen
+  eintrag: Eintrags-ID
+  felder: { produkt (Katalog-ID oder Name + Kategorie), menge, einheit, anmerkung, status }
+```
+
+- **Zusammenführen:** Jedes Gerät spielt alle Änderungen in Zeitreihenfolge ab. Pro Feld gilt **„letzte Änderung gewinnt“** – ändert A die Menge und B gleichzeitig die Anmerkung, bleiben beide erhalten. Entfernte Einträge werden als „entfernt“ markiert, damit ein Gerät, das gerade offline war, sie nicht wieder einfügt.
+- **Aufräumen:** Gelegentlich legt ein Gerät einen verschlüsselten Gesamtstand ab; ältere Änderungen werden danach gelöscht. Neue Mitglieder laden zuerst den Gesamtstand, dann die Änderungen danach.
+- **Pro Gerät bleiben:** Laden-Reihenfolge der Kategorien, Ansicht, Darstellung, eigene Fotos (zu groß für den Briefkasten), „Zuletzt gekauft“.
+
+#### Der Briefkasten: Cloudflare Worker
+
+Ein kleines Programm (ca. 150 Zeilen, liegt im Repository unter `tools/sync/`), das pro Liste einen Briefkasten mit fortlaufend nummerierten, verschlüsselten Änderungen verwaltet (Durable Object mit SQLite-Speicher).
+
+| | |
+|---|---|
+| Schnittstelle | `POST /liste/<id>` (Änderungen einwerfen), `GET /liste/<id>?seit=<nr>` (Neues abholen; leer, wenn nichts da ist), dazu Beitrittsanfragen (siehe unten) |
+| Schreibschutz | Beim Anlegen hinterlegt das erste Gerät einen **Schreib-Nachweis** (aus dem Listenschlüssel abgeleitet). Einwerfen, Gesamtstand ablegen und Löschen nur mit Nachweis. |
+| Bremse | Begrenzung pro Gerät/IP, damit niemand die Gratis-Menge leer fragen kann |
+| Kosten | **0 €** – Gratis-Tarif (rund 100 000 Anfragen pro Tag; 3 Geräte × 1 Stunde × alle 5 s ≈ 2 000–3 000). Über der Grenze entstehen keine Kosten, der Abgleich pausiert bis zum Folgetag. Grenzen vor der Umsetzung aktuell prüfen. |
+| Einrichtung | Einmalig durch Christopher: kostenloses Cloudflare-Konto (ohne Kreditkarte), `npx wrangler deploy` im Ordner `tools/sync/` (Anmeldung im Browser). Danach wartungsfrei; die Adresse `…workers.dev` wird in der App hinterlegt. |
+| Später möglich | Statt alle 5 s fragen: offene Verbindung (WebSocket) – der Briefkasten schickt Änderungen sofort an alle offenen Apps. |
+
+**Was ist öffentlich?**
+
+| Was | Wer kann es sehen? |
+|---|---|
+| Adresse des Workers | Jeder (steht im öffentlichen App-Code) – man kann Anfragen schicken, mehr nicht |
+| Dass es eine bestimmte Liste gibt | Nur wer die Listen-ID kennt (128 Bit Zufall, nicht zu erraten) |
+| Inhalt der Liste | **Nur die Mitglieder** – nicht Cloudflare, nicht der Betreiber |
+| Schreiben/Löschen | Nur mit Schreib-Nachweis, also nur Mitglieder |
+| Was Cloudflare technisch sieht | IP-Adressen, Uhrzeiten, Größe der Pakete, Listen-ID – keine Produkte, keine Namen |
+
+#### Die Verknüpfung: so tritt man einer Liste bei (mit Bestätigung)
+
+Die Einladung enthält **nicht** den Listenschlüssel, sondern nur die Listen-ID und ein Einladungs-Geheimnis. Den Schlüssel bekommt das neue Gerät erst, wenn ein Mitglied den Beitritt bestätigt hat.
+
+```mermaid
+sequenceDiagram
+    participant A as Gerät A (Mitglied)
+    participant B as Briefkasten
+    participant C as Gerät C (tritt bei)
+    A->>C: Einladung über Nachrichten / WhatsApp / QR-Code<br/>…/einkaufsliste/#beitreten=ID.Einladung
+    C->>C: erzeugt eigenes Schlüsselpaar<br/>„Der Liste ‚WG‘ beitreten?“ – Gerätename eingeben
+    C->>B: Beitrittsanfrage (öffentlicher Schlüssel + Gerätename,<br/>mit Einladungs-Geheimnis versiegelt)
+    B-->>A: beim nächsten Abholen: „Beitrittsanfrage von ‚Sams iPhone‘“
+    A->>A: Prüfcode 4817 – stimmt mit C überein? → Bestätigen
+    A->>B: Listenschlüssel, verschlüsselt nur für C
+    B-->>C: Schlüssel abholen, Liste laden – fertig
+```
+
+1. **Liste anlegen** (Gerät A): *Einstellungen › Gemeinsame Listen › Neue Liste* → Name (z. B. „WG“). Die App erzeugt Listen-ID und Schlüssel (256 Bit) und legt den Briefkasten an. **Wahlweise übernimmt sie die bisherige private Liste.**
+2. **Einladen** (jedes Mitglied): *Mitglied einladen* öffnet das Teilen-Menü mit einem Link `https://chriskr22.github.io/einkaufsliste/#beitreten=<ID>.<Einladung>`, daneben ein QR-Code. Die Einladung gilt 24 Stunden.
+   - Alles hinter dem `#` wird nie an einen Server geschickt, auch nicht an GitHub Pages.
+   - Für die Home-Bildschirm-App gilt wie heute: **Link kopieren → einfügen**, weil iPhone-Links in Safari aufgehen.
+3. **Anfrage** (Gerät C): Dialog „Der Liste ‚WG‘ beitreten?“ mit Feld für den Gerätenamen (nur für die Anfrage und die Mitgliederliste, nicht an Einträgen). C erzeugt ein Schlüsselpaar (ECDH P-256) und wirft die Anfrage ein.
+4. **Bestätigen** (ein beliebiges Mitglied, das die App offen hat): Hinweis „Beitrittsanfrage von ‚Sams iPhone‘“. Beide Geräte zeigen einen **4-stelligen Prüfcode** (aus beiden Schlüsseln berechnet); stimmt er überein, tippt das Mitglied *Bestätigen*. Wer die Einladung abgefangen hat, kommt so nicht unbemerkt hinein.
+5. **Fertig** (Gerät C): holt den für sich verschlüsselten Listenschlüssel ab, lädt den Stand; die Liste erscheint in der Listenauswahl.
+6. **Wer ist dabei:** *Einstellungen › Gemeinsame Listen › WG* zeigt die Geräte und wann sie zuletzt abgeglichen haben.
+7. **Verlassen:** Das Gerät löscht Schlüssel und Daten der Liste und meldet sich ab.
+8. **Jemanden entfernen:** Neuer Listenschlüssel; weil jedes Gerät ein eigenes Schlüsselpaar hat, verteilt die App ihn **selbst** an die verbleibenden Mitglieder. Die Entfernte behält, was sie bis dahin gesehen hat, bekommt aber nichts Neues mehr.
+
+#### In der App
+
+- **Listenauswahl:** Tippen auf die Wortmarke (oder eine kleine Zeile unter der Suche) zeigt die Listen: „Meine Liste“ (privat) · „Zuhause“ · „WG“ … Die gewählte Liste gilt für Planen und Einkaufen.
+- **Kennzeichnung:** Gemeinsame Listen tragen ein kleines Personen-Symbol mit der Zahl der Mitglieder. Einträge zeigen **keine** Namen.
+- **Einkaufen zu zweit:** Legt jemand Milch in den Wagen, verschwindet sie wenige Sekunden später auch beim anderen aus „Offen“ – so kauft niemand doppelt.
+- **Einkauf abschließen** gilt für die ganze gemeinsame Liste; „Zuletzt gekauft“ führt jedes Gerät für sich.
+- **Offline im Laden:** Alles funktioniert weiter; Änderungen werden gesammelt und eingeworfen, sobald wieder Netz da ist.
+- **Display wach halten** (Wake Lock) im Einkaufsmodus, damit die App beim Einkaufen offen bleibt.
+
+#### Aufwand (in unseren Sitzungen)
+
+| Baustein | Aufwand |
+|---|---|
+| Kern: Änderungs-Log, Hybrid-Uhr, Zusammenführen, Gesamtstand, Verschlüsselung – mit Tests, ohne Netz | 1–2 Sitzungen |
+| Briefkasten (Worker, Schreibschutz, Bremse) + Abgleich in der App | 1 Sitzung |
+| Listen in der App (Auswahl, eigene Speicher je Liste, Kennzeichnung, private Liste übernehmen) | 1 Sitzung |
+| Einladen, Beitrittsanfrage, Bestätigen mit Prüfcode, Verlassen, Entfernen | 1–1,5 Sitzungen |
+| Testen mit mehreren iPhones (Christopher), Korrekturrunden | 1–2 Runden |
+
+Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung für eine Person, die alles selbst schreibt; die eigentliche Zeit kostet hier das Testen auf echten Geräten.
+
+#### Nachteile und Risiken
+
+- **Nur solange die App offen ist:** etwa 5 Sekunden Verzögerung; kein Abgleich im Hintergrund, keine Mitteilungen.
+- **Ein externer Dienst kommt dazu** (Cloudflare). Er sieht keine Inhalte, aber Zeitpunkte, Größe und IP-Adressen. Fällt er weg, arbeitet die App lokal weiter.
+- **Fremde könnten die Adresse fluten:** kostet nichts, schlimmstenfalls pausiert der Abgleich bis zum nächsten Tag; die Bremse macht das unwahrscheinlich.
+- **Schlüssel weg = Liste weg:** Löscht man die App und hatte niemand sonst die Liste, ist sie nicht wiederherstellbar – darum enthält die Sicherung die Schlüssel.
+- **Gleichzeitige Änderungen am selben Feld:** Die spätere gewinnt; für Mengen und Anmerkungen meist richtig, aber nicht immer.
+- **Mehr Technik in der App:** Der Abgleich ist der anspruchsvollste Teil bisher und braucht gute Tests.
+
+#### Geprüfte Alternativen (16.10.2026, verworfen)
+
+| Weg | Warum nicht |
+|---|---|
+| Ein Gerät als Server (iPhone) | Web-Apps können keine Verbindungen annehmen und werden im Hintergrund angehalten. |
+| Mac zu Hause als Server | Ausgeschlossen (Entscheidung). |
+| GitHub-Repository als Briefkasten | Zugangsschlüssel müsste in jede Einladung; Grauzone der Nutzungsbedingungen gefährdet das Konto, auf dem die App liegt; Bestätigung kaum umsetzbar. Zurückgestellt. |
+| Kurzbefehle-Automation („alle X Sekunden Nachricht“) | Kein Sekundentakt, Web-Apps nicht als Auslöser wählbar, kein Zugriff auf die Daten der App, Links öffnen Safari statt der App. |
+| WebRTC mit QR-Code als Vermittler | Verbindung bricht ab, sobald eine App im Hintergrund ist; neu verbinden braucht neue Scans; im Mobilfunk ohne Hilfsserver (STUN/TURN) meist keine Verbindung. |
+| Bluetooth | Safari unterstützt kein Web Bluetooth; nur mit nativer App möglich. |
+| Abgleich per Nachricht / QR / AirDrop | Ohne Dienst machbar, aber nicht automatisch – bleibt als möglicher Zusatzweg, weil derselbe Kern dahinter steckt. |
+
+#### Entscheidungen (16.10.2026)
+
+| Frage | Entscheidung |
+|---|---|
+| Wo steht der Briefkasten? | **Cloudflare Worker** (Gratis-Tarif). |
+| Wer darf einladen? | **Jedes Mitglied.** |
+| Beitritt | **Muss bestätigt werden** – Anfrage mit eigenem Schlüsselpaar, Bestätigung mit Prüfcode durch ein beliebiges Mitglied. |
+| Private Liste übernehmen | **Ja**, beim Anlegen einer gemeinsamen Liste wählbar. |
+| Was wird geteilt? | Einträge (Menge, Einheit, Anmerkung, Status) und eigene Produkte; pro Gerät bleiben Laden-Reihenfolge, eigene Fotos, „Zuletzt gekauft“. |
+| Einkauf abschließen | **Gilt für alle Mitglieder.** |
+| Sicherung | **Enthält die Schlüssel** der gemeinsamen Listen. |
+| Namen an Einträgen | **Nein.** |
+
+#### Reihenfolge
+
+1. **Kern** ohne Netz: Änderungs-Log, Zusammenführen, Verschlüsselung – mit Tests, die zwei Geräte simulieren.
+2. **Briefkasten** (Worker) schreiben; Christopher richtet ihn einmal ein; Abgleich mit zwei Browsern testen.
+3. **Eine gemeinsame Liste** mit Anlegen (inkl. private Liste übernehmen), Einladen, Beitreten mit Bestätigung.
+4. **Mehrere Listen** mit Auswahl, Mitgliederansicht, Verlassen, Entfernen.
+5. Sicherung mit Schlüsseln, Wake Lock, Feinschliff; Test auf mehreren iPhones.
+
 Quellen: [Apple Developer Forums – SwiftData & CloudKit Sharing](https://developer.apple.com/forums/thread/817369), [Apple: Sharing CloudKit data with other iCloud users](https://developer.apple.com/tutorials/data/documentation/cloudkit/sharing-cloudkit-data-with-other-icloud-users.md), [Apple Developer Forums – EventKit und Erinnerungen-Abschnitte](https://developer.apple.com/forums/thread/744915).
 
 ---
