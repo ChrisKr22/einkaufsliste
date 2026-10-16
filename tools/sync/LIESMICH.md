@@ -73,18 +73,20 @@ Wrangler ist auf **4.148.0** festgelegt (`package.json`), alle mitgeladenen Pake
 Alle Pfade beginnen mit `/v1/lists/<Listen-ID>` (22 Zeichen base64url). „Nachweis“ = Kopfzeilen
 `Authorization: Bearer <Schreib-Nachweis>` **und** `X-Member: <Mitglieds-ID>`; der Briefkasten kennt nur den
 SHA-256-Prüfwert des Nachweises. Höchstens 5 Mitglieder (Plätze) pro Liste; Einladungen gelten höchstens 30 Minuten.
+**Admin** ist das anlegende Gerät (bei älteren Listen das zuerst beigetretene); verlässt es die Liste, wird das am
+längsten dabei befindliche Gerät Admin. Mit „nur Admin“ markierte Anfragen beantwortet der Briefkasten sonst mit 403.
 
 | Anfrage | Zugang | Zweck |
 |---|---|---|
 | `PUT` | – | Briefkasten anlegen: `{ proofHash, memberId }` (erster Platz) |
-| `GET` | Nachweis | `{ last, members, maxMembers }` |
-| `DELETE` | Nachweis | Briefkasten samt Inhalt löschen |
+| `GET` | Nachweis | `{ last, members, maxMembers, admin }` |
+| `DELETE` | Nachweis, nur Admin (oder letztes Gerät) | Briefkasten samt Inhalt löschen |
 | `POST /ops` | Nachweis | Änderungen einwerfen: `{ data }` → `{ nr }` |
 | `GET /ops?after=N` | Nachweis | Änderungen nach Nummer N: `{ snapshot, items: [{nr, data}], last, more }` |
 | `PUT /snapshot` | Nachweis | Gesamtstand bis Nummer `upto` ablegen; ältere Änderungen werden gelöscht |
-| `PUT /proof` | Nachweis | neuer Schreib-Nachweis (nach neuem Listenschlüssel) |
-| `GET /members` | Nachweis | Plätze: `{ members: [{mid, at}], maxMembers }` |
-| `DELETE /members/<mid>` | Nachweis | austreten bzw. entfernen – Zugang endet sofort |
+| `PUT /proof` | Nachweis, nur Admin | neuer Schreib-Nachweis (nach neuem Listenschlüssel) |
+| `GET /members` | Nachweis | Plätze: `{ members: [{mid, at}], maxMembers, admin }` |
+| `DELETE /members/<mid>` | Nachweis; andere nur Admin | austreten (eigene ID) bzw. entfernen – Zugang endet sofort |
 | `POST /invites` | Nachweis | Einladung gültig machen: `{ hash, ttlMs }` (höchstens 30 Minuten) |
 | `POST /requests` | Einladung (`X-Invite`) | Beitrittsanfrage: `{ data }` → `{ rid }`; 409, wenn die Liste voll ist |
 | `GET /requests/<rid>` | Einladung | Antwort abholen: `{ answer }` (null, solange offen; bis 24 h nach der Anfrage) |

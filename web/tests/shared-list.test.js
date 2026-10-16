@@ -274,3 +274,51 @@ test('Kein Zugang mehr (entfernt): Zustand „lost“, Verlassen räumt trotzdem
   assert.equal(b.shared.state.status, 'none');
   assert.deepEqual(names(b.model), ['Reis']);
 });
+
+test('Einladung in Safari geöffnet: erst „in der App beitreten“ anbieten, auf Wunsch hier', async () => {
+  const cloud = fakeCloud();
+  const a = await device(cloud, { items: ['Milch'] });
+  await a.shared.create({ name: 'Zuhause', deviceName: 'A', adopt: true });
+  const { link } = await a.shared.invite();
+  const b = await device(cloud);
+  assert.equal(b.shared.receiveInvite(link, { elsewhere: true }), true);
+  assert.equal(b.shared.state.join.phase, 'elsewhere');
+  assert.equal(parseInvite(b.shared.state.join.link).listId, a.shared.session.listId, 'kopierbarer Link enthält die Einladung');
+  b.shared.joinHere();
+  assert.equal(b.shared.state.join.phase, 'form');
+  await b.shared.sendJoin('B');
+  assert.equal(b.shared.state.join.phase, 'waiting');
+});
+
+test('Admin: wer anlegt, ist Admin und kann andere entfernen; andere nicht', async () => {
+  const cloud = fakeCloud();
+  const { a, b } = await pair(cloud, { bItems: ['Reis'] });
+  await a.shared.sync();
+  await b.shared.sync();
+  assert.equal(a.shared.state.isAdmin, true);
+  assert.equal(b.shared.state.isAdmin, false);
+  const adminRow = b.shared.state.members.find((m) => m.admin);
+  assert.equal(adminRow.name, 'Alex iPhone', 'B sieht, wer Admin ist');
+  // B versucht, A zu entfernen – der Briefkasten lehnt ab
+  await assert.rejects(b.shared.removeMember(a.shared.session.memberId), /Listen-Admin/);
+  // A entfernt B
+  await a.shared.removeMember(b.shared.session.memberId);
+  assert.deepEqual(a.shared.state.members.map((m) => m.name), ['Alex iPhone']);
+  assert.equal(a.shared.state.memberCount, 1);
+  await b.shared.sync();
+  assert.equal(b.shared.state.status, 'lost');
+  assert.match(b.shared.state.error, /entfernt/);
+  await b.shared.leave();
+  assert.deepEqual(names(b.model), ['Reis'], 'B hat seine eigene Liste zurück');
+});
+
+test('Admin verlässt die Liste: das nächste Gerät wird Admin', async () => {
+  const cloud = fakeCloud();
+  const { a, b } = await pair(cloud);
+  await a.shared.leave();
+  await b.shared.sync();
+  await b.shared.sync();
+  await b.shared.sync();
+  assert.equal(b.shared.state.isAdmin, true);
+  assert.equal(b.shared.state.memberCount, 1);
+});

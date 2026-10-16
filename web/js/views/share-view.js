@@ -140,7 +140,8 @@ export function mountPasteSection(root, model, shared = null) {
 /** Beim Start: Wurde die App über einen geteilten Link oder eine Einladung geöffnet? */
 export async function receiveFromLocation(model, shared = null) {
   if (shared && /[#&]beitreten=/.test(location.hash)) {
-    shared.receiveInvite(location.href);
+    // In Safari auf iPhone/iPad: Die App auf dem Home-Bildschirm hat einen eigenen Speicher – dort beitreten.
+    shared.receiveInvite(location.href, { elsewhere: isIosBrowser() });
     history.replaceState(null, '', location.pathname + location.search);
     return;
   }
@@ -152,6 +153,14 @@ export async function receiveFromLocation(model, shared = null) {
   } finally {
     history.replaceState(null, '', location.pathname + location.search);
   }
+}
+
+/** Läuft die App in Safari auf iPhone/iPad (nicht als App vom Home-Bildschirm)? */
+export function isIosBrowser() {
+  const ua = navigator.userAgent ?? '';
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const standalone = navigator.standalone === true || globalThis.matchMedia?.('(display-mode: standalone)').matches === true;
+  return ios && !standalone;
 }
 
 export function appUrl() {

@@ -34,8 +34,17 @@ const clock = (time) => new Date(time).toLocaleTimeString('de-DE', { hour: '2-di
 export function mountSharedSection(root, shared, model) {
   let invite = null;          // { link, text, expires } – vorbereitet, damit „Teilen“ direkt nach dem Tippen kommt
   let confirmLeave = false;
+  let confirmRemove = null;   // Mitglieds-ID, die der Admin entfernen möchte
   let busy = false;
   let error = '';
+  let joinError = '';
+
+  function useInvite(text) {
+    joinError = '';
+    if (!shared.receiveInvite(text)) joinError = 'Darin ist keine Einladung zu einer gemeinsamen Liste enthalten.';
+    else root.querySelector('#shared-invite').value = '';
+    render();
+  }
 
   async function run(work) {
     if (busy) return;
@@ -59,6 +68,17 @@ export function mountSharedSection(root, shared, model) {
       const adopt = root.querySelector('#shared-adopt')?.checked ?? false;
       rememberDeviceName(deviceName.trim());
       await run(() => shared.create({ name, deviceName, adopt }));
+    } else if (t.closest('[data-shared-join]')) {
+      useInvite(root.querySelector('#shared-invite').value);
+    } else if (t.closest('[data-shared-paste]')) {
+      try {
+        const text = await navigator.clipboard.readText();
+        root.querySelector('#shared-invite').value = text;
+        useInvite(text);
+      } catch {
+        joinError = 'Kein Zugriff auf die Zwischenablage – bitte lange ins Feld tippen, „Einsetzen“ wählen und dann „Einladung einfügen“.';
+        render();
+      }
     } else if (t.closest('[data-shared-invite]')) {
       await run(async () => { invite = await shared.invite(); });
     } else if (t.closest('[data-shared-share]')) {
@@ -80,6 +100,16 @@ export function mountSharedSection(root, shared, model) {
     } else if (t.closest('[data-shared-leave-cancel]')) {
       confirmLeave = false;
       render();
+    } else if (t.closest('[data-member-remove]')) {
+      confirmRemove = t.closest('[data-member-remove]').dataset.memberRemove;
+      render();
+    } else if (t.closest('[data-member-remove-cancel]')) {
+      confirmRemove = null;
+      render();
+    } else if (t.closest('[data-member-remove-confirm]')) {
+      const id = confirmRemove;
+      confirmRemove = null;
+      await run(() => shared.removeMember(id));
     } else if (t.closest('[data-shared-leave-confirm]')) {
       confirmLeave = false;
       invite = null;
@@ -112,7 +142,17 @@ export function mountSharedSection(root, shared, model) {
           <button type="button" class="button primary" data-shared-create ${busy ? 'disabled' : ''}>${busy ? 'Wird angelegt …' : 'Gemeinsame Liste anlegen'}</button>
           ${errorHtml}
         </div>
-        <p class="section-note">Zum Beitreten: Einladung von einem Mitglied unten unter „Geteilte Liste einfügen“ einsetzen.</p>`;
+        <div class="card shared-card shared-join">
+          <strong>Einladung erhalten?</strong>
+          <p class="shared-confirm">Nachricht oder Link aus der Einladung kopieren und hier einfügen – dann den Prüfcode vergleichen.</p>
+          <label class="sr-only" for="shared-invite">Einladung</label>
+          <input id="shared-invite" class="shared-invite" type="text" placeholder="Einladung hier einfügen" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <div class="backup-actions">
+            <button type="button" class="button secondary" data-shared-paste>Aus Zwischenablage</button>
+            <button type="button" class="button primary" data-shared-join>Einladung einfügen</button>
+          </div>
+          ${joinError ? `<p class="backup-error" role="alert">${esc(joinError)}</p>` : ''}
+        </div>`;
     }
     if (s.status === 'lost') {
       return `
@@ -123,7 +163,18 @@ export function mountSharedSection(root, shared, model) {
           ${errorHtml}
         </div>`;
     }
-    const members = s.members.map((m) => `<li>${esc(m.name)}${m.me ? ' <span>(dieses Gerät)</span>' : ''}</li>`).join('');
+    if (confirmRemove && !s.members.some((m) => m.id === confirmRemove)) confirmRemove = null;
+    const members = s.members.map((m) => {
+      const tags = [m.me && 'dieses Gerät', m.admin && 'Admin'].filter(Boolean).join(', ');
+      const removable = s.isAdmin && !m.me;
+      if (confirmRemove === m.id) {
+        return `<li class="member-confirm"><span class="member-name">„${esc(m.name)}“ entfernen? Das Gerät hat danach sofort keinen Zugang mehr.</span>
+          <span class="member-actions"><button type="button" class="text-button" data-member-remove-cancel>Abbrechen</button>
+          <button type="button" class="text-button danger" data-member-remove-confirm>Entfernen</button></span></li>`;
+      }
+      return `<li><span class="member-name">${esc(m.name)}${tags ? ` <span>(${tags})</span>` : ''}</span>`
+        + `${removable ? `<button type="button" class="text-button" data-member-remove="${esc(m.id)}" aria-label="${esc(m.name)} entfernen" ${busy ? 'disabled' : ''}>Entfernen</button>` : ''}</li>`;
+    }).join('');
     const inviteHtml = invite ? `
       <div class="invite-ready">
         <p>Einladung bereit – gilt bis ${clock(invite.expires)} Uhr. Verschicken, z. B. per Nachricht:</p>
@@ -152,7 +203,7 @@ export function mountSharedSection(root, shared, model) {
           </div>`}
         ${errorHtml}
       </div>
-      <p class="section-note">Eine Einladung gilt 30 Minuten. Beim Beitritt zeigen beide Geräte einen Prüfcode – vergleicht ihn, bevor du bestätigst.</p>`;
+      <p class="section-note">Eine Einladung gilt 30 Minuten. Beim Beitritt zeigen beide Geräte einen Prüfcode – vergleicht ihn, bevor du bestätigst. ${s.isAdmin ? 'Du bist Admin dieser Liste und kannst Mitglieder entfernen.' : 'Mitglieder entfernen kann der Admin der Liste.'}</p>`;
   }
 
   let last = '';
@@ -187,11 +238,23 @@ export function mountSharedChip(button, shared) {
 export function mountSharedDialogs(root, shared, model) {
   const dismissed = new Set();   // Anfragen, die man mit „Später“ weggelegt hat
   let shownKey = null;
+  let copied = false;            // „In der App beitreten“: Link wurde kopiert
 
   root.addEventListener('click', async (event) => {
     const t = event.target;
     const request = shared.state.requests.find((r) => !dismissed.has(r.rid));
-    if (t.closest('[data-join-send]')) {
+    if (t.closest('[data-join-copy]')) {
+      try {
+        await navigator.clipboard.writeText(shared.state.join?.link ?? '');
+        copied = true;
+      } catch {
+        copied = false;
+        t.closest('button').textContent = 'Kopieren nicht möglich';
+      }
+      render();
+    } else if (t.closest('[data-join-here]')) {
+      shared.joinHere();
+    } else if (t.closest('[data-join-send]')) {
       const name = root.querySelector('#join-device').value;
       rememberDeviceName(name.trim());
       t.closest('button').disabled = true;
@@ -225,7 +288,8 @@ export function mountSharedDialogs(root, shared, model) {
   function render() {
     const { join, requests, status } = shared.state;
     const request = status === 'active' ? requests.find((r) => !dismissed.has(r.rid)) : null;
-    const key = join ? `join:${join.phase}:${join.code ?? ''}:${join.message ?? ''}` : request ? `req:${request.rid}` : null;
+    if (join?.phase !== 'elsewhere') copied = false;
+    const key = join ? `join:${join.phase}:${join.code ?? ''}:${join.message ?? ''}:${copied}` : request ? `req:${request.rid}` : null;
     if (key === shownKey) return;
     shownKey = key;
     document.body.classList.toggle('sheet-open', Boolean(key));
@@ -234,12 +298,22 @@ export function mountSharedDialogs(root, shared, model) {
       return;
     }
     const listName = esc(join?.name || 'gemeinsamen Liste');
-    if (join?.phase === 'form') {
-      const standalone = matchMedia?.('(display-mode: standalone)').matches || navigator.standalone;
+    if (join?.phase === 'elsewhere') {
+      root.innerHTML = sheet(`
+        <div><h2 id="shared-dialog-title">In der App beitreten</h2>
+        <p class="section-note">Du bist in Safari. Safari und FeedYourself auf dem Home-Bildschirm speichern getrennt – damit „${listName}“ in der App landet:</p></div>
+        <ol class="join-steps">
+          <li>${copied ? '<strong>Link kopiert ✓</strong>' : 'Link kopieren'}</li>
+          <li>FeedYourself vom Home-Bildschirm öffnen</li>
+          <li>Einstellungen › Gemeinsame Liste › <strong>Einladung einfügen</strong></li>
+        </ol>
+        <p class="section-note">Noch keine App auf dem Home-Bildschirm? In Safari auf <strong>Teilen › Zum Home-Bildschirm</strong> – danach wie oben. Die Einladung gilt 30 Minuten.</p>
+        <button type="button" class="button primary" data-join-copy>${copied ? 'Nochmal kopieren' : 'Link kopieren'}</button>
+        <button type="button" class="text-button" data-join-here>Lieber hier in Safari beitreten</button>`, 'data-join-close');
+    } else if (join?.phase === 'form') {
       root.innerHTML = sheet(`
         <div><h2 id="shared-dialog-title">Der Liste „${listName}“ beitreten?</h2>
         <p class="section-note">Ein Mitglied muss den Beitritt bestätigen. Deine bisherige Liste bleibt auf diesem Gerät gespeichert und ist wieder da, wenn du die gemeinsame Liste verlässt.</p></div>
-        ${standalone === false && /iPhone|iPad/.test(navigator.userAgent ?? '') ? '<p class="section-note"><strong>Hinweis:</strong> Nutzt du FeedYourself als App auf dem Home-Bildschirm, kopiere den Link lieber und setze ihn dort unter Einstellungen › „Geteilte Liste einfügen“ ein – Safari und die App haben getrennte Speicher.</p>' : ''}
         <label class="shared-field"><span>Name dieses Geräts (sehen nur die Mitglieder)</span><input id="join-device" type="text" maxlength="40" value="${esc(defaultDeviceName())}" autocomplete="off"></label>
         <div class="sheet-actions">
           <button type="button" class="button secondary" data-join-close>Abbrechen</button>

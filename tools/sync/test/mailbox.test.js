@@ -115,7 +115,7 @@ test('Änderungen: fortlaufend nummeriert, abrufbar ab einer Nummer', async () =
   assert.deepEqual(later.items.map((i) => i.data), ['a3']);
   const none = await body(await ctx.call('GET', '/ops?after=3', { proof: ctx.proof }));
   assert.deepEqual(none, { snapshot: null, items: [], last: 3, more: false });
-  assert.deepEqual(await body(await ctx.call('GET', '', { proof: ctx.proof })), { last: 3, members: 1, maxMembers: 5 });
+  assert.deepEqual(await body(await ctx.call('GET', '', { proof: ctx.proof })), { last: 3, members: 1, maxMembers: 5, admin: ctx.member });
 });
 
 test('Änderungen: Abruf in Seiten', async () => {
@@ -334,6 +334,54 @@ test('Plätze: Liste voll, während eine Anfrage noch offen ist – Bestätigen 
   for (let i = 0; i < 4; i++) assert.equal((await join(ctx)).status, 200);
   assert.equal((await ctx.call('POST', `/requests/${rid}`, { proof: ctx.proof, body: { answer: 'k' } })).status, 409);
   assert.deepEqual(await body(await ctx.call('GET', `/requests/${rid}`, { invite })), { answer: null });
+});
+
+test('Admin: wer anlegt, ist Admin; nur er entfernt andere, austreten darf jeder', async () => {
+  const ctx = await created();
+  const b = await join(ctx);
+  const c = await join(ctx);
+  const info = await body(await ctx.call('GET', '/members', { proof: ctx.proof }));
+  assert.equal(info.admin, ctx.member);
+  // B (kein Admin) darf C nicht entfernen
+  const denied = await ctx.call('DELETE', `/members/${c.member}`, { proof: ctx.proof, member: b.member });
+  assert.equal(denied.status, 403);
+  assert.match((await body(denied)).error, /Listen-Admin/);
+  // B darf auch die Liste nicht löschen und den Schlüssel nicht erneuern
+  assert.equal((await ctx.call('DELETE', '', { proof: ctx.proof, member: b.member })).status, 403);
+  assert.equal((await ctx.call('PUT', '/proof', { proof: ctx.proof, member: b.member, body: { proofHash: await sha256('neu-neu-neu-neu-neu-neu') } })).status, 403);
+  // B tritt selbst aus – erlaubt
+  assert.equal((await ctx.call('DELETE', `/members/${b.member}`, { proof: ctx.proof, member: b.member })).status, 200);
+  // Admin entfernt C – erlaubt, C hat sofort keinen Zugang mehr
+  assert.equal((await ctx.call('DELETE', `/members/${c.member}`, { proof: ctx.proof })).status, 200);
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member: c.member })).status, 401);
+});
+
+test('Admin: verlässt der Admin die Liste, wird das am längsten dabei befindliche Gerät Admin', async () => {
+  const ctx = await created();
+  ctx.clock.t += 1000;
+  const b = await join(ctx);
+  ctx.clock.t += 1000;
+  const c = await join(ctx);
+  const left = await body(await ctx.call('DELETE', `/members/${ctx.member}`, { proof: ctx.proof }));
+  assert.equal(left.admin, b.member);
+  assert.equal((await body(await ctx.call('GET', '', { proof: ctx.proof, member: c.member }))).admin, b.member);
+  assert.equal((await ctx.call('DELETE', `/members/${c.member}`, { proof: ctx.proof, member: b.member })).status, 200, 'neuer Admin darf entfernen');
+});
+
+test('Admin: ältere Listen ohne Eintrag – das zuerst beigetretene Gerät gilt als Admin', async () => {
+  const ctx = await created();
+  ctx.clock.t += 1000;
+  const b = await join(ctx);
+  ctx.storage.sql.exec("DELETE FROM meta WHERE k = 'admin'");
+  assert.equal((await body(await ctx.call('GET', '/members', { proof: ctx.proof }))).admin, ctx.member);
+  assert.equal((await ctx.call('DELETE', `/members/${ctx.member}`, { proof: ctx.proof, member: b.member })).status, 403);
+});
+
+test('Admin: als letztes Gerät darf jeder die Liste löschen', async () => {
+  const ctx = await created();
+  const b = await join(ctx);
+  await ctx.call('DELETE', `/members/${ctx.member}`, { proof: ctx.proof });
+  assert.equal((await ctx.call('DELETE', '', { proof: ctx.proof, member: b.member })).status, 204);
 });
 
 // ---------------------------------------------------------------- Einstieg (Worker)

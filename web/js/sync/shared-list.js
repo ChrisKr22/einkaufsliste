@@ -32,9 +32,9 @@ export class SharedList {
     this.joinData = null;
     this.state = {
       status: 'none',           // none | active | lost
-      name: '', members: [], memberCount: 1, maxMembers: 5,
+      name: '', members: [], memberCount: 1, maxMembers: 5, isAdmin: false,
       lastSync: null, error: null, requests: [],
-      join: null,               // { phase: form|waiting|failed, name, code, message }
+      join: null,               // { phase: elsewhere|form|waiting|failed, name, code, message, link }
     };
     this.listeners = new Set();
     this.syncCount = 0;
@@ -91,13 +91,28 @@ export class SharedList {
     this.connection = null;
     this.model.repository.store = this.base;
     await this.base.delete('meta', SESSION_KEY);
-    this.#set({ status: 'none', name: '', members: [], memberCount: 1, requests: [], error: null, lastSync: null });
+    this.seats = null;
+    this.#set({ status: 'none', name: '', members: [], memberCount: 1, isAdmin: false, requests: [], error: null, lastSync: null });
     await this.model.load();
   }
 
+  /**
+   * Name der Liste und Mitglieder. Wer dabei ist und wer Admin ist, sagt der Briefkasten (Plätze);
+   * die Gerätenamen stehen verschlüsselt in der Liste.
+   */
   #summary() {
-    const members = this.replica.all('member').map((m) => ({ id: m.id, name: m.name ?? 'Gerät', me: m.id === this.session.memberId }));
-    return { name: this.replica.get('list', 'info')?.name ?? this.session.name ?? 'Gemeinsame Liste', members };
+    const names = new Map(this.replica.all('member').map((m) => [m.id, m.name ?? 'Gerät']));
+    const me = this.session.memberId;
+    const seats = this.seats;
+    const ids = seats ? seats.members.map((m) => m.mid) : [...names.keys()];
+    const admin = seats?.admin ?? null;
+    const members = ids.map((id) => ({ id, name: names.get(id) ?? 'Gerät', me: id === me, admin: id === admin }));
+    return {
+      name: this.replica.get('list', 'info')?.name ?? this.session.name ?? 'Gemeinsame Liste',
+      members,
+      isAdmin: admin === me,
+      ...(seats ? { memberCount: seats.members.length, maxMembers: seats.maxMembers } : {}),
+    };
   }
 
   async #save() {
@@ -165,6 +180,19 @@ export class SharedList {
     this.#set({ requests: this.state.requests.filter((r) => r.rid !== rid) });
   }
 
+  // ---------------------------------------------------------------- Mitglieder entfernen (nur Admin)
+
+  /** Admin entfernt ein anderes Gerät: Platz frei, dessen Zugang endet sofort. */
+  async removeMember(memberId) {
+    if (!this.session || memberId === this.session.memberId) return;
+    await this.#guard(() => this.connection.leave(memberId));
+    this.replica.remove('member', memberId);
+    if (this.seats) this.seats = { ...this.seats, members: this.seats.members.filter((m) => m.mid !== memberId) };
+    await this.#save();
+    this.#set(this.#summary());
+    await this.sync();
+  }
+
   // ---------------------------------------------------------------- Verlassen
 
   /** Gerät verlässt die Liste; war es das letzte, wird der Briefkasten gelöscht. Die private Liste kommt zurück. */
@@ -183,8 +211,13 @@ export class SharedList {
 
   // ---------------------------------------------------------------- Beitreten (neues Gerät)
 
-  /** Eingefügter Link oder Nachricht mit Einladung → Dialog „Beitreten?“. @returns {boolean} ob eine Einladung darin war */
-  receiveInvite(text) {
+  /**
+   * Eingefügter Link oder Nachricht mit Einladung → Dialog „Beitreten?“.
+   * elsewhere: Der Link wurde in Safari geöffnet, die App wohnt aber auf dem Home-Bildschirm (getrennter Speicher) –
+   * dann erst anbieten, den Link zu kopieren und dort einzufügen.
+   * @returns {boolean} ob eine Einladung darin war
+   */
+  receiveInvite(text, { elsewhere = false } = {}) {
     const invite = parseInvite(text);
     if (!invite) return false;
     if (this.session) {
@@ -192,8 +225,15 @@ export class SharedList {
       return true;
     }
     this.pendingInvite = invite;
-    this.#set({ join: { phase: 'form', name: invite.name } });
+    const link = inviteLink(this.appUrl(), invite);
+    this.#set({ join: { phase: elsewhere ? 'elsewhere' : 'form', name: invite.name, link } });
     return true;
+  }
+
+  /** „Trotzdem hier beitreten“ (z. B. in Safari ohne App auf dem Home-Bildschirm). */
+  joinHere() {
+    if (!this.pendingInvite || this.state.join?.phase !== 'elsewhere') return;
+    this.#set({ join: { ...this.state.join, phase: 'form' } });
   }
 
   async sendJoin(deviceName) {
@@ -344,12 +384,13 @@ export class SharedList {
 
   async #checkRequests() {
     const secrets = this.replica.all('invite').filter((i) => i.expires > this.now() - INVITE_KEEP_MS).map((i) => i.secret);
-    const [info, requests] = await Promise.all([
-      this.connection.info(),
+    const [seats, requests] = await Promise.all([
+      this.connection.members(),
       secrets.length ? this.connection.requests(secrets) : Promise.resolve([]),
     ]);
+    this.seats = seats;
     const withCodes = await Promise.all(requests.map(async (r) => ({ ...r, code: await checkCode(r.secret, r.publicJwk) })));
-    this.#set({ memberCount: info.members, maxMembers: info.maxMembers, requests: withCodes });
+    this.#set({ requests: withCodes, ...this.#summary() });
   }
 
   #cleanupInvites() {

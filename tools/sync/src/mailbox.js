@@ -5,6 +5,8 @@
 // Jedes Mitglieds-Gerät hat eine zufällige Mitglieds-ID; höchstens 5 Plätze pro Liste. Wer den Schlüssel
 // an ein weiteres Gerät weitergibt, kommt damit nicht an die Liste – ohne Platz kein Zugang.
 // Beitrittsanfragen nur mit gültiger Einladung (nur als Prüfwert gespeichert, gilt höchstens 30 Minuten).
+// Listen-Admin ist das Gerät, das die Liste angelegt hat: Nur es darf andere entfernen, den Schlüssel erneuern
+// und die ganze Liste löschen. Verlässt es die Liste, wird das am längsten dabei befindliche Gerät Admin.
 // IP-Adressen werden nicht gespeichert.
 //
 // Die Logik steckt in `Mailbox`; sie bekommt den SQLite-Speicher von außen – so lässt sie sich ohne Cloudflare testen.
@@ -108,6 +110,13 @@ export class Mailbox {
     return this.#rows('SELECT COUNT(*) AS n FROM members')[0].n;
   }
 
+  /** Mitglieds-ID des Admins; bei älteren Listen ohne Eintrag das zuerst beigetretene Gerät. */
+  #admin() {
+    const stored = this.#meta('admin');
+    if (stored && this.#rows('SELECT 1 FROM members WHERE mid = ?', stored).length) return stored;
+    return this.#rows('SELECT mid FROM members ORDER BY at, mid LIMIT 1')[0]?.mid ?? null;
+  }
+
   async #body(request, maxBytes) {
     const text = await request.text();
     if (text.length > maxBytes) throw Object.assign(new Error('zu groß'), { status: 413 });
@@ -147,6 +156,7 @@ export class Mailbox {
       if (typeof proofHash !== 'string' || !TOKEN.test(proofHash)) return fail(400, 'Prüfwert fehlt');
       if (typeof memberId !== 'string' || !TOKEN.test(memberId)) return fail(400, 'Mitglieds-ID fehlt');
       this.#setMeta('proof', proofHash);
+      this.#setMeta('admin', memberId);
       this.#rows('INSERT INTO members (mid, at) VALUES (?, ?)', memberId, now);
       this.#setMeta('created', now);
       await this.#touch(now);
@@ -160,21 +170,25 @@ export class Mailbox {
 
     if (!(await this.#authorized(request))) return fail(401, 'kein Zugang');
     await this.#touch(now);
+    const caller = request.headers.get('X-Member');
+    const isAdmin = caller === this.#admin();
 
     if (!section && method === 'DELETE') {
+      if (!isAdmin && this.#memberCount() > 1) return fail(403, 'Nur der Listen-Admin kann die Liste löschen.');
       await this.storage.deleteAll();
       this.ready = false;
       return json(null, 204);
     }
     if (!section && method === 'GET') {
       const [{ last }] = this.#rows('SELECT COALESCE(MAX(nr), 0) AS last FROM ops');
-      return json({ last: Math.max(last, Number(this.#meta('upto') ?? 0)), members: this.#memberCount(), maxMembers: LIMITS.members });
+      return json({ last: Math.max(last, Number(this.#meta('upto') ?? 0)), members: this.#memberCount(), maxMembers: LIMITS.members, admin: this.#admin() });
     }
     if (section === 'ops' && method === 'POST') return this.#append(request, now);
     if (section === 'ops' && method === 'GET') return this.#read(url);
     if (section === 'snapshot' && method === 'PUT') return this.#putSnapshot(request, now);
     if (section === 'proof' && method === 'PUT') {
       // Neuer Listenschlüssel (jemand wurde entfernt): ab jetzt gilt nur der neue Nachweis
+      if (!isAdmin) return fail(403, 'Nur der Listen-Admin kann den Schlüssel erneuern.');
       const { proofHash } = await this.#body(request, 1024);
       if (typeof proofHash !== 'string' || !TOKEN.test(proofHash)) return fail(400, 'Prüfwert fehlt');
       this.#setMeta('proof', proofHash);
@@ -182,11 +196,19 @@ export class Mailbox {
     }
     // Plätze: ansehen, verlassen bzw. jemanden entfernen (Platz wird sofort frei, Zugang endet sofort)
     if (section === 'members' && method === 'GET' && !sub) {
-      return json({ members: this.#rows('SELECT mid, at FROM members ORDER BY at'), maxMembers: LIMITS.members });
+      return json({ members: this.#rows('SELECT mid, at FROM members ORDER BY at'), maxMembers: LIMITS.members, admin: this.#admin() });
     }
     if (section === 'members' && method === 'DELETE' && sub) {
+      // Austreten darf jeder für sich; andere entfernen nur der Admin.
+      if (sub !== caller && !isAdmin) return fail(403, 'Nur der Listen-Admin kann Mitglieder entfernen.');
+      const wasAdmin = sub === this.#admin();
       const removed = this.#rows('DELETE FROM members WHERE mid = ? RETURNING mid', sub);
-      return removed.length ? json({ ok: true }) : fail(404, 'unbekanntes Mitglied');
+      if (!removed.length) return fail(404, 'unbekanntes Mitglied');
+      if (wasAdmin) {
+        const next = this.#rows('SELECT mid FROM members ORDER BY at, mid LIMIT 1')[0]?.mid;
+        if (next) this.#setMeta('admin', next);
+      }
+      return json({ ok: true, admin: this.#admin() });
     }
     if (section === 'invites' && method === 'POST') {
       const { hash, ttlMs } = await this.#body(request, 1024);

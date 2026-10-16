@@ -141,7 +141,6 @@ export function mountPlanningView(root, model) {
         <h2 class="section-title" id="recent-title">Zuletzt gekauft</h2>
         <div class="recent-order" role="radiogroup" aria-label="Sortierung">${orderButton('recent', 'Zuletzt')}${orderButton('frequent', 'Häufig')}</div>
       </div>
-      <p class="section-note">Ein Tipp – mit Menge und Anmerkung vom letzten Mal.</p>
       <div class="recent-tiles">${tiles}</div>`;
   }
 

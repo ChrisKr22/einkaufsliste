@@ -14,7 +14,7 @@ export class SyncError extends Error {
 }
 
 const MESSAGES = {
-  401: 'Kein Zugang mehr zu dieser Liste.',
+  401: 'Kein Zugang mehr – dieses Gerät wurde aus der Liste entfernt.',
   403: 'Die Einladung ist ungültig oder abgelaufen.',
   404: 'Diese Liste gibt es nicht mehr.',
   409: 'Die Liste ist voll (höchstens 5 Geräte).',
@@ -38,7 +38,11 @@ async function request(fetchFn, base, listId, method, path, { body, proof, membe
   const text = await response.text();
   let json = null;
   try { json = text ? JSON.parse(text) : null; } catch { /* unten */ }
-  if (!response.ok) throw new SyncError(response.status, MESSAGES[response.status] ?? json?.error ?? `Fehler ${response.status}`);
+  if (!response.ok) {
+    // 403: Der Briefkasten sagt selbst, woran es liegt (abgelaufene Einladung oder nur für den Admin erlaubt).
+    const message = response.status === 403 ? json?.error ?? MESSAGES[403] : MESSAGES[response.status] ?? json?.error ?? `Fehler ${response.status}`;
+    throw new SyncError(response.status, message);
+  }
   return json;
 }
 
@@ -112,6 +116,7 @@ export class ListConnection {
     return this.#call('GET', '/members');
   }
 
+  /** Austreten (eigene ID) oder – nur als Admin – ein anderes Gerät entfernen. */
   leave(memberId = this.memberId) {
     return this.#call('DELETE', `/members/${memberId}`);
   }
