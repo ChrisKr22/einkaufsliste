@@ -148,7 +148,7 @@ export function mountPlanningView(root, model) {
     listEl.innerHTML = sections.map(({ category, items }) => `
       <section class="section" aria-label="${esc(category.name)}">
         <h2 class="section-title">${esc(category.name)} <span>· ${items.length}</span></h2>
-        <div class="card">${items.map((item) => row(item, category.key)).join('')}</div>
+        <div class="rows">${items.map((item) => row(item, category.key)).join('')}</div>
       </section>`).join('');
   }
 
@@ -161,11 +161,12 @@ export function mountPlanningView(root, model) {
     return `<div class="row" data-row="${item.id}">
       <div class="row-delete" aria-hidden="true">Entfernen</div>
       <div class="row-inner">
-        <button type="button" class="row-main" data-edit="${item.id}" aria-label="${esc(label)} – bearbeiten">
-          ${thumb(item.product, categoryKey)}
-          <span class="row-text"><span class="row-name">${esc(item.product.name)}</span>${note}</span>
-        </button>
-        ${stepper(item)}
+        <button type="button" class="row-photo" data-edit="${item.id}" tabindex="-1" aria-hidden="true">${thumb(item.product, categoryKey, 'wide')}</button>
+        <div class="row-side">
+          <button type="button" class="row-main" data-edit="${item.id}" aria-label="${esc(label)} – bearbeiten"><span class="row-name">${esc(item.product.name)}</span></button>
+          ${stepper(item)}
+          <button type="button" class="row-note-button" data-edit="${item.id}" tabindex="-1" aria-hidden="true">${note}</button>
+        </div>
       </div>
     </div>`;
   }

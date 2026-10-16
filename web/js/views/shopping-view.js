@@ -167,9 +167,12 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   function srow(item, key) {
     return `<div class="srow" data-swipe="${item.id}">
       <button type="button" class="srow-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
-        ${thumb(item.product, key, 'medium')}
-        <span class="srow-text"><span class="item-name">${esc(item.product.name)}</span><span class="item-note">${esc(item.note)}</span></span>
-        <span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span>
+        <span class="row-photo">${thumb(item.product, key, 'wide')}</span>
+        <span class="row-side">
+          <span class="row-name">${esc(item.product.name)}</span>
+          <span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span>
+          ${item.note ? `<span class="row-note">${esc(item.note)}</span>` : ''}
+        </span>
       </button>
       <button type="button" class="later-button" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
       ${swipeHints()}
