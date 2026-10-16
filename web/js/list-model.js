@@ -317,17 +317,22 @@ export class ListModel {
       .filter((s) => s.items.length > 0);
   }
 
-  /** Fokus-Ansicht: alle offenen Einträge nacheinander, in Laden-Reihenfolge; übersprungene ans Ende
-   *  (in der Reihenfolge, in der sie übersprungen wurden). */
-  get focusQueue() {
-    const items = this.shopSections.flatMap((s) => s.items);
+  /** Fokus-Ansicht: offene Einträge je Kategorie in Laden-Reihenfolge; übersprungene rücken in ihrer
+   *  Kategorie nach hinten (in der Reihenfolge, in der sie übersprungen wurden). */
+  get focusSections() {
     const { skipped } = this.state;
-    const fresh = items.filter((i) => !skipped.has(i.id));
-    const later = items.filter((i) => skipped.has(i.id)).sort((a, b) => skipped.get(a.id) - skipped.get(b.id));
-    return [...fresh, ...later];
+    return this.shopSections.map(({ category, items }) => {
+      const fresh = items.filter((i) => !skipped.has(i.id));
+      const later = items.filter((i) => skipped.has(i.id)).sort((a, b) => skipped.get(a.id) - skipped.get(b.id));
+      return { category, items: [...fresh, ...later] };
+    });
   }
 
-  /** Fokus: einmal tippen – Produkt ans Ende der Reihe, beliebig oft wiederholbar. */
+  get focusQueue() {
+    return this.focusSections.flatMap((s) => s.items);
+  }
+
+  /** Fokus: einmal tippen – Produkt ans Ende seiner Kategorie, beliebig oft wiederholbar. */
   skip(item) {
     if (!item || item.status !== 'open') return;
     this.skipCounter = (this.skipCounter ?? 0) + 1;
@@ -458,9 +463,11 @@ export class ListModel {
   }
 
   /** Kurzer Hinweis ohne Rückgängig (z. B. „Liste kopiert“). */
-  notify(text) {
+  /** Kurzer Hinweis ohne Rückgängig. compact: schmal und mittig (nur so breit wie der Text). */
+  notify(text, { compact = false } = {}) {
     this.undoAction = null;
     this.#showToast(text, false);
+    if (compact) this.state.toast.compact = true;
     this.#emit();
   }
 

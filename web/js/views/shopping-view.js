@@ -7,7 +7,7 @@ import { buzz, esc, keepHorizontalSwipes, photoClass, photoContent, thumb } from
 import { mountViewChoice } from './view-choice.js';
 
 const VIEW_KEY = 'feedyourself.shopView';
-const VIEWS = ['list', 'grid', 'focus'];   // Reihenfolge beim Durchschalten
+const VIEWS = ['list', 'compact', 'grid', 'focus'];   // Reihenfolge beim Durchschalten
 const SWIPE_PX = 80;
 
 // Kurz halten, damit der Hinweis auf dem iPhone in eine Zeile passt (→ / ← = wischen).
@@ -15,6 +15,7 @@ const HINTS = {
   grid: 'Tippen oder →: in den Wagen · ←: zurück',
   list: 'Tippen oder →: in den Wagen · ←: zurück',
   focus: 'Tippen: weiter · →: Wagen · ←: zurück',
+  compact: 'Tippen oder →: in den Wagen · ←: zurück',
 };
 
 const svg = {
@@ -45,7 +46,9 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     const later = t.closest('[data-later]');
     const reopen = t.closest('[data-reopen]');
     const skip = t.closest('[data-skip]');
-    if (skip) skipFocus(skip.dataset.skip);
+    const cat = t.closest('[data-focus-cat]');
+    if (cat) { if (!cat.disabled) moveFocusCategory(Number(cat.dataset.focusCat)); }
+    else if (skip) skipFocus(skip.dataset.skip);
     else if (later) model.toLater(find(later.dataset.later));
     else if (cart) model.toCart(find(cart.dataset.cart));
     else if (reopen) model.reopen(find(reopen.dataset.reopen));
@@ -53,11 +56,56 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     else if (t.closest('[data-to-plan]')) { model.dismissSummary(); onGoToPlanning(); }
   });
 
-  // Überspringen: Karte kurz nach oben ausblenden, dann ist das nächste Produkt dran.
+  // Fokus: aktuelle Kategorie (wechselt über die beiden Knöpfe unter der Karte).
+  let focusCategoryId = null;
+  let focusCategoryOrder = -1;
+
+  /** Abschnitt, der im Fokus gezeigt wird: die gewählte Kategorie, sonst die nächste mit offenen Artikeln. */
+  function focusSection() {
+    const sections = model.focusSections;
+    let index = sections.findIndex((s) => s.category.id === focusCategoryId);
+    if (index < 0) {
+      index = sections.findIndex((s) => s.category.sortOrder >= focusCategoryOrder);
+      if (index < 0) index = sections.length - 1;
+    }
+    const section = sections[index];
+    if (section) { focusCategoryId = section.category.id; focusCategoryOrder = section.category.sortOrder; }
+    return { sections, index, section };
+  }
+
+  function moveFocusCategory(step) {
+    const { sections, index } = focusSection();
+    const target = sections[index + step];
+    if (!target) return;
+    focusCategoryId = target.category.id;
+    focusCategoryOrder = target.category.sortOrder;
+    render();
+  }
+
+  // Überspringen: Karte kurz nach oben ausblenden, dann ist das nächste Produkt der Kategorie dran.
   function skipFocus(id) {
     const item = find(id);
     if (!item) return;
-    if (model.focusQueue.length < 2) { model.notify(`${item.product.name} ist das letzte offene Produkt`); return; }
+    const { section } = focusSection();
+    if (!section || section.items.length < 2) {
+      model.notify('Keine weiteren Artikel', { compact: true });
+      // Kurzes Zittern (2× links/rechts, 0,42 s); der Hinweis verschwindet 0,25 s danach.
+      const SHAKE_MS = 420;
+      const hideNotice = () => setTimeout(() => model.dismissToast(), 250);
+      (window.requestAnimationFrame ?? setTimeout)(() => {
+        const card = content.querySelector('.focus-card');
+        if (!card || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { setTimeout(hideNotice, SHAKE_MS); return; }
+        card.classList.remove('shake');
+        void card.offsetWidth;   // Animation neu starten
+        card.classList.add('shake');
+        let done = false;
+        const finish = () => { if (done) return; done = true; card.classList.remove('shake'); hideNotice(); };
+        card.addEventListener('animationend', finish, { once: true });
+        setTimeout(finish, SHAKE_MS + 50);   // falls animationend ausbleibt
+      });
+      buzz();
+      return;
+    }
     const card = content.querySelector('.focus-card');
     if (!card || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { model.skip(item); return; }
     card.classList.add('skipping');
@@ -112,8 +160,8 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       parts.push(...model.shopSections.map(({ category, items }) => `
         <section class="section" aria-label="${esc(category.name)}">
           <h2 class="section-title">${esc(category.name)}</h2>
-          ${view === 'grid'
-            ? `<div class="tiles">${items.map((i) => tile(i, category.key)).join('')}</div>`
+          ${view === 'grid' ? `<div class="tiles">${items.map((i) => tile(i, category.key)).join('')}</div>`
+            : view === 'compact' ? `<div class="srows compact">${items.map((i) => crow(i, category.key)).join('')}</div>`
             : `<div class="srows">${items.map((i) => srow(i, category.key)).join('')}</div>`}
         </section>`));
     }
@@ -145,7 +193,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
           <span class="item-note">${esc(item.note)}</span>
         </span>
       </button>
-      <button type="button" class="later-button" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      <button type="button" class="later-button sr-only" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
       ${swipeHints()}
     </div>`;
   }
@@ -160,24 +208,42 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
           ${item.note ? `<span class="list-tile-note">${esc(item.note)}</span>` : ''}
         </span>
       </button>
-      <button type="button" class="later-button" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      <button type="button" class="later-button sr-only" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      ${swipeHints()}
+    </div>`;
+  }
+
+  /** Liste klein: halbe Kachelhöhe, Foto über die ganze Breite, Name und Menge mittig auf einer Glaslinse. */
+  function crow(item, key) {
+    return `<div class="crow" data-swipe="${item.id}">
+      <button type="button" class="crow-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+        ${thumb(item.product, key, 'cover')}
+        <span class="crow-lens"><span class="crow-name">${esc(item.product.name)}</span><span class="crow-qty">${formatQuantity(item.quantity, unitOf(item))}</span></span>
+      </button>
+      <button type="button" class="later-button sr-only" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
       ${swipeHints()}
     </div>`;
   }
 
   function focusView() {
-    const queue = model.focusQueue;
-    const [item, next] = queue;
-    const category = model.categoryFor(item.product);
-    const position = `Noch ${queue.length} offen${next ? ` · danach: ${next.product.name}` : ''}`;
+    const { sections, index, section } = focusSection();
+    const [item, nextInCategory] = section.items;
+    const prev = sections[index - 1];
+    const following = sections[index + 1];
+    const next = nextInCategory ?? following?.items[0];
+    const category = section.category;
+    const rest = section.items.length;
+    const position = `Noch ${rest} in ${category.name}${next ? ` · danach: ${next.product.name}` : ''}`;
+    const catButton = (step, target, label) => `<button type="button" class="button focus-cat${step < 0 ? ' prev' : ' next'}" data-focus-cat="${step}"`
+      + `${target ? ` aria-label="${step < 0 ? 'Vorherige' : 'Nächste'} Kategorie: ${esc(target.category.name)}"` : ' disabled'}>${label}</button>`;
     return `<div class="focus">
       <div class="focus-stack">
         ${next ? '<div class="focus-peek" aria-hidden="true"></div>' : ''}
         <div class="focus-card" data-swipe="${item.id}">
           <button type="button" class="focus-main" data-skip="${item.id}" aria-label="${esc(itemLabel(item))} – überspringen">
             <span class="focus-photo-wrap">
-              ${photo(item, category?.key, 'focus-photo')}
-              <span class="chip">${esc(category?.name ?? 'Sonstiges')}</span>
+              ${photo(item, category.key, 'focus-photo')}
+              <span class="chip">${esc(category.name)}</span>
             </span>
             <span class="focus-body">
               <span class="focus-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span></span>
@@ -189,11 +255,12 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
         </div>
       </div>
       <div class="focus-actions">
-        <button type="button" class="button later-soft" data-later="${item.id}">← Zurückstellen</button>
-        <button type="button" class="button accent-soft" data-cart="${item.id}">In den Wagen →</button>
+        ${catButton(-1, prev, `← ${esc(prev?.category.name ?? 'Anfang')}`)}
+        ${catButton(1, following, `${esc(following?.category.name ?? 'Ende')} →`)}
       </div>
     </div>`;
   }
+
 
   function miniRow(item, action, label) {
     const key = model.categoryFor(item.product)?.key;

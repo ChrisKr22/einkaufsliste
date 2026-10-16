@@ -1,5 +1,5 @@
 // Ansichtsknopf oben rechts im Kopf: zeigt die aktuelle Ansicht als Symbol, Tippen schaltet weiter
-// (Planen: Liste → Kacheln, Einkaufen: Liste → Kacheln → Fokus). Er gehört immer zum sichtbaren Modus;
+// (Liste: Liste → Kacheln, Einkaufen: Liste → Liste klein → Kacheln → Fokus). Er gehört immer zum sichtbaren Modus;
 // jeder Modus merkt sich seine Ansicht getrennt.
 
 export const MODE_EVENT = 'fy:modechange';
@@ -7,9 +7,10 @@ export const MODE_EVENT = 'fy:modechange';
 const ICONS = {
   grid: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>',
   list: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="5" width="4" height="4" rx="1"/><rect x="4" y="15" width="4" height="4" rx="1"/><path d="M11 7h9M11 17h9"/></svg>',
+  compact: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4.5" width="16" height="4" rx="1.5"/><rect x="4" y="10" width="16" height="4" rx="1.5"/><rect x="4" y="15.5" width="16" height="4" rx="1.5"/></svg>',
   focus: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="17" rx="2.5"/><path d="M3 7v10M21 7v10"/></svg>',
 };
-const LABELS = { grid: 'Kacheln', list: 'Liste', focus: 'Fokus' };
+const LABELS = { grid: 'Kacheln', list: 'Liste', compact: 'Liste klein', focus: 'Fokus' };
 
 export function mountViewChoice(root, { views, storageKey, fallback, onChange }) {
   const button = document.querySelector('#view-switch');

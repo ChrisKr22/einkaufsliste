@@ -231,7 +231,7 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .full-photo::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none; border-radius: inherit;
   background: linear-gradient(160deg, var(--photo-sheen), transparent 45%); }
 .tile-photo.full-photo::before, .focus-photo.full-photo::before {
-  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%), linear-gradient(to bottom, transparent 55%, var(--surface) 100%); }
+  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%), linear-gradient(to bottom, transparent 55%, var(--surface) 94%); }
 .full-photo::after { z-index: 2; }
 .tile-photo.full-photo::after, .focus-photo.full-photo::after {
   -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
@@ -240,14 +240,14 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .tile-photo + .tile-body { position: relative; margin-top: -26px; }
 .tile-photo:not(.full-photo) { isolation: isolate; }
 .tile-photo:not(.full-photo)::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 55%, var(--surface) 100%); }
+  background: linear-gradient(to bottom, transparent 55%, var(--surface) 94%); }
 .tile-photo:not(.full-photo)::after { z-index: 2; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
 .tile-photo svg { margin-bottom: 12%; }
 /* Fokus: wie die Kacheln – jedes Bild (auch das Kategorie-Symbol) läuft unten in den Text aus, gleiche Höhe. */
 .focus-photo-wrap + .focus-body { position: relative; margin-top: -34px; }
 .focus-photo:not(.full-photo) { isolation: isolate; }
 .focus-photo:not(.full-photo)::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 55%, var(--surface) 100%); }
+  background: linear-gradient(to bottom, transparent 55%, var(--surface) 94%); }
 .focus-photo:not(.full-photo)::after { z-index: 2; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
 .thumb.small { width: 40px; height: 40px; border-radius: 10px; }
 .thumb.large { width: 72px; height: 72px; border-radius: 16px; }
@@ -288,8 +288,8 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .thumb.wide svg { width: 34%; height: 34%; margin-right: 12%; stroke-width: 1.3; }
 .thumb.wide.has-photo img { padding: 10% 18% 10% 6%; }
 .thumb.wide.full-photo img { padding: 0 !important; }
-.thumb.wide::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
-  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%), linear-gradient(to right, transparent 42%, var(--surface) 100%); }
+.thumb.wide::before { content: ""; position: absolute; z-index: 1; inset: 0 -1px 0 0; pointer-events: none;
+  background: linear-gradient(160deg, var(--photo-sheen), transparent 45%), linear-gradient(to right, transparent 42%, var(--surface) 94%); }
 .thumb.wide::after { z-index: 2; -webkit-mask-image: linear-gradient(to right, #000 35%, transparent 80%); mask-image: linear-gradient(to right, #000 35%, transparent 80%); }
 
 /* Planung: Wischen zum Entfernen legt „Entfernen“ unter die Kachel. */
@@ -321,6 +321,10 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
   display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 4px 6px 4px 16px; border-radius: var(--radius);
   background: var(--toast-bg); color: var(--toast-text); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); font-size: 15px; }
 .toast[hidden] { display: none; }
+/* Kurzer Hinweis (z. B. „Keine weiteren Artikel“): schmal, mittig, nur so breit wie der Text */
+.toast.compact { left: 50%; right: auto; width: max-content; max-width: calc(100% - 32px); transform: translateX(-50%);
+  justify-content: center; min-height: 40px; padding: 4px 18px; border-radius: 20px; }
+.toast.compact span { flex: none; }
 .toast span { flex: 1; }
 .toast button { min-height: 40px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--toast-action); font-weight: 600; cursor: pointer; }
 
@@ -513,7 +517,22 @@ body.sheet-open { overscroll-behavior: none; }
 /* Einkauf, Liste: dieselbe Listenkachel; Zurückstellen unten rechts. */
 .srows { display: flex; flex-direction: column; gap: 10px; }
 .srow { border-radius: var(--radius); box-shadow: var(--shadow); }
-.srow .later-button { top: auto; bottom: 8px; right: 8px; background: color-mix(in srgb, var(--surface2) 85%, transparent); }
+/* Zurückstellen geht in Liste und Kacheln per Wischen nach links; der Knopf bleibt nur für VoiceOver erhalten. */
+.later-button.sr-only { width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Einkauf, „Liste klein“: halbe Kachelhöhe, Foto über die ganze Breite, Name + Menge mittig auf einer Glaslinse */
+.srows.compact { gap: 8px; }
+.crow { border-radius: var(--radius); box-shadow: var(--shadow); }
+.crow-main { position: relative; display: block; width: 100%; height: calc(var(--list-tile-h) / 2); padding: 0; border: 0; border-radius: var(--radius);
+  background: var(--tile); overflow: hidden; cursor: pointer; }
+.thumb.cover { position: absolute; inset: 0; width: auto; height: auto; border-radius: inherit; }
+.thumb.cover svg { width: auto; height: 46%; }
+.crow-lens { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: baseline; gap: 8px;
+  max-width: calc(100% - 32px); padding: 7px 16px; border-radius: 18px; white-space: nowrap; color: var(--text);
+  background: var(--glass-button); -webkit-backdrop-filter: blur(14px) saturate(1.5); backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: inset 0 0 0 0.5px var(--glass-line), 0 2px 10px rgba(0, 0, 0, 0.14); }
+.crow-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 600 16px/1.2 var(--font-display); }
+.crow-qty { flex: none; font-size: 15px; font-weight: 700; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
 
 /* Fokus */
 .focus { margin-top: 16px; }
@@ -534,6 +553,10 @@ body.sheet-open { overscroll-behavior: none; }
 .focus-position { display: block; height: 18px; margin-top: 8px; font-size: 13px; line-height: 18px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .focus-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
 .button.later-soft { border: 0; background: var(--later-soft); color: var(--later); }
+/* Fokus: Kategorie wechseln (Reihenfolge wie in den Einstellungen); am Rand ausgegraut */
+.button.focus-cat { border: 0; padding: 0 14px; background: var(--surface2); color: var(--text); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.button.focus-cat.next { background: var(--accent-soft); color: var(--accent-ink); }
+.button.focus-cat:disabled { background: var(--surface2); color: var(--placeholder); opacity: 0.6; }
 .button.accent-soft { border: 0; background: var(--accent-soft); color: var(--accent-ink); }
 
 /* Zurückgestellt & Im Wagen */
@@ -570,6 +593,9 @@ body.sheet-open { overscroll-behavior: none; }
 .noscript { padding: 24px; text-align: center; }
 
 @keyframes fade { from { opacity: 0; } }
+/* Fokus: „Keine weiteren Artikel“ – zweimal kurz nach links und rechts */
+@keyframes shake { 0%, 100% { transform: translateX(0); } 12.5%, 62.5% { transform: translateX(-9px); } 37.5%, 87.5% { transform: translateX(9px); } }
+.focus-card.shake { animation: shake 0.42s ease-in-out; }
 @keyframes slide-up { from { transform: translateY(100%); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

@@ -21,19 +21,22 @@ describe('Einkaufsmodus', () => {
     assert.deepEqual(model.focusQueue.map((i) => i.product.name), ['Äpfel', 'Milch', 'Waschmittel']);
   });
 
-  test('Fokus: Überspringen schiebt ans Ende, auch mehrmals', async () => {
-    const { model } = await makeModel(['Äpfel', 'Milch', 'Waschmittel']);
+  test('Fokus: Überspringen schiebt ans Ende der eigenen Kategorie, auch mehrmals', async () => {
+    const { model } = await makeModel(['Äpfel', 'Bananen', 'Birnen', 'Milch']);
     const names = () => model.focusQueue.map((i) => i.product.name);
-    model.skip(item(model, 'Äpfel'));
-    assert.deepEqual(names(), ['Milch', 'Waschmittel', 'Äpfel']);
-    model.skip(item(model, 'Milch'));
-    assert.deepEqual(names(), ['Waschmittel', 'Äpfel', 'Milch']);
-    model.skip(item(model, 'Waschmittel'));
-    model.skip(item(model, 'Äpfel'));
-    assert.deepEqual(names(), ['Milch', 'Waschmittel', 'Äpfel']);
-    assert.equal(item(model, 'Äpfel').status, 'open', 'Überspringen ändert den Status nicht');
-    await model.toCart(item(model, 'Milch'));
-    assert.deepEqual(names(), ['Waschmittel', 'Äpfel']);
+    const start = names();
+    const obst = start.slice(0, 3);
+    model.skip(item(model, obst[0]));
+    assert.deepEqual(names(), [obst[1], obst[2], obst[0], 'Milch'], 'bleibt in Obst, Milch unverändert dahinter');
+    model.skip(item(model, obst[1]));
+    assert.deepEqual(names(), [obst[2], obst[0], obst[1], 'Milch']);
+    model.skip(item(model, obst[2]));
+    model.skip(item(model, obst[0]));
+    assert.deepEqual(names(), [obst[1], obst[2], obst[0], 'Milch']);
+    assert.equal(item(model, obst[0]).status, 'open', 'Überspringen ändert den Status nicht');
+    await model.toCart(item(model, obst[1]));
+    assert.deepEqual(names(), [obst[2], obst[0], 'Milch']);
+    assert.deepEqual(model.focusSections.map((s) => s.category.key), ['obst', 'milch']);
   });
 
   test('Fokus: Überspringen gilt nur für den laufenden Einkauf', async () => {

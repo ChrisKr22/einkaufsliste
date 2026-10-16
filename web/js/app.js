@@ -131,6 +131,7 @@ function mountChrome(model) {
     const key = error ? `error:${error}` : t?.id;
     toast.hidden = !key;
     toast.classList.toggle('error', Boolean(error));
+    toast.classList.toggle('compact', Boolean(!error && t?.compact));
     if (key && toast.dataset.key !== key) {
       toast.dataset.key = key;
       toast.innerHTML = error
