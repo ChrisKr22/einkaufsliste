@@ -37,6 +37,10 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   const choice = mountViewChoice(root, { views: VIEWS, storageKey: VIEW_KEY, fallback: 'grid', onChange: () => render() });
   let cartOpen = false;
   let lastInputs = null;   // Stand beim letzten Zeichnen (siehe render)
+  const renderInputs = () => {
+    const { items, skipped, categories, photos } = model.state;
+    return [items, skipped, categories, photos, choice.current, focusCategoryId, cartOpen];
+  };
   let lastCarted = model.state.cartedCount;
 
   const find = (id) => model.state.items.find((i) => i.id === id);
@@ -94,15 +98,27 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       const SHAKE_MS = 420;
       const hideNotice = () => setTimeout(() => model.dismissToast(), 250);
       const card = content.querySelector('.focus-card');
-      if (!card || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) { setTimeout(hideNotice, SHAKE_MS); }
-      else {
+      // Bei „Bewegung reduzieren“ (iOS-Einstellung) zittert die Karte nur angedeutet, statt gar nicht.
+      const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      const px = reduced ? 4 : 10;
+      if (!card) { setTimeout(hideNotice, SHAKE_MS); }
+      else if (typeof card.animate === 'function') {
+        // Web Animations: läuft unabhängig von CSS-Klassen, Übergängen und der globalen
+        // „animation: none“-Regel für reduzierte Bewegung.
+        const shake = card.animate([
+          { transform: 'translateX(0)' }, { transform: `translateX(-${px}px)` }, { transform: `translateX(${px}px)` },
+          { transform: `translateX(-${px}px)` }, { transform: `translateX(${px}px)` }, { transform: 'translateX(0)' },
+        ], { duration: SHAKE_MS, easing: 'ease-in-out' });
+        let done = false;
+        const finish = () => { if (done) return; done = true; hideNotice(); };
+        shake.onfinish = finish;
+        shake.oncancel = finish;
+        setTimeout(finish, SHAKE_MS + 80);   // falls onfinish ausbleibt
+      } else {
         card.classList.remove('shake');
         void card.offsetWidth;   // Animation neu starten
         card.classList.add('shake');
-        let done = false;
-        const finish = () => { if (done) return; done = true; card.classList.remove('shake'); hideNotice(); };
-        card.addEventListener('animationend', finish, { once: true });
-        setTimeout(finish, SHAKE_MS + 80);   // falls animationend ausbleibt
+        setTimeout(() => { card.classList.remove('shake'); hideNotice(); }, SHAKE_MS);
       }
       buzz();
       return;
@@ -149,14 +165,13 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
 
     // Nur neu zeichnen, wenn sich etwas Sichtbares geändert hat – ein bloßer Hinweis (Toast) soll
     // die Karten nicht ersetzen (sonst flackern Fotos und laufende Animationen brechen ab).
-    const { items, skipped, categories, photos } = model.state;
-    const inputs = [items, skipped, categories, photos, view, focusCategoryId, cartOpen];
-    if (lastInputs && inputs.every((v, i) => v === lastInputs[i])) return;
-    lastInputs = inputs;
+    // Den Stand erst *nach* dem Zeichnen merken: Die Fokusansicht legt dabei ihre Kategorie fest.
+    if (lastInputs && renderInputs().every((v, i) => v === lastInputs[i])) return;
 
     if (total === 0) {
       content.innerHTML = `<div class="empty">${svg.cart}<h2>Die Liste ist leer</h2>`
         + '<p>Plane zuerst, was du brauchst.</p><button type="button" class="button secondary inline" data-to-plan>Zur Liste</button></div>';
+      lastInputs = renderInputs();
       return;
     }
 
@@ -176,6 +191,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     }
     parts.push(laterSection(), cartSection());
     content.innerHTML = parts.join('');
+    lastInputs = renderInputs();
   }
 
   function itemLabel(item) {
