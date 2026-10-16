@@ -1,4 +1,4 @@
-// FeedYourself – App-Icons für die Web-App erzeugen (grüner Grund, weißer Korb).
+// FeedYourself – App-Icons für die Web-App erzeugen (Tannengrün, weißer Korb mit Salbei-Blatt).
 // Aufruf: swiftc tools/web/make-icons.swift -o <bin> && <bin> web/icons
 
 import CoreGraphics
@@ -10,51 +10,75 @@ let outDir = URL(fileURLWithPath: CommandLine.arguments.count > 1 ? CommandLine.
 try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
 
-func color(_ hex: UInt32) -> CGColor {
-    CGColor(colorSpace: sRGB, components: [CGFloat((hex >> 16) & 0xFF) / 255, CGFloat((hex >> 8) & 0xFF) / 255, CGFloat(hex & 0xFF) / 255, 1])!
+func color(_ hex: UInt32, alpha: CGFloat = 1) -> CGColor {
+    CGColor(colorSpace: sRGB, components: [CGFloat((hex >> 16) & 0xFF) / 255, CGFloat((hex >> 8) & 0xFF) / 255, CGFloat(hex & 0xFF) / 255, alpha])!
 }
 
 func icon(size: Int) -> CGImage {
     let ctx = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: size * 4,
                         space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     let s = CGFloat(size)
-    // Vollflächig: iOS rundet die Ecken selbst ab, „maskable“ braucht Rand ohne Motiv.
-    ctx.setFillColor(color(0x1F5C3A))
-    ctx.fill(CGRect(x: 0, y: 0, width: s, height: s))
-
-    // Koordinaten von oben links, Motiv innerhalb der sicheren Zone (mittlere 60 %).
+    // Koordinaten wie im Entwurf: 1024 × 1024, Ursprung oben links.
     ctx.translateBy(x: 0, y: s)
-    ctx.scaleBy(x: s / 100, y: -s / 100)
-    ctx.setStrokeColor(color(0xFFFFFF))
-    ctx.setFillColor(color(0xFFFFFF))
+    ctx.scaleBy(x: s / 1024, y: -s / 1024)
+
+    // Vollflächiger Grund (iOS rundet selbst ab): Tannengrün mit leichtem Verlauf und feinem Glanz.
+    let green = CGGradient(colorsSpace: sRGB, colors: [color(0x28704A), color(0x184B2F)] as CFArray, locations: [0, 1])!
+    ctx.drawLinearGradient(green, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 0, y: 1024), options: [])
+    let sheen = CGGradient(colorsSpace: sRGB, colors: [color(0xFFFFFF, alpha: 0.14), color(0xFFFFFF, alpha: 0)] as CFArray, locations: [0, 0.5])!
+    ctx.drawLinearGradient(sheen, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 1024, y: 1024), options: [])
+
+    // Motiv leicht verkleinert, damit es auch als „maskable“-Icon (runder Ausschnitt) vollständig bleibt.
+    ctx.translateBy(x: 512, y: 512)
+    ctx.scaleBy(x: 0.9, y: 0.9)
+    ctx.translateBy(x: -512, y: -512)
     ctx.setLineCap(.round)
     ctx.setLineJoin(.round)
+    ctx.setStrokeColor(color(0xFFFFFF))
 
     // Henkel
-    ctx.setLineWidth(5)
-    ctx.addArc(center: CGPoint(x: 50, y: 42), radius: 15, startAngle: .pi, endAngle: 0, clockwise: false)
+    let handle = CGMutablePath()
+    handle.move(to: CGPoint(x: 352, y: 450))
+    handle.addCurve(to: CGPoint(x: 512, y: 282), control1: CGPoint(x: 352, y: 354), control2: CGPoint(x: 424, y: 282))
+    handle.addCurve(to: CGPoint(x: 672, y: 450), control1: CGPoint(x: 600, y: 282), control2: CGPoint(x: 672, y: 354))
+    ctx.setLineWidth(44)
+    ctx.addPath(handle)
     ctx.strokePath()
-    // Korb
+
+    // Korb (Umriss mit gerundeten unteren Ecken)
     let basket = CGMutablePath()
-    basket.move(to: CGPoint(x: 26, y: 42))
-    basket.addLine(to: CGPoint(x: 74, y: 42))
-    basket.addLine(to: CGPoint(x: 68, y: 72))
-    basket.addLine(to: CGPoint(x: 32, y: 72))
+    basket.move(to: CGPoint(x: 250, y: 450))
+    basket.addLine(to: CGPoint(x: 774, y: 450))
+    basket.addLine(to: CGPoint(x: 722, y: 740))
+    basket.addQuadCurve(to: CGPoint(x: 682, y: 774), control: CGPoint(x: 716, y: 774))
+    basket.addLine(to: CGPoint(x: 342, y: 774))
+    basket.addQuadCurve(to: CGPoint(x: 302, y: 740), control: CGPoint(x: 308, y: 774))
     basket.closeSubpath()
     ctx.addPath(basket)
-    ctx.fillPath()
-    // Flechtlinien
-    ctx.setStrokeColor(color(0x1F5C3A))
-    ctx.setLineWidth(3)
-    for x in [41.0, 50.0, 59.0] {
-        ctx.move(to: CGPoint(x: x, y: 49))
-        ctx.addLine(to: CGPoint(x: x - (x - 50) * 0.15, y: 65))
+    ctx.strokePath()
+
+    // Flechtstreben
+    ctx.setLineWidth(36)
+    for x in [420.0, 512.0, 604.0] {
+        ctx.move(to: CGPoint(x: x, y: 540))
+        ctx.addLine(to: CGPoint(x: x, y: 680))
     }
     ctx.strokePath()
-    // Blatt (Akzent Gelb)
+
+    // Salbei-Blatt, das aus dem Korb wächst
+    let leaf = CGMutablePath()
+    leaf.move(to: CGPoint(x: 640, y: 430))
+    leaf.addCurve(to: CGPoint(x: 850, y: 216), control1: CGPoint(x: 650, y: 310), control2: CGPoint(x: 730, y: 230))
+    leaf.addCurve(to: CGPoint(x: 640, y: 430), control1: CGPoint(x: 854, y: 340), control2: CGPoint(x: 778, y: 430))
     ctx.setFillColor(color(0xA7C2A0))
-    ctx.addEllipse(in: CGRect(x: 62, y: 24, width: 12, height: 12))
+    ctx.addPath(leaf)
     ctx.fillPath()
+    // Blattader
+    ctx.setStrokeColor(color(0x184B2F, alpha: 0.55))
+    ctx.setLineWidth(14)
+    ctx.move(to: CGPoint(x: 652, y: 420))
+    ctx.addCurve(to: CGPoint(x: 812, y: 256), control1: CGPoint(x: 692, y: 358), control2: CGPoint(x: 748, y: 302))
+    ctx.strokePath()
     return ctx.makeImage()!
 }
 
