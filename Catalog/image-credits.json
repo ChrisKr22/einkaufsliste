@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16 09:02",
+  "generated_at": "2026-10-16 09:10",
   "images": [
     {
       "product_id": "aepfel",
@@ -834,11 +834,11 @@
       "name": "Milch",
       "file": "Images/milch.jpg",
       "source": "Pexels",
-      "author": "Christopher Welsch Leveroni",
-      "page": "https://www.pexels.com/photo/35386596/",
+      "author": "Cottonbro",
+      "page": "https://www.pexels.com/photo/7702453/",
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
-      "original_file": "Milch_-christopher-welsch-leveroni-2150186467-35386596.jpg",
+      "original_file": "Milch_pexels-cottonbro-7702453.jpg",
       "cutout": false
     },
     {
@@ -1098,9 +1098,11 @@
       "name": "Rindersteak",
       "file": "Images/rindersteak.jpg",
       "source": "Pexels",
+      "author": "Mohamed9380",
+      "page": "https://www.pexels.com/photo/36720624/",
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
-      "original_file": "Steak_pexels.jpg",
+      "original_file": "Steak_pexels-mohamed9380-36720624.jpg",
       "cutout": false
     },
     {
