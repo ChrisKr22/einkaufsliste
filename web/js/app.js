@@ -79,7 +79,8 @@ function mountChrome(model) {
     if (!swipe) return;
     const dx = event.clientX - swipe.x;
     if (!swipe.active) {
-      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(event.clientY - swipe.y)) return;
+      // Großzügig: Schon schräges Wischen (bis gut 60° gegen die Waagerechte) zählt.
+      if (Math.abs(dx) < 6 || Math.abs(dx) * 2 < Math.abs(event.clientY - swipe.y)) return;
       swipe.active = true;
       modeBar.classList.add('dragging');
       dock.setPointerCapture?.(event.pointerId);

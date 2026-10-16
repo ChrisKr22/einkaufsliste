@@ -162,7 +162,8 @@ body.shopping .wordmark span { color: var(--accent-ink); }
   display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 20px; pointer-events: none; }
 .dock > * { pointer-events: auto; }
 .dock-pill { position: relative; width: min(270px, 100%); padding: 4px; border-radius: 24px; background: var(--dock-glass);
-  -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px); box-shadow: var(--dock-shadow); touch-action: pan-y; }
+  -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px); box-shadow: var(--dock-shadow);
+  touch-action: none;   /* Gesten auf der Leiste gehören der Leiste – die Seite scrollt hier nie, auch bei schrägem Wischen */ }
 /* Auswahllinse: eine grüne Fläche, die zwischen den Reitern gleitet (auch beim Wischen dem Finger folgt). */
 .mode { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; --lens-x: 0px; }
 .mode-lens { position: absolute; z-index: 0; top: 0; bottom: 0; left: 0; width: calc(50% - 1px); border-radius: 20px; background: var(--accent);
@@ -228,7 +229,14 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .full-photo::after { z-index: 2; }
 .tile-photo.full-photo::after, .focus-photo.full-photo::after {
   -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
-.tile-photo.full-photo + .tile-body { position: relative; margin-top: -26px; }
+/* Jede Kachel (Foto, freigestelltes Bild oder Kategorie-Symbol) läuft unten gleich in den Text aus –
+   so sind alle Kacheln gleich hoch, auch ohne Foto. */
+.tile-photo + .tile-body { position: relative; margin-top: -26px; }
+.tile-photo:not(.full-photo) { isolation: isolate; }
+.tile-photo:not(.full-photo)::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, transparent 55%, var(--surface) 100%); }
+.tile-photo:not(.full-photo)::after { z-index: 2; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
+.tile-photo svg { margin-bottom: 12%; }
 .focus-photo-wrap:has(.full-photo) + .focus-body { position: relative; margin-top: -34px; }
 .thumb.small { width: 40px; height: 40px; border-radius: 10px; }
 .thumb.large { width: 72px; height: 72px; border-radius: 16px; }
