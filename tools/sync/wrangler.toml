@@ -3,6 +3,8 @@ name = "feedyourself-sync"
 main = "src/worker.js"
 compatibility_date = "2025-09-01"
 workers_dev = true
+# Keine zusätzlichen Test-Adressen je Version – nur die eine Adresse …workers.dev
+preview_urls = false
 
 [[durable_objects.bindings]]
 name = "MAILBOX"

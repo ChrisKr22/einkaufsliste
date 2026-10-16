@@ -338,12 +338,14 @@ test('Plätze: Liste voll, während eine Anfrage noch offen ist – Bestätigen 
 
 // ---------------------------------------------------------------- Einstieg (Worker)
 
-test('Worker: leitet an den Briefkasten der Liste weiter, beantwortet CORS-Vorabfragen', async () => {
+test('Worker: leitet an den Briefkasten der Liste in der EU weiter, beantwortet CORS-Vorabfragen', async () => {
   const seen = [];
   const env = {
     MAILBOX: {
-      idFromName: (name) => `id:${name}`,
-      get: (id) => ({ fetch: (request) => { seen.push([id, new URL(request.url).pathname]); return new Response('ok'); } }),
+      jurisdiction: (where) => ({
+        idFromName: (name) => `${where}:${name}`,
+        get: (id) => ({ fetch: (request) => { seen.push([id, new URL(request.url).pathname]); return new Response('ok'); } }),
+      }),
     },
   };
   const listId = newListId();
@@ -354,7 +356,7 @@ test('Worker: leitet an den Briefkasten der Liste weiter, beantwortet CORS-Vorab
   assert.equal((await worker.fetch(new Request(`${BASE}/`), env)).status, 200);
   assert.equal((await worker.fetch(new Request(`${BASE}/v1/lists/kaputt/ops`), env)).status, 404);
   await worker.fetch(new Request(`${BASE}/v1/lists/${listId}/ops`), env);
-  assert.deepEqual(seen, [[`id:${listId}`, `/v1/lists/${listId}/ops`]]);
+  assert.deepEqual(seen, [[`eu:${listId}`, `/v1/lists/${listId}/ops`]]);
 });
 
 // ---------------------------------------------------------------- Zusammen mit dem Kern der App
