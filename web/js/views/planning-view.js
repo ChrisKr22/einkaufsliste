@@ -1,7 +1,7 @@
 // Planungsmodus: Suche mit Vorschlägen, „Zuletzt gekauft“, Liste oder Kacheln nach Kategorien, Menge, Wischen zum Entfernen.
 
 import { categoryStyle } from '../category-style.js';
-import { esc, icon, photoClass, photoContent, stepper, thumb, buzz } from './dom.js';
+import { esc, icon, keepHorizontalSwipes, photoClass, photoContent, stepper, thumb, buzz } from './dom.js';
 import { mountViewChoice } from './view-choice.js';
 import { formatQuantity, spokenQuantity, unitOf } from '../units.js';
 
@@ -9,6 +9,8 @@ const SWIPE_DELETE_PX = 90;
 const RECENT_ORDER_KEY = 'feedyourself.recentOrder';
 const VIEW_KEY = 'feedyourself.planView';
 const check = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+// Kleiner Stift statt „Anmerkung hinzufügen“: dezent, Tippen öffnet das Detailfenster.
+const pen = '<svg class="note-pen" aria-hidden="true" viewBox="0 0 24 24"><path d="M14.5 5.5l4 4M5 19l1-4L15.5 5.5a1.4 1.4 0 0 1 2 0l1 1a1.4 1.4 0 0 1 0 2L9 18z"/></svg>';
 
 function readRecentOrder() {
   try { return localStorage.getItem(RECENT_ORDER_KEY) === 'frequent' ? 'frequent' : 'recent'; } catch { return 'recent'; }
@@ -71,6 +73,7 @@ export function mountPlanningView(root, model) {
     else if (dec) model.decrement(find(dec.dataset.dec));
     else if (edit) model.openEditor(edit.dataset.edit);
   });
+  keepHorizontalSwipes(listEl, '.row-inner');
   attachSwipeToDelete(listEl, (id) => {
     const item = model.state.items.find((i) => i.id === id);
     if (item) model.remove(item);
@@ -162,7 +165,7 @@ export function mountPlanningView(root, model) {
   function noteFor(item) {
     if (item.status === 'later') return `<span class="list-tile-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
     if (item.note) return `<span class="list-tile-note">${esc(item.note)}</span>`;
-    return '<span class="list-tile-note is-placeholder">Anmerkung hinzufügen</span>';
+    return `<span class="list-tile-note is-placeholder" title="Anmerkung hinzufügen">${pen}</span>`;
   }
 
   function labelFor(item) {
@@ -176,7 +179,7 @@ export function mountPlanningView(root, model) {
     let note;
     if (item.status === 'later') note = `<span class="item-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
     else if (item.note) note = `<span class="item-note">${esc(item.note)}</span>`;
-    else note = '<span class="item-note is-placeholder">Anmerkung hinzufügen</span>';
+    else note = `<span class="item-note is-placeholder" title="Anmerkung hinzufügen">${pen}</span>`;
     return `<div class="tile plan-tile">
       <button type="button" class="tile-main" data-edit="${item.id}" aria-label="${esc(labelFor(item))} – bearbeiten">
         <span class="tile-photo${photoClass(item.product)}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">${photoContent(item.product, categoryKey)}</span>
@@ -225,8 +228,9 @@ function attachSwipeToDelete(listEl, onDelete) {
     const dx = event.clientX - drag.x;
     const dy = event.clientY - drag.y;
     if (!drag.active) {
-      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }   // scrollt
-      if (Math.abs(dx) < 10) return;
+      // Gleiche Regel wie keepHorizontalSwipes: ab 6 px entscheidet die überwiegende Richtung.
+      if (Math.max(Math.abs(dx), Math.abs(dy)) <= 6) return;
+      if (Math.abs(dy) >= Math.abs(dx)) { drag = null; return; }   // scrollt
       drag.active = true;
       drag.inner.classList.add('dragging');
       drag.inner.setPointerCapture?.(event.pointerId);

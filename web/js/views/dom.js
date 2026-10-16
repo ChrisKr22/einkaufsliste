@@ -59,6 +59,33 @@ export function stepper(item, { large = false } = {}) {
     + '</div>';
 }
 
+/**
+ * Waagerechtes Wischen gegen das Scrollen der Seite absichern.
+ * Die Kacheln erlauben senkrechtes Scrollen (touch-action: pan-y). Ohne diese Hilfe übernimmt iOS
+ * ein leicht schräges Wischen als Scrollen und bricht die Geste mittendrin ab (pointercancel).
+ * Sobald eine Bewegung erkennbar waagerecht ist, wird das Scrollen für diese Berührung unterbunden.
+ */
+export function keepHorizontalSwipes(container, selector) {
+  let start = null;
+  let horizontal = null;   // null = noch offen, true/false = entschieden
+  container.addEventListener('touchstart', (event) => {
+    const touch = event.touches[0];
+    start = event.touches.length === 1 && event.target.closest(selector) ? { x: touch.clientX, y: touch.clientY } : null;
+    horizontal = null;
+  }, { passive: true });
+  container.addEventListener('touchmove', (event) => {
+    if (!start) return;
+    const touch = event.touches[0];
+    const dx = Math.abs(touch.clientX - start.x);
+    const dy = Math.abs(touch.clientY - start.y);
+    if (horizontal === null && Math.max(dx, dy) > 6) horizontal = dx > dy;
+    if (horizontal) event.preventDefault();
+  }, { passive: false });
+  const end = () => { start = null; horizontal = null; };
+  container.addEventListener('touchend', end);
+  container.addEventListener('touchcancel', end);
+}
+
 /** Kurzes haptisches Feedback, wo der Browser es kann (iPhone-Safari unterstützt es nicht). */
 export function buzz() {
   try { navigator.vibrate?.(12); } catch { /* egal */ }

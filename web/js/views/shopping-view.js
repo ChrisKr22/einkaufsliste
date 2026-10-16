@@ -3,7 +3,7 @@
 
 import { categoryStyle } from '../category-style.js';
 import { formatQuantity, spokenQuantity, unitOf } from '../units.js';
-import { buzz, esc, photoClass, photoContent, thumb } from './dom.js';
+import { buzz, esc, keepHorizontalSwipes, photoClass, photoContent, thumb } from './dom.js';
 import { mountViewChoice } from './view-choice.js';
 
 const VIEW_KEY = 'feedyourself.shopView';
@@ -64,6 +64,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     setTimeout(() => model.skip(item), 160);
   }
 
+  keepHorizontalSwipes(content, '[data-swipe]');
   attachSwipeGestures(content, {
     onCart: (id) => { const item = find(id); if (item) model.toCart(item); },
     onLater: (id) => { const item = find(id); if (item) model.toLater(item); },
@@ -267,8 +268,9 @@ function attachSwipeGestures(container, { onCart, onLater }) {
     const dx = event.clientX - g.x;
     const dy = event.clientY - g.y;
     if (!g.active) {
-      if (Math.hypot(dx, dy) < 10) return;
-      if (Math.abs(dx) < Math.abs(dy)) { g = null; return; }   // senkrecht: Seite scrollt
+      // Gleiche Regel wie keepHorizontalSwipes: ab 6 px entscheidet die überwiegende Richtung.
+      if (Math.max(Math.abs(dx), Math.abs(dy)) <= 6) return;
+      if (Math.abs(dx) <= Math.abs(dy)) { g = null; return; }   // senkrecht: Seite scrollt
       g.active = true;
       g.el.classList.add('dragging');
       g.el.setPointerCapture?.(event.pointerId);

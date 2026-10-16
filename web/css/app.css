@@ -237,7 +237,12 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
   background: linear-gradient(to bottom, transparent 55%, var(--surface) 100%); }
 .tile-photo:not(.full-photo)::after { z-index: 2; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
 .tile-photo svg { margin-bottom: 12%; }
-.focus-photo-wrap:has(.full-photo) + .focus-body { position: relative; margin-top: -34px; }
+/* Fokus: wie die Kacheln – jedes Bild (auch das Kategorie-Symbol) läuft unten in den Text aus, gleiche Höhe. */
+.focus-photo-wrap + .focus-body { position: relative; margin-top: -34px; }
+.focus-photo:not(.full-photo) { isolation: isolate; }
+.focus-photo:not(.full-photo)::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, transparent 55%, var(--surface) 100%); }
+.focus-photo:not(.full-photo)::after { z-index: 2; -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); mask-image: linear-gradient(to bottom, #000 40%, transparent 85%); }
 .thumb.small { width: 40px; height: 40px; border-radius: 10px; }
 .thumb.large { width: 72px; height: 72px; border-radius: 16px; }
 
@@ -497,6 +502,7 @@ body.sheet-open { overscroll-behavior: none; }
 .glass-button:active { transform: scale(0.92); }
 .glass-button svg { width: 15px; height: 15px; stroke-width: 2.4; }
 .item-note.is-placeholder { color: var(--placeholder); font-style: italic; }
+.note-pen { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; stroke-width: 1.8; opacity: 0.8; }
 .item-note.later { color: var(--later); }
 /* Einkauf, Liste: dieselbe Listenkachel; Zurückstellen unten rechts. */
 .srows { display: flex; flex-direction: column; gap: 10px; }
@@ -509,17 +515,17 @@ body.sheet-open { overscroll-behavior: none; }
 .focus-peek { position: absolute; left: 16px; right: 16px; top: 12px; bottom: -10px; border-radius: 28px; background: var(--surface); box-shadow: var(--shadow); opacity: 0.6; }
 .focus-card { border-radius: 28px; }
 .focus-card.skipping { opacity: 0; transform: translateY(-24px) scale(0.97); transition: transform 0.16s ease-in, opacity 0.16s ease-in; }   /* erbt touch-action: pan-y – senkrecht scrollt */
-.focus-main { display: flex; flex-direction: column; width: 100%; padding: 0; border: 0; border-radius: 28px; background: var(--surface); text-align: left; overflow: hidden; cursor: pointer; box-shadow: var(--shadow); }
+.focus-main { display: block; width: 100%; padding: 0; border: 0; border-radius: 28px; background: var(--surface); text-align: left; overflow: hidden; cursor: pointer; box-shadow: var(--shadow); }
 .focus-photo-wrap { position: relative; display: block; }
 .focus-photo { position: relative; display: flex; align-items: center; justify-content: center; height: min(46vh, 300px); background: var(--tile); color: var(--icon); border-radius: 28px 28px 0 0; overflow: hidden; }
-.focus-photo svg { width: 42%; height: 56%; stroke-width: 0.9; }
+.focus-photo svg { width: 42%; height: 50%; margin-bottom: 8%; stroke-width: 0.9; }
 .chip { position: absolute; z-index: 1; left: 14px; top: 14px; padding: 6px 11px; border-radius: 999px; background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); font-size: 12px; font-weight: 600; color: var(--text); }
 .focus-body { display: block; padding: 18px 22px 22px; }
-.focus-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.focus-head .item-name { font: 700 30px/1.1 var(--font-display); letter-spacing: -0.6px; }
+.focus-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; height: 34px; }
+.focus-head .item-name { min-width: 0; font: 700 30px/1.1 var(--font-display); letter-spacing: -0.6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .focus-head .item-qty { font-size: 24px; font-weight: 600; }
-.focus .item-note { font-size: 16px; min-height: 22px; margin-top: 2px; }
-.focus-position { display: block; margin-top: 8px; font-size: 13px; color: var(--text2); }
+.focus .item-note { font-size: 16px; height: 22px; min-height: 0; line-height: 22px; margin-top: 2px; }
+.focus-position { display: block; height: 18px; margin-top: 8px; font-size: 13px; line-height: 18px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .focus-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
 .button.later-soft { border: 0; background: var(--later-soft); color: var(--later); }
 .button.accent-soft { border: 0; background: var(--accent-soft); color: var(--accent-ink); }
