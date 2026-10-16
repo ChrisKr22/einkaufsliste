@@ -1,0 +1,17 @@
+# Briefkasten für gemeinsame Listen (KONZEPT.md 8.4). Einrichtung: siehe LIESMICH.md.
+name = "feedyourself-sync"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "MAILBOX"
+class_name = "ListMailbox"
+
+# SQLite-Speicher – im Gratis-Tarif die einzige erlaubte Art
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ListMailbox"]
+
+[observability]
+enabled = false

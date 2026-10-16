@@ -432,7 +432,7 @@ Daraus folgt:
 
 - Jede gemeinsame Liste hat einen **Briefkasten** bei Cloudflare: ein kleiner Speicher, in den jedes Gerät seine Änderungen einwirft und aus dem es die Änderungen der anderen abholt.
 - **Der Briefkasten kann nichts lesen.** Alles wird auf dem Gerät verschlüsselt (Ende-zu-Ende, AES-GCM über die WebCrypto-Schnittstelle des Browsers). Der Listenschlüssel liegt nur auf den Geräten der Mitglieder.
-- **Mitglied ist, wer den Schlüssel der Liste hat.** Keine Konten, keine Passwörter, keine E-Mail-Adressen. Ein Gerät kann in beliebig vielen Listen sein; jede Liste hat ihren eigenen Schlüssel.
+- **Mitglied ist, wer den Schlüssel der Liste hat und einen Platz im Briefkasten.** Keine Konten, keine Passwörter, keine E-Mail-Adressen. **Höchstens 5 Geräte pro Liste**; jedes hat eine zufällige Mitglieds-ID, ohne Platz kein Zugang – auch nicht mit weitergegebenem Schlüssel. Ein Gerät kann in beliebig vielen Listen sein; jede Liste hat ihren eigenen Schlüssel.
 - **Abgleich automatisch:** Solange die App offen ist, sofort beim Öffnen, nach jeder eigenen Änderung (gebündelt nach 1–2 s) und sonst alle 5 Sekunden. Im Hintergrund passiert nichts – iOS lässt Web-Apps dort nicht arbeiten; wer die App öffnet, ist nach einer Sekunde aktuell.
 - **Offline zuerst:** Die App arbeitet immer mit ihrem lokalen Stand. Fällt der Briefkasten aus, fehlt nur der Abgleich.
 
@@ -460,7 +460,8 @@ Ein kleines Programm (ca. 150 Zeilen, liegt im Repository unter `tools/sync/`), 
 | | |
 |---|---|
 | Schnittstelle | `POST /liste/<id>` (Änderungen einwerfen), `GET /liste/<id>?seit=<nr>` (Neues abholen; leer, wenn nichts da ist), dazu Beitrittsanfragen (siehe unten) |
-| Schreibschutz | Beim Anlegen hinterlegt das erste Gerät einen **Schreib-Nachweis** (aus dem Listenschlüssel abgeleitet). Einwerfen, Gesamtstand ablegen und Löschen nur mit Nachweis. |
+| Schreibschutz | Beim Anlegen hinterlegt das erste Gerät einen **Schreib-Nachweis** (aus dem Listenschlüssel abgeleitet). Lesen, Einwerfen, Gesamtstand ablegen und Löschen nur mit Nachweis **und** eigenem Platz (Mitglieds-ID). |
+| Plätze | Höchstens 5 pro Liste. Ein Platz entsteht beim Anlegen und beim bestätigten Beitritt; Austreten oder Entfernen gibt ihn frei, der Zugang dieses Geräts endet sofort. |
 | Bremse | Begrenzung pro Gerät/IP, damit niemand die Gratis-Menge leer fragen kann |
 | Kosten | **0 €** – Gratis-Tarif (rund 100 000 Anfragen pro Tag; 3 Geräte × 1 Stunde × alle 5 s ≈ 2 000–3 000). Über der Grenze entstehen keine Kosten, der Abgleich pausiert bis zum Folgetag. Grenzen vor der Umsetzung aktuell prüfen. |
 | Einrichtung | Einmalig durch Christopher: kostenloses Cloudflare-Konto (ohne Kreditkarte), `npx wrangler deploy` im Ordner `tools/sync/` (Anmeldung im Browser). Danach wartungsfrei; die Adresse `…workers.dev` wird in der App hinterlegt. |
@@ -495,15 +496,15 @@ sequenceDiagram
 ```
 
 1. **Liste anlegen** (Gerät A): *Einstellungen › Gemeinsame Listen › Neue Liste* → Name (z. B. „WG“). Die App erzeugt Listen-ID und Schlüssel (256 Bit) und legt den Briefkasten an. **Wahlweise übernimmt sie die bisherige private Liste.**
-2. **Einladen** (jedes Mitglied): *Mitglied einladen* öffnet das Teilen-Menü mit einem Link `https://chriskr22.github.io/einkaufsliste/#beitreten=<ID>.<Einladung>`, daneben ein QR-Code. Die Einladung gilt 24 Stunden.
+2. **Einladen** (jedes Mitglied): *Mitglied einladen* öffnet das Teilen-Menü mit einem Link `https://chriskr22.github.io/einkaufsliste/#beitreten=<ID>.<Einladung>`, daneben ein QR-Code. Die Einladung gilt **30 Minuten**; eine Bestätigung, die kurz vor Ablauf kommt, kann das neue Gerät danach noch 24 Stunden abholen. Ist die Liste mit 5 Geräten voll, lässt sich keine Anfrage stellen.
    - Alles hinter dem `#` wird nie an einen Server geschickt, auch nicht an GitHub Pages.
    - Für die Home-Bildschirm-App gilt wie heute: **Link kopieren → einfügen**, weil iPhone-Links in Safari aufgehen.
 3. **Anfrage** (Gerät C): Dialog „Der Liste ‚WG‘ beitreten?“ mit Feld für den Gerätenamen (nur für die Anfrage und die Mitgliederliste, nicht an Einträgen). C erzeugt ein Schlüsselpaar (ECDH P-256) und wirft die Anfrage ein.
 4. **Bestätigen** (ein beliebiges Mitglied, das die App offen hat): Hinweis „Beitrittsanfrage von ‚Sams iPhone‘“. Beide Geräte zeigen einen **4-stelligen Prüfcode** (aus beiden Schlüsseln berechnet); stimmt er überein, tippt das Mitglied *Bestätigen*. Wer die Einladung abgefangen hat, kommt so nicht unbemerkt hinein.
-5. **Fertig** (Gerät C): holt den für sich verschlüsselten Listenschlüssel ab, lädt den Stand; die Liste erscheint in der Listenauswahl.
+5. **Fertig** (Gerät C): bekommt einen der 5 Plätze, holt den für sich verschlüsselten Listenschlüssel ab, lädt den Stand; die Liste erscheint in der Listenauswahl.
 6. **Wer ist dabei:** *Einstellungen › Gemeinsame Listen › WG* zeigt die Geräte und wann sie zuletzt abgeglichen haben.
-7. **Verlassen:** Das Gerät löscht Schlüssel und Daten der Liste und meldet sich ab.
-8. **Jemanden entfernen:** Neuer Listenschlüssel; weil jedes Gerät ein eigenes Schlüsselpaar hat, verteilt die App ihn **selbst** an die verbleibenden Mitglieder. Die Entfernte behält, was sie bis dahin gesehen hat, bekommt aber nichts Neues mehr.
+7. **Verlassen:** Das Gerät löscht Schlüssel und Daten der Liste und gibt seinen Platz frei.
+8. **Jemanden entfernen:** Platz sofort freigeben (Zugang endet), dann neuer Listenschlüssel; weil jedes Gerät ein eigenes Schlüsselpaar hat, verteilt die App ihn **selbst** an die verbleibenden Mitglieder. Die Entfernte behält, was sie bis dahin gesehen hat, bekommt aber nichts Neues mehr.
 
 #### In der App
 
@@ -553,6 +554,8 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 |---|---|
 | Wo steht der Briefkasten? | **Cloudflare Worker** (Gratis-Tarif). |
 | Wer darf einladen? | **Jedes Mitglied.** |
+| Gültigkeit einer Einladung | **30 Minuten.** |
+| Mitglieder pro Liste | **Höchstens 5 Geräte**, vom Briefkasten durchgesetzt. |
 | Beitritt | **Muss bestätigt werden** – Anfrage mit eigenem Schlüsselpaar, Bestätigung mit Prüfcode durch ein beliebiges Mitglied. |
 | Private Liste übernehmen | **Ja**, beim Anlegen einer gemeinsamen Liste wählbar. |
 | Was wird geteilt? | Einträge (Menge, Einheit, Anmerkung, Status) und eigene Produkte; pro Gerät bleiben Laden-Reihenfolge, eigene Fotos, „Zuletzt gekauft“. |

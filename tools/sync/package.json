@@ -1,0 +1,10 @@
+{
+  "name": "feedyourself-sync",
+  "private": true,
+  "type": "module",
+  "description": "Briefkasten für gemeinsame FeedYourself-Listen (Cloudflare Worker).",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "deploy": "npx wrangler@4 deploy"
+  }
+}

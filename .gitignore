@@ -22,3 +22,7 @@ __pycache__/
 *.pyc
 # Katalog-Vorschläge von Nutzern (enthalten fremde Nachrichten)
 Catalog/Vorschlaege/
+
+# Cloudflare-Werkzeug (lokale Dateien)
+tools/sync/.wrangler/
+tools/sync/node_modules/
