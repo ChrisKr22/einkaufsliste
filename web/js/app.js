@@ -5,6 +5,7 @@ import { ShoppingRepository } from './data/repository.js';
 import { ListModel } from './list-model.js';
 import { openIdbStore } from './storage/idb-store.js';
 import { MemoryStore } from './storage/memory-store.js';
+import { mountThemeSection } from './theme.js';
 import { mountBackupSection } from './views/backup-view.js';
 import { mountEditSheet } from './views/edit-sheet.js';
 import { esc, setPhotoSources } from './views/dom.js';
@@ -133,6 +134,7 @@ async function start() {
   mountShoppingView(document.querySelector('#shop-view'), model, { onGoToPlanning: () => chrome.setMode('plan') });
   mountEditSheet(document.querySelector('#sheet-root'), model);
   mountSettingsView(document.querySelector('#settings'), model, { opener: document.querySelector('#open-settings') });
+  mountThemeSection(document.querySelector('#theme-section'));
   mountBackupSection(document.querySelector('#backup'), model);
   mountProductUnits(document.querySelector('#product-units'), model);
   mountShareButton(document.querySelector('#plan-view'), model);

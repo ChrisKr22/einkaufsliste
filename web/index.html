@@ -15,6 +15,8 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <!-- Gewählte Darstellung vor dem ersten Zeichnen setzen, damit nichts aufblitzt (Details: js/theme.js). -->
+  <script>try { var t = localStorage.getItem('fy-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
   <link rel="stylesheet" href="css/app.css">
   <title>FeedYourself</title>
 </head>
@@ -89,7 +91,16 @@
           <h2 id="settings-title">Einstellungen</h2>
           <button type="button" class="text-button strong" data-close-settings>Fertig</button>
         </div>
-        <section aria-labelledby="categories-title">
+        <section id="theme-section" aria-labelledby="theme-title">
+          <h3 class="section-title" id="theme-title">Darstellung</h3>
+          <div class="theme-choice" role="radiogroup" aria-labelledby="theme-title">
+            <button type="button" role="radio" data-theme-choice="system" aria-checked="true">System</button>
+            <button type="button" role="radio" data-theme-choice="light" aria-checked="false">Hell</button>
+            <button type="button" role="radio" data-theme-choice="dark" aria-checked="false">Dunkel</button>
+          </div>
+          <p class="section-note">„System“ folgt der Einstellung des iPhones. Gilt nur auf diesem Gerät.</p>
+        </section>
+        <section class="settings-section" aria-labelledby="categories-title">
           <h3 class="section-title" id="categories-title">Kategorien</h3>
           <p class="section-note">Die Reihenfolge ist dein Weg durch den Laden. Zum Sortieren am Griff ziehen, Namen antippen zum Umbenennen.</p>
           <div id="category-list" class="card category-list" role="list"></div>

@@ -289,6 +289,9 @@ body.settings-open { overflow: hidden; }
 .settings .section-note:last-child { margin-top: 10px; }
 
 .settings-section { margin-top: 32px; }
+.theme-choice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 11px; background: var(--surface2); }
+.theme-choice button { min-height: 36px; border: 0; border-radius: 9px; background: transparent; color: var(--text2); font-size: 15px; font-weight: 500; cursor: pointer; }
+.theme-choice button[aria-checked="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow-sm); }
 .backup-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
 .backup-status { margin: 0; font-size: 15px; color: var(--text2); }
 .backup-status.due { color: var(--later); font-weight: 600; }
