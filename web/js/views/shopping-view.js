@@ -30,8 +30,9 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   const progressEl = bar?.parentElement;
   const hint = root.querySelector('#shop-hint');
   const content = root.querySelector('#shop-content');
-  const finishBar = root.querySelector('#finish-bar');
-  const finishButton = root.querySelector('#finish');
+  // „Einkauf abschließen“ ist der runde Haken in der schwebenden Leiste unten (nur im Einkaufsmodus sichtbar).
+  const finishButton = document.querySelector('#finish');
+  finishButton?.addEventListener('click', () => { if (!finishButton.disabled) model.finishShopping(); });
   const choice = mountViewChoice(root, { views: VIEWS, storageKey: VIEW_KEY, fallback: 'grid', onChange: () => render() });
   let cartOpen = false;
   let lastCarted = model.state.cartedCount;
@@ -49,7 +50,6 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     else if (cart) model.toCart(find(cart.dataset.cart));
     else if (reopen) model.reopen(find(reopen.dataset.reopen));
     else if (t.closest('[data-toggle-cart]')) { cartOpen = !cartOpen; render(); }
-    else if (t.closest('[data-finish]')) model.finishShopping();
     else if (t.closest('[data-to-plan]')) { model.dismissSummary(); onGoToPlanning(); }
   });
 
@@ -86,7 +86,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     const { summary } = model.state;
     const view = choice.current;
     hint.hidden = Boolean(summary);
-    finishBar.hidden = Boolean(summary) || model.state.items.length === 0;
+    if (finishButton) finishButton.hidden = Boolean(summary) || model.state.items.length === 0;
     if (summary) {
       content.innerHTML = summaryView(summary);
       return;
@@ -94,7 +94,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
 
     const { done, total } = model.progress;
     hint.textContent = HINTS[view];
-    finishButton.disabled = done === 0;
+    if (finishButton) finishButton.disabled = done === 0;
 
     if (total === 0) {
       content.innerHTML = `<div class="empty">${svg.cart}<h2>Die Liste ist leer</h2>`

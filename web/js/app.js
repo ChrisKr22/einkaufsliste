@@ -62,6 +62,26 @@ function mountChrome(model) {
 
   for (const tab of tabs) tab.addEventListener('click', () => setMode(tab.dataset.mode));
 
+  // Waagerecht über die Leiste wischen wechselt den Modus (nach links → Einkaufen, nach rechts → Planen).
+  const dock = document.querySelector('.dock-pill');
+  let swipe = null;
+  dock?.addEventListener('pointerdown', (event) => { swipe = { x: event.clientX, y: event.clientY }; });
+  dock?.addEventListener('pointerup', (event) => {
+    if (!swipe) return;
+    const dx = event.clientX - swipe.x;
+    const dy = event.clientY - swipe.y;
+    swipe = null;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const current = tabs.find((t) => t.getAttribute('aria-selected') === 'true')?.dataset.mode;
+    const next = dx < 0 ? 'shop' : 'plan';
+    // Der Klick, den das Loslassen auf einem Reiter auslöst, soll das Wischen nicht wieder umkehren.
+    const block = (e) => { e.stopPropagation(); e.preventDefault(); };
+    dock.addEventListener('click', block, { capture: true });
+    setTimeout(() => dock.removeEventListener('click', block, { capture: true }), 350);
+    if (next !== current) setMode(next);
+  });
+  dock?.addEventListener('pointercancel', () => { swipe = null; });
+
   toast.addEventListener('click', (event) => {
     if (event.target.closest('[data-undo]')) model.undo();
     else if (event.target.closest('[data-dismiss-error]')) model.clearError();

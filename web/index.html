@@ -27,13 +27,6 @@
         <h1 class="wordmark">Feed<span>Yourself</span></h1>
         <button type="button" id="view-switch" class="view-toggle" aria-label="Ansicht wechseln"></button>
       </div>
-      <div class="mode-wrap">
-        <div class="mode" role="tablist" aria-label="Modus">
-          <button type="button" role="tab" id="tab-plan" aria-controls="plan-view" aria-selected="true" data-mode="plan">Planen</button>
-          <button type="button" role="tab" id="tab-shop" aria-controls="shop-view" aria-selected="false" data-mode="shop">Einkaufen</button>
-        </div>
-        <div class="progress" role="progressbar" aria-label="Im Wagen" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-bar"></span></div>
-      </div>
     </header>
 
     <main id="plan-view" class="view" role="tabpanel" aria-labelledby="tab-plan">
@@ -66,10 +59,22 @@
       <p id="shop-hint" class="shop-hint"></p>
       <div id="shop-content"></div>
       <button type="button" id="open-settings-shop" class="settings-link" data-open-settings><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>Einstellungen</button>
-      <div id="finish-bar" class="finish-bar">
-        <button type="button" id="finish" class="button primary" data-finish>Einkauf abschließen</button>
-      </div>
     </main>
+
+    <!-- Schwebende Leiste unten: Modus wechseln (tippen oder waagerecht wischen), Fortschritt, im Einkauf „Abschließen“.
+         Sitzt mit Abstand über dem Bereich der Home-Geste (App-Wechsel). -->
+    <nav class="dock" aria-label="Modus">
+      <div class="dock-pill">
+        <div class="mode" role="tablist" aria-label="Modus">
+          <button type="button" role="tab" id="tab-plan" aria-controls="plan-view" aria-selected="true" data-mode="plan">Planen</button>
+          <button type="button" role="tab" id="tab-shop" aria-controls="shop-view" aria-selected="false" data-mode="shop">Einkaufen</button>
+        </div>
+        <div class="progress" role="progressbar" aria-label="Im Wagen" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-bar"></span></div>
+      </div>
+      <button type="button" id="finish" class="dock-finish" data-finish aria-label="Einkauf abschließen">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </button>
+    </nav>
 
     <div id="settings" class="settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
       <div class="settings-inner">
