@@ -567,11 +567,20 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 
 #### Reihenfolge
 
-1. **Kern** ohne Netz: Änderungs-Log, Zusammenführen, Verschlüsselung – mit Tests, die zwei Geräte simulieren.
-2. **Briefkasten** (Worker) schreiben; Christopher richtet ihn einmal ein; Abgleich mit zwei Browsern testen.
-3. **Eine gemeinsame Liste** mit Anlegen (inkl. private Liste übernehmen), Einladen, Beitreten mit Bestätigung.
+1. ✅ **Kern** ohne Netz: Änderungs-Log, Zusammenführen, Verschlüsselung – mit Tests, die zwei Geräte simulieren.
+2. ✅ **Briefkasten** (Worker) schreiben; Christopher richtet ihn einmal ein; Abgleich mit zwei Browsern testen.
+3. ✅ **Eine gemeinsame Liste** mit Anlegen (inkl. private Liste übernehmen), Einladen, Beitreten mit Bestätigung (16.10.2026, Stand siehe unten).
 4. **Mehrere Listen** mit Auswahl, Mitgliederansicht, Verlassen, Entfernen.
 5. Sicherung mit Schlüsseln, Wake Lock, Feinschliff; Test auf mehreren iPhones.
+
+#### Umgesetzt: eine gemeinsame Liste (16.10.2026)
+
+- **Bausteine** (`web/js/sync/`): `join.js` (Einladung, Geräteschlüssel, Prüfcode, Schlüssel nur für das neue Gerät), `client.js` (Briefkasten), `shared-store.js` (Speicher-Weiche: Einträge aus der Replica, alles andere vom Gerät), `shared-list.js` (Steuerung, Abgleich, Beitritt). Oberfläche in `views/shared-view.js`.
+- **Bedienung:** *Einstellungen › Gemeinsame Liste* – anlegen (Name der Liste, Name des Geräts, bisherige Liste übernehmen), *Mitglied einladen* (zweistufig: Einladung erzeugen, dann *Teilen*/*Kopieren* – Safari öffnet das Teilen-Menü nur direkt nach dem Tippen), *Verlassen*. Beitreten: Einladung unter *Geteilte Liste einfügen* einsetzen (oder Link in Safari öffnen) → Gerätename → Prüfcode → warten. Mitglieder sehen die Anfrage als Dialog mit Prüfcode (*Bestätigen*, *Ablehnen*, *Später*). Im Kopf zeigt ein Hinweis den Namen der Liste (Punkt = offene Anfrage).
+- **Abgleich:** beim Öffnen und Zurückkehren in die App, 1,2 s nach jeder eigenen Änderung, sonst alle 5 s (nur sichtbar). Gesamtstand nach je 200 Änderungen. Hat ein anderes Gerät den Einkauf abgeschlossen, schreibt jedes Gerät „Zuletzt gekauft“ für sich fort.
+- **Private Liste:** bleibt im Gerätespeicher; beim Beitreten ausgeblendet, beim Verlassen wieder da. Beim Anlegen wahlweise übernommen (sie wandert dann in die gemeinsame Liste).
+- **Getestet:** 15 Abläufe mit zwei bis sechs Geräten (Node, echter Briefkasten-Code), 2 Oberflächen-Abläufe (jsdom), dazu der ganze Ablauf gegen den echten Briefkasten (Hin und zurück ≈ 0,3 s).
+- **Bekannte Grenzen dieser Stufe:** ein Gerät ist in höchstens einer gemeinsamen Liste; legen zwei Geräte innerhalb weniger Sekunden dasselbe Produkt neu auf die Liste, steht es zweimal da; Entfernen anderer Mitglieder und neuer Schlüssel folgen mit Stufe 4; die Sicherung enthält noch keine Schlüssel (Stufe 5). In der Web-Vorschau (claude.ai) ist der Briefkasten vermutlich nicht erreichbar – testen über GitHub Pages auf dem iPhone.
 
 Quellen: [Apple Developer Forums – SwiftData & CloudKit Sharing](https://developer.apple.com/forums/thread/817369), [Apple: Sharing CloudKit data with other iCloud users](https://developer.apple.com/tutorials/data/documentation/cloudkit/sharing-cloudkit-data-with-other-icloud-users.md), [Apple Developer Forums – EventKit und Erinnerungen-Abschnitte](https://developer.apple.com/forums/thread/744915).
 

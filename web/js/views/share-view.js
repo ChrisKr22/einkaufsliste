@@ -103,8 +103,8 @@ export function mountIncomingDialog(root, model) {
   render();
 }
 
-/** Einstellungen › „Geteilte Liste einfügen“ (für die App auf dem Home-Bildschirm). */
-export function mountPasteSection(root, model) {
+/** Einstellungen › „Geteilte Liste einfügen“ (für die App auf dem Home-Bildschirm) – auch Einladungen. */
+export function mountPasteSection(root, model, shared = null) {
   const input = root.querySelector('#paste-input');
   const error = root.querySelector('#paste-error');
   const showError = (message) => { error.textContent = message; error.hidden = !message; };
@@ -112,6 +112,10 @@ export function mountPasteSection(root, model) {
   async function apply(text) {
     showError('');
     try {
+      if (shared?.receiveInvite(text)) {
+        input.value = '';
+        return;
+      }
       await model.receiveShared(text);
       input.value = '';
     } catch (e) {
@@ -133,8 +137,13 @@ export function mountPasteSection(root, model) {
   });
 }
 
-/** Beim Start: Wurde die App über einen geteilten Link geöffnet? */
-export async function receiveFromLocation(model) {
+/** Beim Start: Wurde die App über einen geteilten Link oder eine Einladung geöffnet? */
+export async function receiveFromLocation(model, shared = null) {
+  if (shared && /[#&]beitreten=/.test(location.hash)) {
+    shared.receiveInvite(location.href);
+    history.replaceState(null, '', location.pathname + location.search);
+    return;
+  }
   if (!/[#&]liste=/.test(location.hash)) return;
   try {
     await model.receiveShared(location.href);

@@ -11,8 +11,10 @@ import { mountEditSheet } from './views/edit-sheet.js';
 import { esc, setPhotoSources } from './views/dom.js';
 import { mountPlanningView } from './views/planning-view.js';
 import { mountSettingsView } from './views/settings-view.js';
-import { mountIncomingDialog, mountPasteSection, mountShareButton, receiveFromLocation } from './views/share-view.js';
+import { appUrl, mountIncomingDialog, mountPasteSection, mountShareButton, receiveFromLocation } from './views/share-view.js';
 import { mountShoppingView } from './views/shopping-view.js';
+import { SharedList } from './sync/shared-list.js';
+import { mountSharedChip, mountSharedDialogs, mountSharedSection } from './views/shared-view.js';
 import { mountSuggestSection } from './views/suggest-view.js';
 import { MODE_EVENT } from './views/view-choice.js';
 import { mountProductUnits } from './views/units-view.js';
@@ -195,9 +197,19 @@ async function start() {
   mountProductUnits(document.querySelector('#product-units'), model);
   mountSuggestSection(document.querySelector('#suggest'), model);
   mountShareButton(document.querySelector('#plan-view'), model);
-  mountPasteSection(document.querySelector('#paste-share'), model);
+  // Gemeinsame Liste: tauscht beim Start ggf. den Speicher der Einträge aus und gleicht ab.
+  const shared = new SharedList(model, store, { appUrl });
+  mountSharedSection(document.querySelector('#shared-section'), shared, model);
+  mountSharedChip(document.querySelector('#shared-chip'), shared);
+  mountSharedDialogs(document.querySelector('#shared-root'), shared, model);
+  mountPasteSection(document.querySelector('#paste-share'), model, shared);
   mountIncomingDialog(document.querySelector('#incoming-root'), model);
-  await receiveFromLocation(model);
+  try {
+    await shared.init();
+  } catch (error) {
+    console.warn('Gemeinsame Liste nicht verfügbar:', error);
+  }
+  await receiveFromLocation(model, shared);
   registerServiceWorker();
 }
 

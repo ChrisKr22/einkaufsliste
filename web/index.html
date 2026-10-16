@@ -25,6 +25,7 @@
     <header class="header">
       <div class="header-row">
         <h1 class="wordmark">Feed<span>Yourself</span></h1>
+        <button type="button" id="shared-chip" class="shared-chip" data-open-settings hidden></button>
         <button type="button" id="view-switch" class="view-toggle" aria-label="Ansicht wechseln"></button>
       </div>
       <!-- Nur in der Liste (Planen): Suche fest im Kopf, daneben die Zahl der Artikel -->
@@ -83,6 +84,7 @@
           <h2 id="settings-title">Einstellungen</h2>
           <button type="button" class="text-button strong" data-close-settings>Fertig</button>
         </div>
+        <section id="shared-section" class="settings-section" aria-labelledby="shared-title"></section>
         <section id="theme-section" aria-labelledby="theme-title">
           <h3 class="section-title" id="theme-title">Darstellung</h3>
           <div class="theme-choice" role="radiogroup" aria-labelledby="theme-title">
@@ -118,7 +120,7 @@
         </section>
         <section id="paste-share" class="settings-section" aria-labelledby="paste-title">
           <h3 class="section-title" id="paste-title">Geteilte Liste einfügen</h3>
-          <p class="section-note">Hat dir jemand eine Liste geschickt? Nachricht oder Link kopieren und hier einfügen – die Produkte kommen zu deiner Liste dazu.</p>
+          <p class="section-note">Hat dir jemand eine Liste oder eine Einladung zur gemeinsamen Liste geschickt? Nachricht oder Link kopieren und hier einfügen.</p>
           <div class="card paste-card">
             <label class="sr-only" for="paste-input">Nachricht oder Link</label>
             <textarea id="paste-input" rows="3" placeholder="Nachricht oder Link hier einfügen"></textarea>
@@ -147,6 +149,7 @@
     </div>
 
     <div id="incoming-root"></div>
+    <div id="shared-root"></div>
     <div id="toast" class="toast" role="status" hidden></div>
     <div id="sheet-root"></div>
   </div>

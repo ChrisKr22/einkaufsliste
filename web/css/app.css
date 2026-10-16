@@ -422,6 +422,37 @@ body.sheet-open { overscroll-behavior: none; }
 .paste-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
 .paste-card textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; font-size: 15px; resize: vertical; }
 .paste-card textarea:focus { outline: none; border-color: var(--accent-ink); }
+
+/* Gemeinsame Liste (Einstellungen, Kopf, Dialoge) */
+.shared-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+.shared-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text2); }
+.shared-field input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); color: var(--text); font: inherit; font-size: 16px; font-weight: 400; touch-action: auto; }
+.shared-field input:focus { outline: none; border-color: var(--accent-ink); }
+.shared-check { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.shared-check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.shared-head { display: flex; align-items: center; gap: 12px; }
+.shared-head svg { flex: none; width: 34px; height: 34px; padding: 6px; border-radius: 12px; background: var(--accent-soft); color: var(--accent-ink); stroke-width: 1.8; }
+.shared-head strong { display: block; font-size: 17px; }
+.shared-head span { display: block; font-size: 13px; color: var(--text2); }
+.shared-members { margin: 0; padding: 0 0 0 4px; list-style: none; font-size: 15px; }
+.shared-members li { padding: 3px 0; }
+.shared-members li::before { content: "•"; margin-right: 8px; color: var(--accent-ink); }
+.shared-members span, .shared-confirm, .shared-lost { color: var(--text2); }
+.shared-confirm, .shared-lost { margin: 0; font-size: 14px; }
+.invite-ready { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--accent-soft); }
+.invite-ready p { margin: 0; font-size: 14px; color: var(--accent-ink); }
+.join-code { margin: 0; text-align: center; font: 700 44px/1 var(--font-display); letter-spacing: 12px; padding-left: 12px; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+.shared-sheet .section-note { margin: 6px 0 0; }
+.shared-sheet h2 { margin: 0; font-size: 22px; }
+.shared-sheet .text-button { align-self: center; }
+.shared-chip { position: relative; display: inline-flex; align-items: center; gap: 5px; max-width: 42%; min-height: 30px; margin-left: auto; margin-right: 8px; padding: 0 10px 0 7px;
+  border: 0; border-radius: 15px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; font-weight: 600; cursor: pointer; }
+.shared-chip[hidden] { display: none; }
+.shared-chip svg { flex: none; width: 18px; height: 18px; stroke-width: 1.8; }
+.shared-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shared-chip i { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 5px; background: var(--later); box-shadow: 0 0 0 2px var(--surface); }
+.shared-chip.problem { background: var(--surface2); color: var(--text2); }
 .sheet.incoming { max-height: 85dvh; }
 .sheet.incoming h2 { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
 .sheet.incoming .section-note { margin: 0; }
