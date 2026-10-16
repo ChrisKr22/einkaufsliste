@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16 08:42",
+  "generated_at": "2026-10-16 09:02",
   "images": [
     {
       "product_id": "aepfel",
@@ -107,6 +107,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Bacon_pexels-polina-tankilevitch-4110375.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "baguette",
+      "name": "Baguette",
+      "file": "Images/baguette.jpg",
+      "source": "Pexels",
+      "author": "Couleur",
+      "page": "https://www.pexels.com/photo/38597841/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Baguette_pexels-couleur-38597841.jpg",
       "cutout": false
     },
     {
@@ -386,6 +398,18 @@
       "cutout": false
     },
     {
+      "product_id": "fusilli",
+      "name": "Fusilli",
+      "file": "Images/fusilli.jpg",
+      "source": "Pexels",
+      "author": "Klaus Nielsen",
+      "page": "https://www.pexels.com/photo/6287280/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Fusili_pexels-klaus-nielsen-6287280.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "gehackte-tomaten",
       "name": "Gehackte Tomaten",
       "file": "Images/gehackte-tomaten.jpg",
@@ -419,6 +443,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "geriebenerKäse_pexels-tiago-fagundes-soares-661985253-37145377.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "getrocknete-tomaten",
+      "name": "Getrocknete Tomaten",
+      "file": "Images/getrocknete-tomaten.jpg",
+      "source": "Pexels",
+      "author": "Valeriya",
+      "page": "https://www.pexels.com/photo/21558695/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "getrockneteTomaten_pexels-valeriya-21558695.jpg",
       "cutout": false
     },
     {
@@ -554,6 +590,18 @@
       "cutout": false
     },
     {
+      "product_id": "joghurt-laktosefrei",
+      "name": "Joghurt laktosefrei",
+      "file": "Images/joghurt-laktosefrei.jpg",
+      "source": "Pexels",
+      "author": "Daniel Trylski",
+      "page": "https://www.pexels.com/photo/10874048/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Joghurt laktosefrei_pexels-daniel-trylski-10874048.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "kaffee",
       "name": "Kaffee",
       "file": "Images/kaffee.jpg",
@@ -614,6 +662,18 @@
       "cutout": false
     },
     {
+      "product_id": "kidneybohnen",
+      "name": "Kidneybohnen",
+      "file": "Images/kidneybohnen.jpg",
+      "source": "Pexels",
+      "author": "Icon0",
+      "page": "https://www.pexels.com/photo/1313643/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Kidneybohnen_pexels-icon0-1313643.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "kiwis",
       "name": "Kiwis",
       "file": "Images/kiwis.jpg",
@@ -635,6 +695,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Kochschinken_pexels-adonyi-foto-5491291.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "kokosmilch",
+      "name": "Kokosmilch",
+      "file": "Images/kokosmilch.jpg",
+      "source": "Pexels",
+      "author": "Carlos Lopez",
+      "page": "https://www.pexels.com/photo/9814722/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "kokosmilch_pexels-carlos-lopez-117694035-9814722.jpg",
       "cutout": false
     },
     {
@@ -854,6 +926,18 @@
       "cutout": false
     },
     {
+      "product_id": "paprika",
+      "name": "Paprika",
+      "file": "Images/paprika.jpg",
+      "source": "Pexels",
+      "author": "Christopher Welsch Leveroni",
+      "page": "https://www.pexels.com/photo/33583999/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "paprika_pexels-christopher-welsch-leveroni-2150186467-33583999.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "parmesan",
       "name": "Parmesan",
       "file": "Images/parmesan.jpg",
@@ -863,6 +947,30 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "parmesan_pexels-castorlystock-3693280.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "penne",
+      "name": "Penne",
+      "file": "Images/penne.jpg",
+      "source": "Pexels",
+      "author": "Klaus Nielsen",
+      "page": "https://www.pexels.com/photo/6287351/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "penne_pexels-klaus-nielsen-6287351.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "petersilie",
+      "name": "Petersilie",
+      "file": "Images/petersilie.jpg",
+      "source": "Pexels",
+      "author": "Boryslav",
+      "page": "https://www.pexels.com/photo/13354859/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Petersilie_pexels-boryslav-13354859.jpg",
       "cutout": false
     },
     {
@@ -926,6 +1034,18 @@
       "cutout": false
     },
     {
+      "product_id": "quark",
+      "name": "Quark",
+      "file": "Images/quark.jpg",
+      "source": "Pexels",
+      "author": "Shvetsa",
+      "page": "https://www.pexels.com/photo/5953719/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Quark_pexels-shvetsa-5953719.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "quinoa",
       "name": "Quinoa",
       "file": "Images/quinoa.jpg",
@@ -935,6 +1055,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "quinoa_pexels-didsss-5446137.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "rapsoel",
+      "name": "Rapsöl",
+      "file": "Images/rapsoel.jpg",
+      "source": "Pexels",
+      "author": "Breaks",
+      "page": "https://www.pexels.com/photo/30853346/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Rapsöl_pexels-breaks-30853346.jpg",
       "cutout": false
     },
     {
@@ -1044,6 +1176,18 @@
       "cutout": false
     },
     {
+      "product_id": "schokolade",
+      "name": "Schokolade",
+      "file": "Images/schokolade.jpg",
+      "source": "Pexels",
+      "author": "Irina Kraskova",
+      "page": "https://www.pexels.com/photo/17878536/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Schokolade_pexels-irina-kraskova-76947236-17878536.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "schokostreusel",
       "name": "Schokostreusel",
       "file": "Images/schokostreusel.jpg",
@@ -1140,6 +1284,18 @@
       "cutout": false
     },
     {
+      "product_id": "spuelmittel",
+      "name": "Spülmittel",
+      "file": "Images/spuelmittel.jpg",
+      "source": "Pexels",
+      "author": "Karola G",
+      "page": "https://www.pexels.com/photo/4239104/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Spülmittel_pexels-karola-g-4239104.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "tee",
       "name": "Tee",
       "file": "Images/tee.jpg",
@@ -1197,6 +1353,30 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Tomaten_pexels-cibelebergamim-34472661.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "tomatenmark",
+      "name": "Tomatenmark",
+      "file": "Images/tomatenmark.jpg",
+      "source": "Pexels",
+      "author": "Angela Khebou",
+      "page": "https://www.pexels.com/photo/13269805/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Tomatenmark_pexels-angela-khebou-259135285-13269805.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "tomatensosse",
+      "name": "Tomatensoße",
+      "file": "Images/tomatensosse.jpg",
+      "source": "Pexels",
+      "author": "Renestrgar",
+      "page": "https://www.pexels.com/photo/15627900/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Tomatensoße_pexels-renestrgar-15627900.jpg",
       "cutout": false
     },
     {
@@ -1281,6 +1461,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Zahnpaster_pexels-miriam-alonso-7622555.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "zucchini",
+      "name": "Zucchini",
+      "file": "Images/zucchini.jpg",
+      "source": "Pexels",
+      "author": "Angele J",
+      "page": "https://www.pexels.com/photo/128420/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Zuchini_pexels-angele-j-35172-128420.jpg",
       "cutout": false
     },
     {
