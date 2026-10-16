@@ -154,16 +154,16 @@ export function mountPlanningView(root, model) {
 
   function row(item, categoryKey) {
     let note;
-    if (item.status === 'later') note = `<span class="row-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
-    else if (item.note) note = `<span class="row-note">${esc(item.note)}</span>`;
-    else note = '<span class="row-note placeholder">Anmerkung hinzufügen</span>';
+    if (item.status === 'later') note = `<span class="list-tile-note later">Zurückgestellt${item.note ? ` · ${esc(item.note)}` : ''}</span>`;
+    else if (item.note) note = `<span class="list-tile-note">${esc(item.note)}</span>`;
+    else note = '<span class="list-tile-note placeholder">Anmerkung hinzufügen</span>';
     const label = [`${item.product.name}, ${spokenQuantity(item.quantity, unitOf(item))}`, item.note].filter(Boolean).join(', ');
     return `<div class="row" data-row="${item.id}">
       <div class="row-delete" aria-hidden="true">Entfernen</div>
-      <div class="row-inner">
-        <button type="button" class="row-photo" data-edit="${item.id}" tabindex="-1" aria-hidden="true">${thumb(item.product, categoryKey, 'wide')}</button>
-        <div class="row-side">
-          <button type="button" class="row-main" data-edit="${item.id}" aria-label="${esc(label)} – bearbeiten"><span class="row-name">${esc(item.product.name)}</span></button>
+      <div class="row-inner list-tile">
+        <button type="button" class="list-tile-photo" data-edit="${item.id}" tabindex="-1" aria-hidden="true">${thumb(item.product, categoryKey, 'wide')}</button>
+        <div class="list-tile-side">
+          <button type="button" class="row-main" data-edit="${item.id}" aria-label="${esc(label)} – bearbeiten"><span class="list-tile-name">${esc(item.product.name)}</span></button>
           ${stepper(item)}
           <button type="button" class="row-note-button" data-edit="${item.id}" tabindex="-1" aria-hidden="true">${note}</button>
         </div>
