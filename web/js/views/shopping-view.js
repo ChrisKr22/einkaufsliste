@@ -258,7 +258,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     const next = nextInCategory ?? following?.items[0];
     const category = section.category;
     const rest = section.items.length;
-    const position = `Noch ${rest} in ${category.name}${next ? ` · danach: ${next.product.name}` : ''}`;
+    const position = `${rest} Artikel in ${category.name}${nextInCategory ? ` · danach: ${nextInCategory.product.name}` : ''}`;
     const catButton = (step, target, label) => `<button type="button" class="button focus-cat${step < 0 ? ' prev' : ' next'}" data-focus-cat="${step}"`
       + `${target ? ` aria-label="${step < 0 ? 'Vorherige' : 'Nächste'} Kategorie: ${esc(target.category.name)}"` : ' disabled'}>${label}</button>`;
     return `<div class="focus">
