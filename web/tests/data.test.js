@@ -57,6 +57,38 @@ describe('Katalog-Import', () => {
   });
 });
 
+describe('Katalog-Import: Umbenennen', () => {
+  const small = (version, name, synonyms) => ({
+    version,
+    categories: [{ id: 'obst', name: 'Obst' }, { id: 'sonst', name: 'Sonstiges' }],
+    products: [{ id: 'avocados', name, category: 'obst', synonyms }],
+  });
+
+  test('im Katalog umbenannt (alter Name jetzt Synonym): Name wird nachgezogen', async () => {
+    const store = new MemoryStore();
+    await importCatalog(small(1, 'Avocados', ['Avocado']), store);
+    const summary = await importCatalog(small(2, 'Avocado', ['Avocados']), store);
+    const [product] = await store.getAll('products');
+    assert.equal(product.name, 'Avocado');
+    assert.deepEqual(product.synonyms, ['Avocados']);
+    assert.equal(summary.productsUpdated, 1);
+  });
+
+  test('selbst umbenannt: eigener Name bleibt', async () => {
+    const store = new MemoryStore();
+    await importCatalog(small(1, 'Avocados', ['Avocado']), store);
+    const [product] = await store.getAll('products');
+    await store.put('products', { ...product, name: 'Hass-Avocado' });
+    await importCatalog(small(2, 'Avocado', ['Avocados']), store);
+    assert.equal((await store.getAll('products'))[0].name, 'Hass-Avocado');
+  });
+
+  test('mitgelieferter Katalog: Avocado heißt jetzt Avocado', async () => {
+    const { repository } = await makeStore();
+    assert.ok(await productNamed(repository, 'Avocado'));
+  });
+});
+
 describe('Repository', () => {
   test('Hinzufügen legt auf die Liste', async () => {
     const { repository } = await makeStore();

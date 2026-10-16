@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "categories": [
     {"id": "obst", "name": "Obst"},
     {"id": "gemuese", "name": "Gemüse"},
@@ -32,7 +32,7 @@
     {"id": "himbeeren", "name": "Himbeeren", "category": "obst", "synonyms": ["Himbeere"], "query_en": "raspberries", "origin": "entwurf"},
     {"id": "trauben", "name": "Trauben", "category": "obst", "synonyms": ["Weintrauben", "Weintraube"], "query_en": "grapes bunch", "origin": "entwurf"},
     {"id": "kiwis", "name": "Kiwis", "category": "obst", "synonyms": ["Kiwi"], "query_en": "kiwi fruit", "origin": "entwurf"},
-    {"id": "avocados", "name": "Avocados", "category": "obst", "synonyms": ["Avocado"], "query_en": "avocado", "origin": "nutzer"},
+    {"id": "avocados", "name": "Avocado", "category": "obst", "synonyms": ["Avocados"], "query_en": "avocado", "origin": "nutzer"},
     {"id": "ananas", "name": "Ananas", "category": "obst", "synonyms": [], "query_en": "pineapple", "origin": "entwurf"},
     {"id": "mango", "name": "Mango", "category": "obst", "synonyms": ["Mangos"], "query_en": "mango", "origin": "nutzer"},
 

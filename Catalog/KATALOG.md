@@ -41,7 +41,7 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 |  | **Himbeeren** | Himbeere | `himbeeren` | raspberries |
 |  | **Trauben** | Weintrauben, Weintraube | `trauben` | grapes bunch |
 |  | **Kiwis** | Kiwi | `kiwis` | kiwi fruit |
-| ● | **Avocados** | Avocado | `avocados` | avocado |
+| ● | **Avocado** | Avocados | `avocados` | avocado |
 |  | **Ananas** | – | `ananas` | pineapple |
 | ● | **Mango** | Mangos | `mango` | mango |
 

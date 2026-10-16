@@ -19,6 +19,8 @@ const HINTS = {
 };
 
 const svg = {
+  // Kartenstapel: offene Artikel dieser Kategorie (Fokus, oben rechts)
+  stack: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="8" width="12" height="13" rx="2.2"/><path d="M8.5 5.2h8.3A2.2 2.2 0 0 1 19 7.4v9.8"/></svg>',
   later: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 12H6M11.5 6l-6 6 6 6"/></svg>',
   cart: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>',
   check: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -258,7 +260,8 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     const next = nextInCategory ?? following?.items[0];
     const category = section.category;
     const rest = section.items.length;
-    const position = `${rest} Artikel in ${category.name}${nextInCategory ? ` · danach: ${nextInCategory.product.name}` : ''}`;
+    const position = nextInCategory ? `Nächster Artikel: ${nextInCategory.product.name}` : `Letzter Artikel in ${category.name}`;
+    const countLabel = rest === 1 ? `1 Artikel offen in ${category.name}` : `${rest} Artikel offen in ${category.name}`;
     const catButton = (step, target, label) => `<button type="button" class="button focus-cat${step < 0 ? ' prev' : ' next'}" data-focus-cat="${step}"`
       + `${target ? ` aria-label="${step < 0 ? 'Vorherige' : 'Nächste'} Kategorie: ${esc(target.category.name)}"` : ' disabled'}>${label}</button>`;
     return `<div class="focus">
@@ -269,6 +272,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
             <span class="focus-photo-wrap">
               ${photo(item, category.key, 'focus-photo')}
               <span class="chip">${esc(category.name)}</span>
+              <span class="focus-count" role="img" aria-label="${esc(countLabel)}">${svg.stack}<b>${rest}</b></span>
             </span>
             <span class="focus-body">
               <span class="focus-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span></span>

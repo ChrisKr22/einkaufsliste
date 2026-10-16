@@ -1,6 +1,6 @@
 // Übernimmt den mitgelieferten Katalog (data/catalog.json) in den Speicher.
 // - Erster Start: alle Kategorien und Produkte anlegen.
-// - Neuere Katalog-Version: fehlende ergänzen, Synonyme aktualisieren.
+// - Neuere Katalog-Version: fehlende ergänzen, Synonyme aktualisieren, im Katalog umbenannte Namen nachziehen.
 //   Namen und Reihenfolge, die man in der App geändert hat, bleiben unangetastet.
 
 import { DEFAULT_UNIT, isUnit } from '../units.js';
@@ -39,9 +39,12 @@ export async function importCatalog(catalog, store) {
     const product = productsByCatalogId.get(item.id);
     if (product) {
       const synonymsChanged = JSON.stringify(product.synonyms) !== JSON.stringify(item.synonyms);
-      if (synonymsChanged || !product.categoryId) {
-        changed.push({ ...product, synonyms: item.synonyms, categoryId: product.categoryId ?? category?.id ?? null });
-        if (synonymsChanged) summary.productsUpdated++;
+      // Im Katalog umbenannt (der alte Name steht jetzt unter den Synonymen): neuen Namen übernehmen.
+      // Hat man das Produkt in der App selbst anders benannt, bleibt dieser Name.
+      const renamed = product.name !== item.name && item.synonyms.includes(product.name);
+      if (synonymsChanged || renamed || !product.categoryId) {
+        changed.push({ ...product, name: renamed ? item.name : product.name, synonyms: item.synonyms, categoryId: product.categoryId ?? category?.id ?? null });
+        if (synonymsChanged || renamed) summary.productsUpdated++;
       }
     } else {
       changed.push({
