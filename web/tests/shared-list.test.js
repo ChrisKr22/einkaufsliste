@@ -6,6 +6,7 @@ import { JOIN_KEY, sessionKey, SharedList } from '../js/sync/shared-list.js';
 import { ListsManager } from '../js/lists.js';
 import { checkCode, inviteLink, newDeviceKeys, newInviteSecret, openForDevice, parseInvite, sealForDevice } from '../js/sync/join.js';
 import { Mailbox } from '../../tools/sync/src/mailbox.js';
+import { ListConnection } from '../js/sync/client.js';
 import { makeStore, productNamed } from './helpers.js';
 
 // ---------------------------------------------------------------- Briefkasten im Speicher (echter Code, SQLite von Node)
@@ -325,4 +326,56 @@ test('Admin verlässt die Liste: das nächste Gerät wird Admin', async () => {
   await b.shared.sync();
   assert.equal(b.shared.state.isAdmin, true);
   assert.equal(b.shared.state.memberCount, 1);
+});
+
+// ---------------------------------------------------------------- Mitglieds-Geheimnis
+
+const membersOf = (cloud, listId) => cloud.boxes.get(listId).storage.sql.exec('SELECT mid, secret FROM members').toArray();
+
+test('Geheimnis: jedes Gerät hat ein eigenes, der Briefkasten kennt nur den Prüfwert', async () => {
+  const cloud = fakeCloud();
+  const { a, b } = await pair(cloud);
+  const sa = a.shared.session.memberSecret;
+  const sb = b.shared.session.memberSecret;
+  assert.ok(sa && sb && sa !== sb);
+  assert.equal((await b.store.get('meta', sessionKey(b.shared.session.listId))).value.memberSecret, sb, 'auf dem Gerät gespeichert');
+  const rows = membersOf(cloud, a.shared.session.listId);
+  assert.equal(rows.length, 2);
+  for (const row of rows) assert.ok(row.secret && row.secret !== sa && row.secret !== sb);
+});
+
+test('Geheimnis: entferntes Gerät kommt auch mit der ID des Admins nicht mehr an die Liste', async () => {
+  const cloud = fakeCloud();
+  const { a, b } = await pair(cloud);
+  const { listId, listKey, memberSecret } = b.shared.session;
+  await a.shared.removeMember(b.shared.session.memberId);
+  const impostor = new ListConnection({ listId, listKey, memberId: a.shared.session.memberId, memberSecret, fetch: cloud.fetch });
+  await assert.rejects(impostor.pull(0), (error) => error.status === 401);
+  await assert.rejects(impostor.push([{ s: 'x', k: 'entry', i: 'x', f: {} }]), (error) => error.status === 401);
+});
+
+test('Übergang: Liste von vor den Geheimnissen – das Gerät erzeugt eins, speichert es und gleicht weiter ab', async () => {
+  const cloud = fakeCloud();
+  const { a, b } = await pair(cloud, { aItems: ['Milch'] });
+  const { listId } = a.shared.session;
+  // Stand wie vor dem Update: kein Geheimnis auf dem Gerät, keins beim Briefkasten
+  cloud.boxes.get(listId).storage.sql.exec('UPDATE members SET secret = NULL');
+  for (const d of [a, b]) {
+    const { memberSecret, ...old } = (await d.store.get('meta', sessionKey(listId))).value;
+    await d.store.put('meta', { key: sessionKey(listId), value: old });
+  }
+  const restarted = new SharedList(b.model, b.store, { fetch: cloud.fetch, timers: false });
+  b.model.repository.store = b.store;
+  await new ListsManager(b.model, b.store, restarted).init();
+  await restarted.sync();
+  assert.equal(restarted.state.status, 'active');
+  assert.equal(restarted.state.error, null);
+  const saved = (await b.store.get('meta', sessionKey(listId))).value.memberSecret;
+  assert.ok(saved, 'Geheimnis gespeichert');
+  const row = membersOf(cloud, listId).find((r) => r.mid === restarted.session.memberId);
+  assert.ok(row.secret, 'Briefkasten hat es übernommen');
+  // Ein anderes Geheimnis für denselben Platz gilt danach nicht mehr
+  const other = new ListConnection({ ...restarted.session, memberSecret: 'x'.repeat(43), fetch: cloud.fetch });
+  await assert.rejects(other.pull(0), (error) => error.status === 401);
+  assert.deepEqual(names(b.model), ['Milch']);
 });

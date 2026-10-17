@@ -21,11 +21,12 @@ const MESSAGES = {
   429: 'Zu viele Anfragen – gleich noch einmal versuchen.',
 };
 
-async function request(fetchFn, base, listId, method, path, { body, proof, member, invite } = {}) {
+async function request(fetchFn, base, listId, method, path, { body, proof, member, secret, invite } = {}) {
   const headers = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (proof) headers.Authorization = `Bearer ${proof}`;
   if (member) headers['X-Member'] = member;
+  if (secret) headers['X-Member-Secret'] = secret;
   if (invite) headers['X-Invite'] = invite;
   let response;
   try {
@@ -49,10 +50,11 @@ async function request(fetchFn, base, listId, method, path, { body, proof, membe
 /** Zugang eines Mitglieds zu seiner Liste. */
 export class ListConnection {
   /**
-   * @param {{listId: string, listKey: string, memberId: string, baseUrl?: string, fetch?: typeof fetch}} options
+   * @param {{listId: string, listKey: string, memberId: string, memberSecret: string, baseUrl?: string, fetch?: typeof fetch}} options
+   *   memberSecret: Geheimnis dieses Geräts – weist es zusammen mit der Mitglieds-ID beim Briefkasten aus
    */
-  constructor({ listId, listKey, memberId, baseUrl = SYNC_URL, fetch: fetchFn = (...a) => globalThis.fetch(...a) }) {
-    Object.assign(this, { listId, listKey, memberId, baseUrl, fetchFn });
+  constructor({ listId, listKey, memberId, memberSecret, baseUrl = SYNC_URL, fetch: fetchFn = (...a) => globalThis.fetch(...a) }) {
+    Object.assign(this, { listId, listKey, memberId, memberSecret, baseUrl, fetchFn });
     this.keys = null;
   }
 
@@ -63,13 +65,15 @@ export class ListConnection {
 
   async #call(method, path, body) {
     const keys = await this.#keys();
-    return request(this.fetchFn, this.baseUrl, this.listId, method, path, { body, proof: keys.writeProof, member: this.memberId });
+    return request(this.fetchFn, this.baseUrl, this.listId, method, path, { body, proof: keys.writeProof, member: this.memberId, secret: this.memberSecret });
   }
 
   /** Briefkasten anlegen; dieses Gerät bekommt den ersten Platz. */
   async create() {
     const keys = await this.#keys();
-    await request(this.fetchFn, this.baseUrl, this.listId, 'PUT', '', { body: { proofHash: await proofHash(keys.writeProof), memberId: this.memberId } });
+    await request(this.fetchFn, this.baseUrl, this.listId, 'PUT', '', {
+      body: { proofHash: await proofHash(keys.writeProof), memberId: this.memberId, secretHash: await proofHash(this.memberSecret) },
+    });
   }
 
   info() {
@@ -168,11 +172,15 @@ export class JoinConnection {
     Object.assign(this, { listId, secret, baseUrl, fetchFn });
   }
 
-  /** @returns {Promise<string>} Anfrage-ID (wird nach Bestätigung die Mitglieds-ID) */
-  async request(publicJwk, device) {
+  /**
+   * @param {string} memberSecret  Geheimnis des neuen Geräts; der Briefkasten bekommt nur den Prüfwert,
+   *   das bestätigende Mitglied gar nichts davon
+   * @returns {Promise<string>} Anfrage-ID (wird nach Bestätigung die Mitglieds-ID)
+   */
+  async request(publicJwk, device, memberSecret) {
     const keys = await inviteKeys(this.secret, this.listId);
     const { rid } = await request(this.fetchFn, this.baseUrl, this.listId, 'POST', '/requests', {
-      invite: keys.token, body: { data: await seal(keys, { pub: publicJwk, device }) },
+      invite: keys.token, body: { data: await seal(keys, { pub: publicJwk, device }), secretHash: await proofHash(memberSecret) },
     });
     return rid;
   }

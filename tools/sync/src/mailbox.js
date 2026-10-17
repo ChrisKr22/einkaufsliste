@@ -2,8 +2,12 @@
 //
 // Der Briefkasten kennt keine Inhalte: Er speichert verschlüsselte Texte mit laufender Nummer und gibt sie wieder aus.
 // Lesen und Schreiben nur mit Schreib-Nachweis (gespeichert ist nur dessen SHA-256-Prüfwert) und einem Platz:
-// Jedes Mitglieds-Gerät hat eine zufällige Mitglieds-ID; höchstens 5 Plätze pro Liste. Wer den Schlüssel
-// an ein weiteres Gerät weitergibt, kommt damit nicht an die Liste – ohne Platz kein Zugang.
+// Jedes Mitglieds-Gerät hat eine zufällige Mitglieds-ID und ein eigenes Mitglieds-Geheimnis (gespeichert nur als
+// Prüfwert); höchstens 5 Plätze pro Liste. Die Mitglieds-IDs kennen alle Mitglieder – ausweisen kann sich damit nur,
+// wer auch das Geheimnis hat. Wer entfernt wird, kommt darum sofort nicht mehr an die Liste, auch nicht mit dem
+// Listenschlüssel und der ID eines anderen Geräts.
+// Übergang für Plätze aus der Zeit vor den Geheimnissen: Das erste Geheimnis, das für einen solchen Platz kommt,
+// gilt ab dann; Anfragen ganz ohne Geheimnis (alte App-Fassung) nur noch bis LEGACY_UNTIL und nur für solche Plätze.
 // Beitrittsanfragen nur mit gültiger Einladung (nur als Prüfwert gespeichert, gilt höchstens 30 Minuten).
 // Listen-Admin ist das Gerät, das die Liste angelegt hat: Nur es darf andere entfernen, den Schlüssel erneuern
 // und die ganze Liste löschen. Verlässt es die Liste, wird das am längsten dabei befindliche Gerät Admin.
@@ -25,13 +29,16 @@ export const LIMITS = {
   idleMs: 180 * 24 * 60 * 60 * 1000,   // so lange unbenutzt → Briefkasten wird gelöscht
 };
 
+/** Bis dahin dürfen Plätze ohne Geheimnis (vor dem 17.10.2026 entstanden) noch ohne Geheimnis anfragen. */
+export const LEGACY_UNTIL = Date.UTC(2026, 10, 1);   // 1. November 2026
+
 const ID = /^[A-Za-z0-9_-]{22}$/;      // Listen-ID: 128 Bit base64url
 const TOKEN = /^[A-Za-z0-9_-]{20,100}$/;
 
 export const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Invite, X-Member',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Invite, X-Member, X-Member-Secret',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -63,8 +70,14 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS ops (nr INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT NOT NULL, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS snapshot (id INTEGER PRIMARY KEY CHECK (id = 1), upto INTEGER NOT NULL, data TEXT NOT NULL, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS invites (hash TEXT PRIMARY KEY, expires INTEGER NOT NULL)',
-  'CREATE TABLE IF NOT EXISTS members (mid TEXT PRIMARY KEY, at INTEGER NOT NULL)',
-  'CREATE TABLE IF NOT EXISTS requests (rid TEXT PRIMARY KEY, invite TEXT NOT NULL, data TEXT NOT NULL, answer TEXT, at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS members (mid TEXT PRIMARY KEY, at INTEGER NOT NULL, secret TEXT)',   // secret: Prüfwert des Mitglieds-Geheimnisses
+  'CREATE TABLE IF NOT EXISTS requests (rid TEXT PRIMARY KEY, invite TEXT NOT NULL, data TEXT NOT NULL, answer TEXT, at INTEGER NOT NULL, secret TEXT)',
+];
+
+// Briefkästen von vor den Mitglieds-Geheimnissen: Spalte nachrüsten (gibt es sie schon, scheitert der Befehl – egal).
+const MIGRATIONS = [
+  'ALTER TABLE members ADD COLUMN secret TEXT',
+  'ALTER TABLE requests ADD COLUMN secret TEXT',
 ];
 
 export class Mailbox {
@@ -82,6 +95,9 @@ export class Mailbox {
   #prepare() {
     if (this.ready) return;
     for (const statement of SCHEMA) this.storage.sql.exec(statement);
+    for (const statement of MIGRATIONS) {
+      try { this.storage.sql.exec(statement); } catch { /* schon vorhanden */ }
+    }
     this.ready = true;
   }
 
@@ -97,13 +113,30 @@ export class Mailbox {
     this.#rows('INSERT INTO meta (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v', key, String(value));
   }
 
-  async #authorized(request) {
+  /** Schreib-Nachweis der Liste und Platz samt Mitglieds-Geheimnis des anfragenden Geräts. */
+  async #authorized(request, now) {
     const stored = this.#meta('proof');
     const header = request.headers.get('Authorization') ?? '';
     const proof = header.startsWith('Bearer ') ? header.slice(7) : '';
     if (!stored || !TOKEN.test(proof) || (await sha256(proof)) !== stored) return false;
     const member = request.headers.get('X-Member') ?? '';
-    return this.#rows('SELECT 1 FROM members WHERE mid = ?', member).length > 0;
+    const row = this.#rows('SELECT secret FROM members WHERE mid = ?', member)[0];
+    if (!row) return false;
+    const secret = request.headers.get('X-Member-Secret') ?? '';
+    if (row.secret) return TOKEN.test(secret) && (await sha256(secret)) === row.secret;
+    // Platz von vor den Geheimnissen: Das erste Geheimnis gilt ab jetzt; ohne Geheimnis nur noch in der Übergangszeit.
+    if (TOKEN.test(secret)) {
+      this.#rows('UPDATE members SET secret = ? WHERE mid = ? AND secret IS NULL', await sha256(secret), member);
+      return true;
+    }
+    return now < LEGACY_UNTIL;
+  }
+
+  /** Prüfwert des Mitglieds-Geheimnisses aus einer Anfrage; fehlt bei alten App-Fassungen (dann null). */
+  #secretHash(value) {
+    if (value === undefined || value === null) return null;
+    if (typeof value !== 'string' || !TOKEN.test(value)) throw Object.assign(new Error('Prüfwert des Mitglieds-Geheimnisses ungültig'), { status: 400 });
+    return value;
   }
 
   #memberCount() {
@@ -149,15 +182,16 @@ export class Mailbox {
     const [section, sub] = path.rest;
     const method = request.method;
 
-    // Anlegen: PUT /v1/lists/<id>  { proofHash, memberId } – das anlegende Gerät bekommt den ersten Platz
+    // Anlegen: PUT /v1/lists/<id>  { proofHash, memberId, secretHash } – das anlegende Gerät bekommt den ersten Platz
     if (!section && method === 'PUT') {
       if (exists) return fail(409, 'gibt es schon');
-      const { proofHash, memberId } = await this.#body(request, 1024);
+      const { proofHash, memberId, secretHash } = await this.#body(request, 1024);
       if (typeof proofHash !== 'string' || !TOKEN.test(proofHash)) return fail(400, 'Prüfwert fehlt');
       if (typeof memberId !== 'string' || !TOKEN.test(memberId)) return fail(400, 'Mitglieds-ID fehlt');
+      const secret = this.#secretHash(secretHash);
       this.#setMeta('proof', proofHash);
       this.#setMeta('admin', memberId);
-      this.#rows('INSERT INTO members (mid, at) VALUES (?, ?)', memberId, now);
+      this.#rows('INSERT INTO members (mid, at, secret) VALUES (?, ?, ?)', memberId, now, secret);
       this.#setMeta('created', now);
       await this.#touch(now);
       return json({ ok: true }, 201);
@@ -168,7 +202,7 @@ export class Mailbox {
     if (section === 'requests' && method === 'POST' && !sub) return this.#createRequest(request, now);
     if (section === 'requests' && method === 'GET' && sub) return this.#requestStatus(request, sub, now);
 
-    if (!(await this.#authorized(request))) return fail(401, 'kein Zugang');
+    if (!(await this.#authorized(request, now))) return fail(401, 'kein Zugang');
     await this.#touch(now);
     const caller = request.headers.get('X-Member');
     const isAdmin = caller === this.#admin();
@@ -231,9 +265,9 @@ export class Mailbox {
       const open = this.#rows('SELECT rid FROM requests WHERE rid = ? AND answer IS NULL', sub);
       if (!open.length) return fail(404, 'unbekannte oder schon beantwortete Anfrage');
       if (this.#memberCount() >= LIMITS.members) return fail(409, 'Liste ist voll');
-      // Bestätigt: Die Anfrage-ID wird die Mitglieds-ID des neuen Geräts
+      // Bestätigt: Die Anfrage-ID wird die Mitglieds-ID des neuen Geräts, sein Geheimnis kam mit der Anfrage
       this.#rows('UPDATE requests SET answer = ? WHERE rid = ?', answer, sub);
-      this.#rows('INSERT INTO members (mid, at) VALUES (?, ?)', sub, now);
+      this.#rows('INSERT INTO members (mid, at, secret) SELECT ?, ?, secret FROM requests WHERE rid = ?', sub, now, sub);
       return json({ ok: true });
     }
     return fail(404, 'unbekannt');
@@ -288,13 +322,14 @@ export class Mailbox {
     const invite = await this.#inviteHash(request, now);
     if (!invite) return fail(403, 'Einladung ungültig oder abgelaufen');
     if (this.#memberCount() >= LIMITS.members) return fail(409, 'Liste ist voll');
-    const { data } = await this.#body(request, LIMITS.requestBytes);
+    const { data, secretHash } = await this.#body(request, LIMITS.requestBytes);
     if (typeof data !== 'string' || !data) return fail(400, 'Daten fehlen');
+    const secret = this.#secretHash(secretHash);
     this.#cleanup(now);
     const [{ open }] = this.#rows('SELECT COUNT(*) AS open FROM requests');
     if (open >= LIMITS.openRequests) return fail(429, 'zu viele offene Anfragen');
     const rid = crypto.randomUUID();
-    this.#rows('INSERT INTO requests (rid, invite, data, at) VALUES (?, ?, ?, ?)', rid, invite, data, now);
+    this.#rows('INSERT INTO requests (rid, invite, data, at, secret) VALUES (?, ?, ?, ?, ?)', rid, invite, data, now, secret);
     return json({ rid }, 201);
   }
 

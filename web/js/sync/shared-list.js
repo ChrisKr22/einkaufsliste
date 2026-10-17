@@ -59,7 +59,10 @@ export class SharedList {
   }
 
   #connection(session) {
-    return new ListConnection({ listId: session.listId, listKey: session.listKey, memberId: session.memberId, baseUrl: this.baseUrl, fetch: this.fetchFn });
+    return new ListConnection({
+      listId: session.listId, listKey: session.listKey, memberId: session.memberId, memberSecret: session.memberSecret,
+      baseUrl: this.baseUrl, fetch: this.fetchFn,
+    });
   }
 
   // ---------------------------------------------------------------- Start
@@ -99,6 +102,12 @@ export class SharedList {
   }
 
   async #activate(session) {
+    if (!session.memberSecret) {
+      // Liste von vor den Mitglieds-Geheimnissen: Geheimnis erst sicher speichern, dann damit anfragen –
+      // der Briefkasten übernimmt das erste, das für diesen Platz kommt.
+      session = { ...session, memberSecret: newMemberSecret() };
+      await this.base.put('meta', { key: sessionKey(session.listId), value: session });
+    }
     this.session = session;
     this.replica = new Replica({ deviceId: session.deviceId, now: this.now, saved: session.replica });
     this.connection = this.#connection(session);
@@ -160,7 +169,7 @@ export class SharedList {
   async create({ name, deviceName, adopt = true }) {
     const source = adopt && !(this.model.repository.store instanceof SharedStore) ? this.model.repository.store : null;
     const session = {
-      listId: newListId(), listKey: newListKey(), memberId: crypto.randomUUID(), deviceId: newId().slice(0, 8),
+      listId: newListId(), listKey: newListKey(), memberId: crypto.randomUUID(), memberSecret: newMemberSecret(), deviceId: newId().slice(0, 8),
       name: cleanName(name, 'Gemeinsame Liste'), deviceName: cleanName(deviceName, 'Mein Gerät'), seen: 0, snapshotUpto: 0, replica: null,
     };
     await this.#connection(session).create();
@@ -275,8 +284,9 @@ export class SharedList {
       const keys = await newDeviceKeys();
       const join = new JoinConnection({ listId: invite.listId, secret: invite.secret, baseUrl: this.baseUrl, fetch: this.fetchFn });
       const device = cleanName(deviceName, 'Neues Gerät');
-      const rid = await join.request(keys.publicJwk, device);
-      this.joinData = { ...invite, rid, deviceName: device, ...keys, code: await checkCode(invite.secret, keys.publicJwk), startedAt: this.now() };
+      const memberSecret = newMemberSecret();
+      const rid = await join.request(keys.publicJwk, device, memberSecret);
+      this.joinData = { ...invite, rid, memberSecret, deviceName: device, ...keys, code: await checkCode(invite.secret, keys.publicJwk), startedAt: this.now() };
       await this.base.put('meta', { key: JOIN_KEY, value: this.joinData });
       this.pendingInvite = null;
       this.#set({ join: { phase: 'waiting', name: invite.name, code: this.joinData.code } });
@@ -299,7 +309,7 @@ export class SharedList {
       this.joinData = null;
       clearTimeout(this.joinTimer);
       const session = {
-        listId: data.listId, listKey: payload.listKey, memberId: data.rid, deviceId: newId().slice(0, 8),
+        listId: data.listId, listKey: payload.listKey, memberId: data.rid, memberSecret: data.memberSecret, deviceId: newId().slice(0, 8),
         name: cleanName(payload.name, data.name || 'Gemeinsame Liste'), deviceName: data.deviceName, seen: 0, snapshotUpto: 0, replica: null,
       };
       await this.base.put('meta', { key: sessionKey(session.listId), value: session });
@@ -490,6 +500,9 @@ export class SharedList {
     clearTimeout(this.pushTimer);
   }
 }
+
+/** Geheimnis dieses Geräts für eine gemeinsame Liste (256 Bit) – weist es beim Briefkasten aus. */
+const newMemberSecret = newListKey;
 
 function cleanName(name, fallback) {
   const clean = String(name ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);

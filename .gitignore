@@ -14,6 +14,9 @@ xcuserdata/
 Catalog/Inbox/*
 !Catalog/Inbox/LIESMICH.md
 
+# Private Notizen und Prüfberichte (nicht ins Repository)
+privat/
+
 # Lokale Claude-Einstellungen
 .claude/
 

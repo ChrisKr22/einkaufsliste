@@ -71,14 +71,16 @@ Wrangler ist auf **4.148.0** festgelegt (`package.json`), alle mitgeladenen Pake
 ## Schnittstelle
 
 Alle Pfade beginnen mit `/v1/lists/<Listen-ID>` (22 Zeichen base64url). „Nachweis“ = Kopfzeilen
-`Authorization: Bearer <Schreib-Nachweis>` **und** `X-Member: <Mitglieds-ID>`; der Briefkasten kennt nur den
-SHA-256-Prüfwert des Nachweises. Höchstens 5 Mitglieder (Plätze) pro Liste; Einladungen gelten höchstens 30 Minuten.
+`Authorization: Bearer <Schreib-Nachweis>`, `X-Member: <Mitglieds-ID>` **und** `X-Member-Secret: <Mitglieds-Geheimnis>`;
+der Briefkasten kennt von Nachweis und Geheimnis nur die SHA-256-Prüfwerte. Plätze von vor dem 17.10.2026 haben noch
+kein Geheimnis: Das erste, das für so einen Platz kommt, gilt ab dann; ganz ohne Geheimnis nur bis `LEGACY_UNTIL`
+(1.11.2026) – danach kann `LEGACY_UNTIL` samt dem Zweig in `#authorized` entfallen. Höchstens 5 Mitglieder (Plätze) pro Liste; Einladungen gelten höchstens 30 Minuten.
 **Admin** ist das anlegende Gerät (bei älteren Listen das zuerst beigetretene); verlässt es die Liste, wird das am
 längsten dabei befindliche Gerät Admin. Mit „nur Admin“ markierte Anfragen beantwortet der Briefkasten sonst mit 403.
 
 | Anfrage | Zugang | Zweck |
 |---|---|---|
-| `PUT` | – | Briefkasten anlegen: `{ proofHash, memberId }` (erster Platz) |
+| `PUT` | – | Briefkasten anlegen: `{ proofHash, memberId, secretHash }` (erster Platz) |
 | `GET` | Nachweis | `{ last, members, maxMembers, admin }` |
 | `DELETE` | Nachweis, nur Admin (oder letztes Gerät) | Briefkasten samt Inhalt löschen |
 | `POST /ops` | Nachweis | Änderungen einwerfen: `{ data }` → `{ nr }` |
@@ -88,7 +90,7 @@ längsten dabei befindliche Gerät Admin. Mit „nur Admin“ markierte Anfragen
 | `GET /members` | Nachweis | Plätze: `{ members: [{mid, at}], maxMembers, admin }` |
 | `DELETE /members/<mid>` | Nachweis; andere nur Admin | austreten (eigene ID) bzw. entfernen – Zugang endet sofort |
 | `POST /invites` | Nachweis | Einladung gültig machen: `{ hash, ttlMs }` (höchstens 30 Minuten) |
-| `POST /requests` | Einladung (`X-Invite`) | Beitrittsanfrage: `{ data }` → `{ rid }`; 409, wenn die Liste voll ist |
+| `POST /requests` | Einladung (`X-Invite`) | Beitrittsanfrage: `{ data, secretHash }` → `{ rid }`; 409, wenn die Liste voll ist |
 | `GET /requests/<rid>` | Einladung | Antwort abholen: `{ answer }` (null, solange offen; bis 24 h nach der Anfrage) |
 | `GET /requests` | Nachweis | offene Anfragen |
 | `POST /requests/<rid>` | Nachweis | bestätigen `{ answer }` (die `rid` wird Mitglieds-ID des neuen Geräts) oder ablehnen `{ reject: true }` |

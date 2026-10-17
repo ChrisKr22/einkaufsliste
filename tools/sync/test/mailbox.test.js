@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
-import { LIMITS, Mailbox, sha256 } from '../src/mailbox.js';
+import { LEGACY_UNTIL, LIMITS, Mailbox, sha256 } from '../src/mailbox.js';
 import worker from '../src/worker.js';
 import { listKeys, newListId, newListKey, proofHash, seal, unseal } from '../../../web/js/sync/crypto.js';
 import { Replica } from '../../../web/js/sync/replica.js';
@@ -35,12 +35,14 @@ function setup() {
   const storage = fakeStorage();
   const mailbox = new Mailbox(storage, { now: () => clock.t });
   const listId = newListId();
-  const ctx = { clock, storage, mailbox, listId, member: null };
-  ctx.call = (method, path, { body, proof, invite, member = ctx.member } = {}) => {
+  // secrets: Mitglieds-Geheimnis je Mitglieds-ID – wird automatisch mitgeschickt (secret: null = ohne)
+  const ctx = { clock, storage, mailbox, listId, member: null, secrets: {} };
+  ctx.call = (method, path, { body, proof, invite, member = ctx.member, secret = ctx.secrets[member] } = {}) => {
     const headers = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (proof) headers.Authorization = `Bearer ${proof}`;
     if (member) headers['X-Member'] = member;
+    if (secret) headers['X-Member-Secret'] = secret;
     if (invite) headers['X-Invite'] = invite;
     return mailbox.fetch(new Request(`${BASE}/v1/lists/${listId}${path}`, {
       method, headers, body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body),
@@ -49,14 +51,16 @@ function setup() {
   return ctx;
 }
 
-async function created() {
+async function created({ withSecret = true } = {}) {
   const ctx = setup();
   ctx.listKey = newListKey();
   ctx.keys = await listKeys(ctx.listKey, ctx.listId);
   const memberId = crypto.randomUUID();
-  const res = await ctx.call('PUT', '', { body: { proofHash: await proofHash(ctx.keys.writeProof), memberId } });
+  const secret = newListKey();
+  const res = await ctx.call('PUT', '', { body: { proofHash: await proofHash(ctx.keys.writeProof), memberId, ...(withSecret ? { secretHash: await sha256(secret) } : {}) } });
   assert.equal(res.status, 201);
   ctx.member = memberId;
+  if (withSecret) ctx.secrets[memberId] = secret;
   ctx.proof = ctx.keys.writeProof;
   return ctx;
 }
@@ -258,13 +262,15 @@ test('Beitritt: höchstens 5 offene Anfragen', async () => {
 });
 
 /** Einladung ausstellen, Anfrage stellen, bestätigen – liefert die Mitglieds-ID des neuen Geräts. */
-async function join(ctx, invite = `einladung-${crypto.randomUUID()}`) {
+async function join(ctx, invite = `einladung-${crypto.randomUUID()}`, { withSecret = true } = {}) {
   await ctx.call('POST', '/invites', { proof: ctx.proof, body: { hash: await sha256(invite), ttlMs: 30 * 60_000 } });
-  const res = await ctx.call('POST', '/requests', { invite, body: { data: 'anfrage' } });
+  const secret = newListKey();
+  const res = await ctx.call('POST', '/requests', { invite, body: { data: 'anfrage', ...(withSecret ? { secretHash: await sha256(secret) } : {}) } });
   if (res.status !== 201) return { status: res.status };
   const { rid } = await body(res);
   const answered = await ctx.call('POST', `/requests/${rid}`, { proof: ctx.proof, body: { answer: 'schlüssel' } });
-  return { status: answered.status, member: rid, invite };
+  if (withSecret) ctx.secrets[rid] = secret;
+  return { status: answered.status, member: rid, secret, invite };
 }
 
 test('Einladung: gilt höchstens 30 Minuten, auch wenn länger verlangt', async () => {
@@ -384,6 +390,106 @@ test('Admin: als letztes Gerät darf jeder die Liste löschen', async () => {
   assert.equal((await ctx.call('DELETE', '', { proof: ctx.proof, member: b.member })).status, 204);
 });
 
+// ---------------------------------------------------------------- Mitglieds-Geheimnis
+
+test('Geheimnis: ohne, mit falschem oder fremdem Geheimnis kein Zugang – auch mit dem richtigen Schlüssel', async () => {
+  const ctx = await created();
+  const b = await join(ctx);
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member: b.member })).status, 200);
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member: b.member, secret: null })).status, 401, 'ohne');
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member: b.member, secret: newListKey() })).status, 401, 'falsch');
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member: b.member, secret: ctx.secrets[ctx.member] })).status, 401, 'das des Admins');
+});
+
+test('Geheimnis: ein Mitglied kann sich nicht als Admin ausgeben', async () => {
+  const ctx = await created();
+  const b = await join(ctx);
+  const c = await join(ctx);
+  const admin = (await body(await ctx.call('GET', '/members', { proof: ctx.proof, member: b.member }))).admin;
+  assert.equal(admin, ctx.member);
+  for (const secret of [b.secret, null]) {
+    assert.equal((await ctx.call('DELETE', `/members/${c.member}`, { proof: ctx.proof, member: admin, secret })).status, 401);
+    assert.equal((await ctx.call('PUT', '/proof', { proof: ctx.proof, member: admin, secret, body: { proofHash: await sha256('neu-neu-neu-neu-neu-neu') } })).status, 401);
+    assert.equal((await ctx.call('DELETE', '', { proof: ctx.proof, member: admin, secret })).status, 401);
+  }
+  assert.equal((await ctx.call('GET', '/members', { proof: ctx.proof })).status, 200, 'Liste unverändert da');
+});
+
+test('Geheimnis: ein entferntes Gerät kommt auch mit der ID eines anderen nicht mehr hinein', async () => {
+  const ctx = await created();
+  const b = await join(ctx);
+  const c = await join(ctx);
+  assert.equal((await ctx.call('DELETE', `/members/${c.member}`, { proof: ctx.proof })).status, 200);
+  for (const member of [c.member, b.member, ctx.member]) {
+    assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member, secret: c.secret })).status, 401, member);
+    assert.equal((await ctx.call('POST', '/ops', { proof: ctx.proof, member, secret: c.secret, body: { data: 'x' } })).status, 401, member);
+  }
+});
+
+test('Geheimnis: wird nirgends ausgegeben', async () => {
+  const ctx = await created();
+  const b = await join(ctx);
+  const texts = await Promise.all([
+    ctx.call('GET', '/members', { proof: ctx.proof }), ctx.call('GET', '', { proof: ctx.proof }), ctx.call('GET', '/requests', { proof: ctx.proof }),
+  ].map(async (res) => (await res).text()));
+  for (const text of texts) {
+    assert.ok(!text.includes(b.secret) && !text.includes(await sha256(b.secret)), text);
+    assert.ok(!text.includes('secret'), text);
+  }
+});
+
+test('Geheimnis: ungültiger Prüfwert beim Anlegen oder Beitreten → 400', async () => {
+  const ctx = setup();
+  const body = { proofHash: await sha256('geheim-geheim-geheim-geheim'), memberId: crypto.randomUUID(), secretHash: 'kurz' };
+  assert.equal((await ctx.call('PUT', '', { body })).status, 400);
+  const list = await created();
+  const invite = 'einladung-pruefwert-123';
+  await list.call('POST', '/invites', { proof: list.proof, body: { hash: await sha256(invite), ttlMs: 60_000 } });
+  assert.equal((await list.call('POST', '/requests', { invite, body: { data: 'x', secretHash: 42 } })).status, 400);
+});
+
+test('Übergang: alter Platz ohne Geheimnis – das erste Geheimnis gilt, danach nur noch damit', async () => {
+  const ctx = await created({ withSecret: false });
+  const b = await join(ctx, undefined, { withSecret: false });
+  // alte App-Fassung: ohne Geheimnis in der Übergangszeit weiter möglich
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof })).status, 200);
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member: b.member })).status, 200);
+  // neue App-Fassung auf A: setzt das Geheimnis
+  const secret = newListKey();
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, secret })).status, 200);
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, secret: null })).status, 401, 'ohne geht es für A nicht mehr');
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, secret: newListKey() })).status, 401, 'ein anderes auch nicht');
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, secret })).status, 200);
+  // B ist davon unberührt
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, member: b.member })).status, 200);
+});
+
+test('Übergang: nach LEGACY_UNTIL ohne Geheimnis kein Zugang mehr, Geheimnis setzen geht weiter', async () => {
+  const ctx = await created({ withSecret: false });
+  ctx.clock.t = LEGACY_UNTIL;
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof })).status, 401);
+  const secret = newListKey();
+  assert.equal((await ctx.call('GET', '/ops', { proof: ctx.proof, secret })).status, 200);
+});
+
+test('Übergang: Briefkasten aus der Zeit vor den Geheimnissen bekommt die Spalten nachgerüstet', async () => {
+  const storage = fakeStorage();
+  storage.sql.exec('CREATE TABLE members (mid TEXT PRIMARY KEY, at INTEGER NOT NULL)');
+  storage.sql.exec('CREATE TABLE requests (rid TEXT PRIMARY KEY, invite TEXT NOT NULL, data TEXT NOT NULL, answer TEXT, at INTEGER NOT NULL)');
+  storage.sql.exec("CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
+  const keys = await listKeys(newListKey(), newListId());
+  const listId = newListId();
+  storage.sql.exec("INSERT INTO meta (k, v) VALUES ('proof', ?)", await proofHash(keys.writeProof));
+  storage.sql.exec("INSERT INTO members (mid, at) VALUES ('alt-alt-alt-alt-alt-alt', 1)");
+  const mailbox = new Mailbox(storage, { now: () => 1_000_000 });
+  const secret = newListKey();
+  const res = await mailbox.fetch(new Request(`${BASE}/v1/lists/${listId}/ops`, {
+    headers: { Authorization: `Bearer ${keys.writeProof}`, 'X-Member': 'alt-alt-alt-alt-alt-alt', 'X-Member-Secret': secret },
+  }));
+  assert.equal(res.status, 200);
+  assert.equal(storage.sql.exec('SELECT secret FROM members').toArray()[0].secret, await sha256(secret));
+});
+
 // ---------------------------------------------------------------- Einstieg (Worker)
 
 test('Worker: leitet an den Briefkasten der Liste in der EU weiter, beantwortet CORS-Vorabfragen', async () => {
@@ -401,6 +507,7 @@ test('Worker: leitet an den Briefkasten der Liste in der EU weiter, beantwortet 
   assert.equal(pre.status, 204);
   assert.equal(pre.headers.get('Access-Control-Allow-Origin'), '*');
   assert.match(pre.headers.get('Access-Control-Allow-Headers'), /Authorization/);
+  assert.match(pre.headers.get('Access-Control-Allow-Headers'), /X-Member-Secret/);
   assert.equal((await worker.fetch(new Request(`${BASE}/`), env)).status, 200);
   assert.equal((await worker.fetch(new Request(`${BASE}/v1/lists/kaputt/ops`), env)).status, 404);
   await worker.fetch(new Request(`${BASE}/v1/lists/${listId}/ops`), env);

@@ -432,7 +432,7 @@ Daraus folgt:
 
 - Jede gemeinsame Liste hat einen **Briefkasten** bei Cloudflare: ein kleiner Speicher, in den jedes Gerät seine Änderungen einwirft und aus dem es die Änderungen der anderen abholt.
 - **Der Briefkasten kann nichts lesen.** Alles wird auf dem Gerät verschlüsselt (Ende-zu-Ende, AES-GCM über die WebCrypto-Schnittstelle des Browsers). Der Listenschlüssel liegt nur auf den Geräten der Mitglieder.
-- **Mitglied ist, wer den Schlüssel der Liste hat und einen Platz im Briefkasten.** Keine Konten, keine Passwörter, keine E-Mail-Adressen. **Höchstens 5 Geräte pro Liste**; jedes hat eine zufällige Mitglieds-ID, ohne Platz kein Zugang – auch nicht mit weitergegebenem Schlüssel. Ein Gerät kann in beliebig vielen Listen sein; jede Liste hat ihren eigenen Schlüssel.
+- **Mitglied ist, wer den Schlüssel der Liste hat und einen Platz im Briefkasten.** Keine Konten, keine Passwörter, keine E-Mail-Adressen. **Höchstens 5 Geräte pro Liste**; jedes hat eine zufällige Mitglieds-ID und ein eigenes **Mitglieds-Geheimnis** (der Briefkasten kennt nur dessen Prüfwert). Die IDs kennen alle Mitglieder, ausweisen kann sich aber nur, wer auch das Geheimnis hat: ohne eigenen Platz kein Zugang – auch nicht mit weitergegebenem Schlüssel oder der ID eines anderen Geräts. Ein Gerät kann in beliebig vielen Listen sein; jede Liste hat ihren eigenen Schlüssel.
 - **Abgleich automatisch:** Solange die App offen ist, sofort beim Öffnen, nach jeder eigenen Änderung (gebündelt nach 1–2 s) und sonst alle 5 Sekunden. Im Hintergrund passiert nichts – iOS lässt Web-Apps dort nicht arbeiten; wer die App öffnet, ist nach einer Sekunde aktuell.
 - **Offline zuerst:** Die App arbeitet immer mit ihrem lokalen Stand. Fällt der Briefkasten aus, fehlt nur der Abgleich.
 
@@ -460,7 +460,7 @@ Ein kleines Programm (ca. 150 Zeilen, liegt im Repository unter `tools/sync/`), 
 | | |
 |---|---|
 | Schnittstelle | `POST /liste/<id>` (Änderungen einwerfen), `GET /liste/<id>?seit=<nr>` (Neues abholen; leer, wenn nichts da ist), dazu Beitrittsanfragen (siehe unten) |
-| Schreibschutz | Beim Anlegen hinterlegt das erste Gerät einen **Schreib-Nachweis** (aus dem Listenschlüssel abgeleitet). Lesen, Einwerfen, Gesamtstand ablegen und Löschen nur mit Nachweis **und** eigenem Platz (Mitglieds-ID). |
+| Schreibschutz | Beim Anlegen hinterlegt das erste Gerät einen **Schreib-Nachweis** (aus dem Listenschlüssel abgeleitet). Lesen, Einwerfen, Gesamtstand ablegen und Löschen nur mit Nachweis **und** eigenem Platz (Mitglieds-ID samt Mitglieds-Geheimnis). Plätze von vor dem 17.10.2026 ohne Geheimnis: Das erste Geheimnis, das kommt, gilt ab dann; ganz ohne Geheimnis nur bis 1.11.2026. |
 | Plätze | Höchstens 5 pro Liste. Ein Platz entsteht beim Anlegen und beim bestätigten Beitritt; Austreten oder Entfernen gibt ihn frei, der Zugang dieses Geräts endet sofort. |
 | Bremse | Begrenzung pro Gerät/IP, damit niemand die Gratis-Menge leer fragen kann |
 | Kosten | **0 €** – Gratis-Tarif (rund 100 000 Anfragen pro Tag; 3 Geräte × 1 Stunde × alle 5 s ≈ 2 000–3 000). Über der Grenze entstehen keine Kosten, der Abgleich pausiert bis zum Folgetag. Grenzen vor der Umsetzung aktuell prüfen. |
