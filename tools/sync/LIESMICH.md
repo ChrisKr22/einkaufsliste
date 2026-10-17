@@ -64,7 +64,7 @@ Wrangler ist auf **4.148.0** festgelegt (`package.json`), alle mitgeladenen Pake
 
 ## Kosten und Grenzen
 
-- Gratis-Tarif: rund 100 000 Anfragen pro Tag. Ein einstündiger Einkauf mit drei Geräten braucht etwa 2 000–3 000.
+- Gratis-Tarif: rund 100 000 Anfragen pro Tag. Ein einstündiger Einkauf mit drei Geräten braucht beim Abgleich alle 2 s etwa 6 000.
 - Über der Grenze entstehen **keine** Kosten – der Abgleich pausiert bis zum nächsten Tag, die App arbeitet lokal weiter.
 - Briefkästen, die 180 Tage niemand benutzt hat, löschen sich selbst.
 
@@ -84,7 +84,7 @@ längsten dabei befindliche Gerät Admin. Mit „nur Admin“ markierte Anfragen
 | `GET` | Nachweis | `{ last, members, maxMembers, admin }` |
 | `DELETE` | Nachweis, nur Admin (oder letztes Gerät) | Briefkasten samt Inhalt löschen |
 | `POST /ops` | Nachweis | Änderungen einwerfen: `{ data }` → `{ nr }` |
-| `GET /ops?after=N` | Nachweis | Änderungen nach Nummer N: `{ snapshot, items: [{nr, data}], last, more }` |
+| `GET /ops` mit `X-After: N` | Nachweis | Änderungen nach Nummer N: `{ snapshot, items: [{nr, data}], last, more }`. `?after=N` geht weiterhin (ältere App-Fassungen); die Kopfzeile hält die Adresse gleich, so wiederholt der Browser die Vorabfrage nicht. |
 | `PUT /snapshot` | Nachweis | Gesamtstand bis Nummer `upto` ablegen; ältere Änderungen werden gelöscht |
 | `PUT /proof` | Nachweis, nur Admin | neuer Schreib-Nachweis (nach neuem Listenschlüssel) |
 | `GET /members` | Nachweis | Plätze: `{ members: [{mid, at}], maxMembers, admin }` |

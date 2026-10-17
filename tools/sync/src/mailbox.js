@@ -38,7 +38,7 @@ const TOKEN = /^[A-Za-z0-9_-]{20,100}$/;
 export const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Invite, X-Member, X-Member-Secret',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Invite, X-Member, X-Member-Secret, X-After',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -218,7 +218,7 @@ export class Mailbox {
       return json({ last: Math.max(last, Number(this.#meta('upto') ?? 0)), members: this.#memberCount(), maxMembers: LIMITS.members, admin: this.#admin() });
     }
     if (section === 'ops' && method === 'POST') return this.#append(request, now);
-    if (section === 'ops' && method === 'GET') return this.#read(url);
+    if (section === 'ops' && method === 'GET') return this.#read(request, url);
     if (section === 'snapshot' && method === 'PUT') return this.#putSnapshot(request, now);
     if (section === 'proof' && method === 'PUT') {
       // Neuer Listenschlüssel (jemand wurde entfernt): ab jetzt gilt nur der neue Nachweis
@@ -283,8 +283,11 @@ export class Mailbox {
   }
 
   /** GET ops?after=N – Änderungen nach Nummer N. Liegt N vor dem Gesamtstand, kommt dieser zuerst mit. */
-  #read(url) {
-    const after = Math.max(0, Math.floor(Number(url.searchParams.get('after')) || 0));
+  #read(request, url) {
+    // Startnummer als Kopfzeile X-After (gleichbleibende Adresse – der Browser merkt sich die Vorabfrage);
+    // ?after=N bleibt für ältere App-Fassungen.
+    const raw = request.headers.get('X-After') ?? url.searchParams.get('after');
+    const after = Math.max(0, Math.floor(Number(raw) || 0));
     const snap = this.#rows('SELECT upto, data FROM snapshot WHERE id = 1')[0] ?? null;
     const needsSnapshot = snap !== null && after < snap.upto;
     const from = needsSnapshot ? snap.upto : after;

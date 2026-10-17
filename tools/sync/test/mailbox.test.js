@@ -122,6 +122,21 @@ test('Änderungen: fortlaufend nummeriert, abrufbar ab einer Nummer', async () =
   assert.deepEqual(await body(await ctx.call('GET', '', { proof: ctx.proof })), { last: 3, members: 1, maxMembers: 5, admin: ctx.member });
 });
 
+test('Änderungen: Startnummer auch als Kopfzeile X-After (gleichbleibende Adresse), sie geht vor ?after', async () => {
+  const ctx = await created();
+  for (const data of ['a', 'b', 'c']) await ctx.call('POST', '/ops', { proof: ctx.proof, body: { data } });
+  const read = async (path, after) => {
+    const res = await ctx.mailbox.fetch(new Request(`${BASE}/v1/lists/${ctx.listId}${path}`, {
+      headers: { Authorization: `Bearer ${ctx.proof}`, 'X-Member': ctx.member, 'X-Member-Secret': ctx.secrets[ctx.member], ...(after === undefined ? {} : { 'X-After': after }) },
+    }));
+    return (await body(res)).items.map((i) => i.data);
+  };
+  assert.deepEqual(await read('/ops', '1'), ['b', 'c']);
+  assert.deepEqual(await read('/ops?after=2', '0'), ['a', 'b', 'c'], 'Kopfzeile gewinnt');
+  assert.deepEqual(await read('/ops?after=2'), ['c'], 'ältere App-Fassung');
+  assert.deepEqual(await read('/ops', 'kaputt'), ['a', 'b', 'c']);
+});
+
 test('Änderungen: Abruf in Seiten', async () => {
   const ctx = await created();
   for (let i = 0; i < LIMITS.page + 3; i++) await ctx.call('POST', '/ops', { proof: ctx.proof, body: { data: `d${i}` } });
@@ -508,6 +523,7 @@ test('Worker: leitet an den Briefkasten der Liste in der EU weiter, beantwortet 
   assert.equal(pre.headers.get('Access-Control-Allow-Origin'), '*');
   assert.match(pre.headers.get('Access-Control-Allow-Headers'), /Authorization/);
   assert.match(pre.headers.get('Access-Control-Allow-Headers'), /X-Member-Secret/);
+  assert.match(pre.headers.get('Access-Control-Allow-Headers'), /X-After/);
   assert.equal((await worker.fetch(new Request(`${BASE}/`), env)).status, 200);
   assert.equal((await worker.fetch(new Request(`${BASE}/v1/lists/kaputt/ops`), env)).status, 404);
   await worker.fetch(new Request(`${BASE}/v1/lists/${listId}/ops`), env);
