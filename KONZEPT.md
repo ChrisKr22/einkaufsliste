@@ -371,6 +371,7 @@ Der Basis-Katalog (Produkte, Synonyme, Kategorien, Bildnamen) liegt als JSON in 
 | Suche | Name + Synonyme, normalisiert (Umlaute, ß, Akzente), Präfix-, Teilwort- und Tippfehler-Treffer |
 | Feedback | Animationen; Vibration nur, wo der Browser es kann (iPhone-Safari nicht) |
 | Barrierefreiheit | echte Buttons, Beschriftungen für Screenreader, Dark Mode, reduzierte Bewegung |
+| Sicherheit | Content-Security-Policy in `index.html`: Skripte nur aus der App, Netz nur zum Briefkasten (bei neuer Briefkasten-Adresse dort mit ändern). Texte und IDs werden beim Anzeigen maskiert; IDs von anderen Geräten und aus Sicherungsdateien nur in sicherer Form (`js/data/ids.js`) |
 | Tests | Node-Tests für Suche, Datenlogik und Planung (`npm test` in `web/`) |
 
 Kein Konto, keine Analytics. Nach dem ersten Laden braucht die App kein Netz mehr.
@@ -476,7 +477,7 @@ Ein kleines Programm (ca. 150 Zeilen, liegt im Repository unter `tools/sync/`), 
 | Adresse des Workers | Jeder (steht im öffentlichen App-Code) – man kann Anfragen schicken, mehr nicht |
 | Dass es eine bestimmte Liste gibt | Nur wer die Listen-ID kennt (128 Bit Zufall, nicht zu erraten) |
 | Inhalt der Liste | **Nur die Mitglieder** – nicht Cloudflare, nicht der Betreiber |
-| Schreiben/Löschen | Nur mit Schreib-Nachweis, also nur Mitglieder |
+| Schreiben/Löschen | Nur mit Schreib-Nachweis und eigenem Mitglieds-Geheimnis, also nur Mitglieder mit Platz |
 | Was Cloudflare technisch sieht | IP-Adressen, Uhrzeiten, Größe der Pakete, Listen-ID – keine Produkte, keine Namen |
 
 #### Die Verknüpfung: so tritt man einer Liste bei (mit Bestätigung)
@@ -506,7 +507,7 @@ sequenceDiagram
 5. **Fertig** (Gerät C): bekommt einen der 5 Plätze, holt den für sich verschlüsselten Listenschlüssel ab, lädt den Stand; die Liste erscheint in der Listenauswahl.
 6. **Wer ist dabei:** *Einstellungen › Gemeinsame Listen › WG* zeigt die Geräte und wann sie zuletzt abgeglichen haben.
 7. **Verlassen:** Das Gerät löscht Schlüssel und Daten der Liste und gibt seinen Platz frei.
-8. **Jemanden entfernen:** Platz sofort freigeben (Zugang endet), dann neuer Listenschlüssel; weil jedes Gerät ein eigenes Schlüsselpaar hat, verteilt die App ihn **selbst** an die verbleibenden Mitglieder. Die Entfernte behält, was sie bis dahin gesehen hat, bekommt aber nichts Neues mehr.
+8. **Jemanden entfernen:** Platz sofort freigeben – der Zugang endet, weil sich das Gerät ohne Platz und eigenes Mitglieds-Geheimnis nicht mehr ausweisen kann. Die Entfernte behält, was sie bis dahin gesehen hat, bekommt aber nichts Neues mehr. *Geplant:* zusätzlich ein neuer Listenschlüssel, den die App über eigene Schlüsselpaare der Geräte an die verbleibenden Mitglieder verteilt.
 
 #### In der App
 
@@ -574,6 +575,14 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 4. ✅ **Mehrere Listen** mit Auswahl, Mitgliederansicht, Verlassen, Entfernen (17.10.2026; neuer Schlüssel nach dem Entfernen steht noch aus).
 5. Sicherung mit Schlüsseln, Wake Lock, Feinschliff; Test auf mehreren iPhones.
 
+#### Umgesetzt: Härtung der gemeinsamen Listen (17.10.2026)
+
+- **Mitglieds-Geheimnis:** Jedes Gerät erzeugt beim Anlegen bzw. Beitreten ein eigenes Geheimnis (256 Bit) und schickt es bei jeder Anfrage mit (`X-Member-Secret`). Der Briefkasten speichert nur den Prüfwert; das bestätigende Mitglied erfährt es nie. Auf dem Gerät liegt es bei den Zugangsdaten der Liste (`meta` › `shared:<Listen-ID>`) und ist für niemanden sichtbar.
+- **Übergang für bestehende Listen:** Plätze von vor dem 17.10.2026 haben kein Geheimnis. Das Gerät erzeugt beim nächsten Öffnen eins, speichert es und schickt es dann mit; der Briefkasten übernimmt das erste, das für den Platz kommt, und verlangt es ab dann. Anfragen ganz ohne Geheimnis (alte App-Fassung) nimmt er für solche Plätze nur bis **1.11.2026** an. *Danach:* den Übergang (`LEGACY_UNTIL` in `tools/sync/src/mailbox.js`) wieder entfernen.
+- **Fremde Daten:** Art und ID von Änderungen anderer Geräte, Produktverweise und die IDs in eingespielten Sicherungen müssen der Form in `js/data/ids.js` entsprechen, sonst werden sie verworfen; beim Anzeigen werden auch IDs maskiert.
+- **Content-Security-Policy** in `index.html` (siehe Kapitel 7); das Skript für die Darstellung liegt dafür in `js/theme-init.js`.
+- **Tests:** `web/tests/security.test.js`, Mitglieds-Geheimnis in `tools/sync/test/mailbox.test.js` und `web/tests/shared-list.test.js`.
+
 #### Umgesetzt: mehrere Listen, privat und gemeinsam (17.10.2026)
 
 - **Listenarten:** *privat* (nur auf diesem Gerät, nichts geht an den Briefkasten) und *gemeinsam* (über den Briefkasten). Beliebig viele von beiden; ein Gerät kann in mehreren gemeinsamen Listen sein. Abgeglichen wird die gerade geöffnete gemeinsame Liste; beim Wechsel wirft sie ihre Änderungen noch ein.
@@ -587,7 +596,7 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 - **Bausteine** (`web/js/sync/`): `join.js` (Einladung, Geräteschlüssel, Prüfcode, Schlüssel nur für das neue Gerät), `client.js` (Briefkasten), `shared-store.js` (Speicher-Weiche: Einträge aus der Replica, alles andere vom Gerät), `shared-list.js` (Steuerung, Abgleich, Beitritt). Oberfläche in `views/shared-view.js`.
 - **Bedienung:** *Einstellungen › Gemeinsame Liste* – anlegen (Name der Liste, Name des Geräts, bisherige Liste übernehmen), *Mitglied einladen* (zweistufig: Einladung erzeugen, dann *Teilen*/*Kopieren* – Safari öffnet das Teilen-Menü nur direkt nach dem Tippen), *Verlassen*. Beitreten: Einladung unter *Geteilte Liste einfügen* einsetzen (oder Link in Safari öffnen) → Gerätename → Prüfcode → warten. Mitglieder sehen die Anfrage als Dialog mit Prüfcode (*Bestätigen*, *Ablehnen*, *Später*). Im Kopf zeigt ein Hinweis den Namen der Liste (Punkt = offene Anfrage).
 - **Abgleich:** beim Öffnen und Zurückkehren in die App, 1,2 s nach jeder eigenen Änderung, sonst alle 5 s (nur sichtbar). Gesamtstand nach je 200 Änderungen. Hat ein anderes Gerät den Einkauf abgeschlossen, schreibt jedes Gerät „Zuletzt gekauft“ für sich fort.
-- **Admin und Entfernen:** In der Mitgliederliste steht „(Admin)“; der Admin hat bei jedem anderen Gerät *Entfernen* (mit Rückfrage). Das entfernte Gerät hat sofort keinen Zugang mehr – ohne Platz lässt der Briefkasten es nicht herein, auch mit Schlüssel nicht – und sieht „Kein Zugang mehr“ mit der Möglichkeit, seine eigene Liste zurückzuholen.
+- **Admin und Entfernen:** In der Mitgliederliste steht „(Admin)“; der Admin hat bei jedem anderen Gerät *Entfernen* (mit Rückfrage). Das entfernte Gerät hat sofort keinen Zugang mehr – ohne Platz lässt der Briefkasten es nicht herein, auch mit Schlüssel nicht und auch nicht mit der Mitglieds-ID eines anderen Geräts – und sieht „Kein Zugang mehr“ mit der Möglichkeit, seine eigene Liste zurückzuholen.
 - **Safari und Home-Bildschirm:** Öffnet sich eine Einladung in Safari auf iPhone/iPad, bietet die App zuerst *Link kopieren* an (Safari und die App auf dem Home-Bildschirm haben getrennte Speicher), danach *Einstellungen › Gemeinsame Liste › Einladung einfügen* in der App; *Lieber hier in Safari beitreten* bleibt möglich.
 - **Private Liste:** bleibt im Gerätespeicher; beim Beitreten ausgeblendet, beim Verlassen wieder da. Beim Anlegen wahlweise übernommen (sie wandert dann in die gemeinsame Liste).
 - **Getestet:** 15 Abläufe mit zwei bis sechs Geräten (Node, echter Briefkasten-Code), 2 Oberflächen-Abläufe (jsdom), dazu der ganze Ablauf gegen den echten Briefkasten (Hin und zurück ≈ 0,3 s).
