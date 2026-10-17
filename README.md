@@ -114,6 +114,10 @@ python3 tools/photos/photos.py recompress
 
 Ein zugeschnittenes Original (`…_zugeschnitten.jpg` daneben) hat dabei Vorrang. Details: [Catalog/Inbox/LIESMICH.md](Catalog/Inbox/LIESMICH.md). Eigene Fotos einzelner Produkte nimmt man direkt in der App auf (Bearbeiten-Fenster › „Foto ändern“).
 
+## Version
+
+Die App-Version steht in `VERSION` (Schema Major.Minor.Patch), die Änderungen in [CHANGELOG.md](CHANGELOG.md). Vor jedem Commit Nummer erhöhen und Eintrag ergänzen; `python3 tools/web/build.py` zeigt die Version dann unten in den Einstellungen an und setzt sie im Xcode-Projekt.
+
 ## Katalog ändern
 
 `Catalog/catalog.json` bearbeiten, `"version"` um 1 erhöhen, dann prüfen und bauen:

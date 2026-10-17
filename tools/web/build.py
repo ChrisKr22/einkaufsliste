@@ -7,6 +7,8 @@
 2. Trägt alle App-Dateien in die Offline-Liste des Service Workers (web/sw.js) ein
    und setzt eine neue VERSION, sobald sich eine Datei geändert hat. So holen sich
    installierte Apps beim nächsten Öffnen mit Netz automatisch die neue Fassung.
+3. Schreibt die App-Version aus VERSION in die Einstellungen (web/index.html)
+   und in das Xcode-Projekt (MARKETING_VERSION).
 """
 
 import hashlib
@@ -20,6 +22,8 @@ WEB = ROOT / "web"
 SW = WEB / "sw.js"
 INCLUDE = ("index.html", "manifest.webmanifest", "css", "js", "data", "icons", "images")
 SKIP_SUFFIXES = {".md"}
+VERSION_FILE = ROOT / "VERSION"
+XCODE_PROJECT = ROOT / "FeedYourself.xcodeproj" / "project.pbxproj"
 
 
 def app_files():
@@ -66,7 +70,24 @@ def copy_catalog_images():
     return ids
 
 
+def apply_app_version():
+    """VERSION (z. B. 1.2.0) → Einstellungen der Web-App und Xcode-Projekt."""
+    version = VERSION_FILE.read_text(encoding="utf-8").strip()
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        raise SystemExit(f"VERSION muss die Form 1.2.3 haben, gefunden: {version!r}")
+    index = WEB / "index.html"
+    html, count = re.subn(r"(<span data-app-version>)[^<]*(</span>)", rf"\g<1>{version}\g<2>", index.read_text(encoding="utf-8"))
+    if count != 1:
+        raise SystemExit("web/index.html: <span data-app-version> nicht (eindeutig) gefunden.")
+    index.write_text(html, encoding="utf-8")
+    if XCODE_PROJECT.exists():
+        pbx = re.sub(r"MARKETING_VERSION = [^;]*;", f"MARKETING_VERSION = {version};", XCODE_PROJECT.read_text(encoding="utf-8"))
+        XCODE_PROJECT.write_text(pbx, encoding="utf-8")
+    return version
+
+
 def main():
+    app_version = apply_app_version()
     (WEB / "data").mkdir(exist_ok=True)
     shutil.copyfile(ROOT / "Catalog" / "catalog.json", WEB / "data" / "catalog.json")
     images = copy_catalog_images()
@@ -86,7 +107,7 @@ def main():
     SW.write_text(sw, encoding="utf-8")
 
     size = sum(f.stat().st_size for f in files)
-    print(f"Version {version}: {len(files)} Dateien, {size / 1024:.0f} KB offline verfügbar, {len(images)} Produktfotos.")
+    print(f"App-Version {app_version}, Build {version}: {len(files)} Dateien, {size / 1024:.0f} KB offline verfügbar, {len(images)} Produktfotos.")
     return files
 
 

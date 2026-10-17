@@ -394,6 +394,7 @@ body.sheet-open { overscroll-behavior: none; }
 .settings .section-note:last-child { margin-top: 10px; }
 .settings-signature { margin: 32px 4px 0; text-align: center; font-size: 12px; line-height: 1.45; color: var(--text2); }
 .settings-signature strong { color: var(--text); font-weight: 600; }
+.app-version { display: block; margin-top: 6px; font-variant-numeric: tabular-nums; }
 
 .settings-section { margin-top: 32px; }
 .theme-choice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 11px; background: var(--surface2); }
