@@ -9,9 +9,12 @@
 // Kennt ein Gerät ein Produkt noch nicht, legt es dieses beim Lesen an.
 
 import { FALLBACK_CATEGORY, newId } from '../data/repository.js';
+import { isSafeId } from '../data/ids.js';
 
 const ENTRY_FIELDS = ['quantity', 'unit', 'note', 'status', 'addedAt', 'checkedAt'];
 const normalizeName = (name) => String(name ?? '').trim().toLocaleLowerCase('de');
+/** Verweis aus der gemeinsamen Liste (von einem anderen Gerät): „c:“ oder „s:“ mit sicherer ID. */
+const isValidRef = (ref) => typeof ref === 'string' && /^[cs]:/.test(ref) && isSafeId(ref.slice(2));
 
 export function productRef(product) {
   return product.catalogId ? `c:${product.catalogId}` : `s:${product.sharedId ?? product.id}`;
@@ -124,7 +127,7 @@ export class SharedStore {
     let categories = null;
     const result = [];
     for (const record of records) {
-      if (typeof record.ref !== 'string') continue;
+      if (!isValidRef(record.ref)) continue;
       let product = byRef.get(record.ref);
       if (!product) {
         categories ??= await this.#categoryKeys();

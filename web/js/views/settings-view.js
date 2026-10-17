@@ -87,16 +87,16 @@ export function mountSettingsView(root, model, { openers }) {
     const rows = model.categoryRows;
     list.innerHTML = rows.map(({ category, productCount, canDelete }, index) => {
       const name = esc(category.name);
-      return `<div class="cat-row" role="listitem" data-id="${category.id}">
-        <button type="button" class="drag-handle" data-handle="${category.id}" aria-label="${name} verschieben, Position ${index + 1} von ${rows.length}. Mit Pfeiltasten verschieben.">${icons.handle}</button>
+      return `<div class="cat-row" role="listitem" data-id="${esc(category.id)}">
+        <button type="button" class="drag-handle" data-handle="${esc(category.id)}" aria-label="${name} verschieben, Position ${index + 1} von ${rows.length}. Mit Pfeiltasten verschieben.">${icons.handle}</button>
         ${thumb({}, category.key, 'tiny')}
         <span class="cat-text">
-          <label class="sr-only" for="cat-${category.id}">Name der Kategorie ${index + 1}</label>
-          <input id="cat-${category.id}" data-name="${category.id}" type="text" value="${name}" enterkeyhint="done" autocomplete="off" autocapitalize="sentences" spellcheck="false">
+          <label class="sr-only" for="cat-${esc(category.id)}">Name der Kategorie ${index + 1}</label>
+          <input id="cat-${esc(category.id)}" data-name="${esc(category.id)}" type="text" value="${name}" enterkeyhint="done" autocomplete="off" autocapitalize="sentences" spellcheck="false">
           <span class="cat-count">${productCount === 1 ? '1 Produkt' : `${productCount} Produkte`}</span>
         </span>
         ${canDelete
-          ? `<button type="button" class="icon-button cat-delete" data-delete="${category.id}" aria-label="${name} löschen">${icons.trash}</button>`
+          ? `<button type="button" class="icon-button cat-delete" data-delete="${esc(category.id)}" aria-label="${name} löschen">${icons.trash}</button>`
           : '<span class="cat-delete-spacer" aria-hidden="true"></span>'}
       </div>`;
     }).join('');

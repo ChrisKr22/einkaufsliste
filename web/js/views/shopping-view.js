@@ -212,22 +212,22 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   }
 
   function tile(item, key) {
-    return `<div class="tile" data-swipe="${item.id}">
-      <button type="button" class="tile-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+    return `<div class="tile" data-swipe="${esc(item.id)}">
+      <button type="button" class="tile-main" data-cart="${esc(item.id)}" aria-label="${esc(itemLabel(item))} – in den Wagen">
         ${photo(item, key, 'tile-photo')}
         <span class="tile-body">
           <span class="tile-head"><span class="item-name">${esc(item.product.name)}</span><span class="item-qty">${formatQuantity(item.quantity, unitOf(item))}</span></span>
           <span class="item-note">${esc(item.note)}</span>
         </span>
       </button>
-      <button type="button" class="later-button sr-only" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      <button type="button" class="later-button sr-only" data-later="${esc(item.id)}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
       ${swipeHints()}
     </div>`;
   }
 
   function srow(item, key) {
-    return `<div class="srow" data-swipe="${item.id}">
-      <button type="button" class="srow-main list-tile" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+    return `<div class="srow" data-swipe="${esc(item.id)}">
+      <button type="button" class="srow-main list-tile" data-cart="${esc(item.id)}" aria-label="${esc(itemLabel(item))} – in den Wagen">
         <span class="list-tile-photo">${thumb(item.product, key, 'wide')}</span>
         <span class="list-tile-side">
           <span class="list-tile-name">${esc(item.product.name)}</span>
@@ -235,19 +235,19 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
           ${item.note ? `<span class="list-tile-note">${esc(item.note)}</span>` : ''}
         </span>
       </button>
-      <button type="button" class="later-button sr-only" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      <button type="button" class="later-button sr-only" data-later="${esc(item.id)}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
       ${swipeHints()}
     </div>`;
   }
 
   /** Liste klein: halbe Kachelhöhe, Foto über die ganze Breite, Name und Menge mittig auf einer Glaslinse. */
   function crow(item, key) {
-    return `<div class="crow" data-swipe="${item.id}">
-      <button type="button" class="crow-main" data-cart="${item.id}" aria-label="${esc(itemLabel(item))} – in den Wagen">
+    return `<div class="crow" data-swipe="${esc(item.id)}">
+      <button type="button" class="crow-main" data-cart="${esc(item.id)}" aria-label="${esc(itemLabel(item))} – in den Wagen">
         ${thumb(item.product, key, 'cover')}
         <span class="crow-lens"><span class="crow-name">${esc(item.product.name)}</span><span class="crow-qty">${formatQuantity(item.quantity, unitOf(item))}</span></span>
       </button>
-      <button type="button" class="later-button sr-only" data-later="${item.id}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
+      <button type="button" class="later-button sr-only" data-later="${esc(item.id)}" aria-label="${esc(item.product.name)} zurückstellen">${svg.later}</button>
       ${swipeHints()}
     </div>`;
   }
@@ -267,8 +267,8 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     return `<div class="focus">
       <div class="focus-stack">
         ${next ? '<div class="focus-peek" aria-hidden="true"></div>' : ''}
-        <div class="focus-card" data-swipe="${item.id}">
-          <button type="button" class="focus-main" data-skip="${item.id}" aria-label="${esc(itemLabel(item))} – überspringen">
+        <div class="focus-card" data-swipe="${esc(item.id)}">
+          <button type="button" class="focus-main" data-skip="${esc(item.id)}" aria-label="${esc(itemLabel(item))} – überspringen">
             <span class="focus-photo-wrap">
               ${photo(item, category.key, 'focus-photo')}
               <span class="chip">${esc(category.name)}</span>
@@ -296,7 +296,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     return `<div class="mini-row">
       ${thumb(item.product, key, 'tiny')}
       <span class="mini-name">${esc(item.product.name)} <span>${formatQuantity(item.quantity, unitOf(item))}</span></span>
-      <button type="button" class="text-button" data-reopen="${item.id}" aria-label="${esc(item.product.name)}: ${label}">${label}</button>
+      <button type="button" class="text-button" data-reopen="${esc(item.id)}" aria-label="${esc(item.product.name)}: ${label}">${label}</button>
     </div>`;
   }
 

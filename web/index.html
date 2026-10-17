@@ -2,6 +2,10 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
+  <!-- Nur Skripte, Bilder und Daten aus der App selbst; Netz nur zum Briefkasten der gemeinsamen Listen.
+       Schutz für den Fall, dass doch einmal fremder Text als HTML landet. Inline-Styles bleiben erlaubt (style="--tint:…").
+       Beim Ändern der Briefkasten-Adresse (js/sync/client.js) hier mit anpassen. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://feedyourself-sync.ck-lists.workers.dev; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0E0F0E" media="(prefers-color-scheme: dark)">
@@ -16,7 +20,7 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <!-- Gewählte Darstellung vor dem ersten Zeichnen setzen, damit nichts aufblitzt (Details: js/theme.js). -->
-  <script>try { var t = localStorage.getItem('fy-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/app.css">
   <title>FeedYourself</title>
 </head>

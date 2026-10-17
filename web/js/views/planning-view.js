@@ -103,7 +103,7 @@ export function mountPlanningView(root, model) {
     }
     const rows = model.suggestions.map(({ product, subtitle }) => {
       const key = model.categoryFor(product)?.key;
-      return `<button type="button" class="suggestion" data-add="${product.id}" aria-label="${esc(product.name)} hinzufügen, ${esc(subtitle)}">`
+      return `<button type="button" class="suggestion" data-add="${esc(product.id)}" aria-label="${esc(product.name)} hinzufügen, ${esc(subtitle)}">`
         + `${thumb(product, key, 'small')}`
         + `<span class="suggestion-text"><span class="suggestion-name">${esc(product.name)}</span>`
         + `<span class="suggestion-sub">${esc(subtitle)}</span></span>`
@@ -129,7 +129,7 @@ export function mountPlanningView(root, model) {
     const tiles = recent.map(({ product, isOnList, subtitle }) => {
       const key = model.categoryFor(product)?.key;
       const label = isOnList ? `${product.name} ist schon auf der Liste` : `${product.name} wieder hinzufügen, ${subtitle}`;
-      return `<button type="button" class="recent-tile" data-recent="${product.id}" aria-label="${esc(label)}"${isOnList ? ' disabled' : ''}>
+      return `<button type="button" class="recent-tile" data-recent="${esc(product.id)}" aria-label="${esc(label)}"${isOnList ? ' disabled' : ''}>
         ${thumb(product, key, 'recent')}
         <span class="recent-name">${esc(product.name)}</span>
         <span class="recent-sub">${esc(subtitle)}</span>
@@ -181,14 +181,14 @@ export function mountPlanningView(root, model) {
     else if (item.note) note = `<span class="item-note">${esc(item.note)}</span>`;
     else note = `<span class="item-note is-placeholder" title="Anmerkung hinzufügen">${pen}</span>`;
     return `<div class="tile plan-tile">
-      <button type="button" class="tile-main" data-edit="${item.id}" aria-label="${esc(labelFor(item))} – bearbeiten">
+      <button type="button" class="tile-main" data-edit="${esc(item.id)}" aria-label="${esc(labelFor(item))} – bearbeiten">
         <span class="tile-photo${photoClass(item.product)}" style="--tint:${style.tint};--ink:${style.ink}" aria-hidden="true">${photoContent(item.product, categoryKey)}</span>
         <span class="tile-body"><span class="tile-head"><span class="item-name">${esc(item.product.name)}</span>`
           + `<span class="qty-lens" aria-hidden="true">${formatQuantity(item.quantity, unitOf(item))}</span></span>${note}</span>
       </button>
       <div class="tile-ctl">
-        <button type="button" class="glass-button" data-inc="${item.id}" aria-label="${esc(item.product.name)} mehr">${icon.plus}</button>
-        <button type="button" class="glass-button" data-dec="${item.id}" aria-label="${esc(item.product.name)} weniger">${icon.minus}</button>
+        <button type="button" class="glass-button" data-inc="${esc(item.id)}" aria-label="${esc(item.product.name)} mehr">${icon.plus}</button>
+        <button type="button" class="glass-button" data-dec="${esc(item.id)}" aria-label="${esc(item.product.name)} weniger">${icon.minus}</button>
       </div>
     </div>`;
   }
@@ -196,14 +196,14 @@ export function mountPlanningView(root, model) {
   function row(item, categoryKey) {
     const note = noteFor(item);
     const label = labelFor(item);
-    return `<div class="row" data-row="${item.id}">
+    return `<div class="row" data-row="${esc(item.id)}">
       <div class="row-delete" aria-hidden="true">Entfernen</div>
       <div class="row-inner list-tile">
-        <button type="button" class="list-tile-photo" data-edit="${item.id}" tabindex="-1" aria-hidden="true">${thumb(item.product, categoryKey, 'wide')}</button>
+        <button type="button" class="list-tile-photo" data-edit="${esc(item.id)}" tabindex="-1" aria-hidden="true">${thumb(item.product, categoryKey, 'wide')}</button>
         <div class="list-tile-side">
-          <button type="button" class="row-main" data-edit="${item.id}" aria-label="${esc(label)} – bearbeiten"><span class="list-tile-name">${esc(item.product.name)}</span></button>
+          <button type="button" class="row-main" data-edit="${esc(item.id)}" aria-label="${esc(label)} – bearbeiten"><span class="list-tile-name">${esc(item.product.name)}</span></button>
           ${stepper(item)}
-          <button type="button" class="row-note-button" data-edit="${item.id}" tabindex="-1" aria-hidden="true">${note}</button>
+          <button type="button" class="row-note-button" data-edit="${esc(item.id)}" tabindex="-1" aria-hidden="true">${note}</button>
         </div>
       </div>
     </div>`;

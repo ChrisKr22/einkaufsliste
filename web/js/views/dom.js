@@ -53,9 +53,9 @@ export function thumb(product, categoryKey, size = '') {
 export function stepper(item, { large = false } = {}) {
   const name = esc(item.product.name);
   return `<div class="stepper${large ? ' large' : ''}">`
-    + `<button type="button" data-dec="${item.id}" aria-label="${name} weniger">${icon.minus}</button>`
+    + `<button type="button" data-dec="${esc(item.id)}" aria-label="${name} weniger">${icon.minus}</button>`
     + `<span class="qty" aria-label="${spokenQuantity(item.quantity, unitOf(item))}">${formatQuantity(item.quantity, unitOf(item))}</span>`
-    + `<button type="button" data-inc="${item.id}" aria-label="${name} mehr">${icon.plus}</button>`
+    + `<button type="button" data-inc="${esc(item.id)}" aria-label="${name} mehr">${icon.plus}</button>`
     + '</div>';
 }
 

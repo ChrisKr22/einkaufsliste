@@ -18,11 +18,11 @@ export function mountProductUnits(root, model) {
 
   function row(product) {
     const category = model.categoryFor(product);
-    const id = `unit-${product.id}`;
+    const id = `unit-${esc(product.id)}`;
     return `<div class="unit-row" role="listitem">
       ${thumb(product, category?.key, 'tiny')}
-      <label class="unit-name" for="${id}">${esc(product.name)}<span>${esc(category?.name ?? 'Sonstiges')}</span></label>
-      <select id="${id}" class="unit-select" data-unit-for="${product.id}">
+      <label class="unit-name" for="${esc(id)}">${esc(product.name)}<span>${esc(category?.name ?? 'Sonstiges')}</span></label>
+      <select id="${esc(id)}" class="unit-select" data-unit-for="${esc(product.id)}">
         ${UNIT_KEYS.map((key) => `<option value="${key}"${key === unitOf(product) ? ' selected' : ''}>${UNITS[key].label}</option>`).join('')}
       </select>
     </div>`;

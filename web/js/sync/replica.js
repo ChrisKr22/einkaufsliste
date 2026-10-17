@@ -10,6 +10,7 @@
 // Wird derselbe Datensatz später wieder gesetzt (`_del: false`), lebt er mit den neuen Werten wieder auf.
 
 import { createClock, parseStamp } from './clock.js';
+import { isSafeId } from '../data/ids.js';
 
 export const DELETED = '_del';
 const SNAPSHOT_FORMAT = 1;
@@ -73,7 +74,7 @@ export class Replica {
    * @returns {Change|null} null, wenn sich nichts geändert hat
    */
   set(kind, id, fields) {
-    if (!kind || !id || !isPlainObject(fields) || Object.keys(fields).length === 0) throw new Error('ungültige Änderung');
+    if (!isSafeId(kind) || !isSafeId(id) || !isPlainObject(fields) || Object.keys(fields).length === 0) throw new Error('ungültige Änderung');
     const op = { s: this.clock.tick(), k: kind, i: id, f: structuredClone(fields) };
     this.pending.push(op);
     return this.#apply(op);
@@ -185,8 +186,9 @@ function fieldsOf(record) {
   return Object.fromEntries(Object.entries(record.fields).map(([field, [value]]) => [field, structuredClone(value)]));
 }
 
+/** Änderungen anderer Geräte sind Fremdeingaben: Art und ID nur in sicherer Form (sie landen in HTML-Attributen). */
 function isValidOp(op) {
-  if (!isPlainObject(op) || typeof op.k !== 'string' || !op.k || typeof op.i !== 'string' || !op.i || !isPlainObject(op.f)) return false;
+  if (!isPlainObject(op) || !isSafeId(op.k) || !isSafeId(op.i) || !isPlainObject(op.f)) return false;
   try {
     parseStamp(op.s);
     return true;

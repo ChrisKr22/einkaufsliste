@@ -65,11 +65,11 @@ export function mountSuggestSection(root, model) {
 
   function row(product) {
     const category = model.categoryFor(product);
-    const id = `suggest-${product.id}`;
+    const id = `suggest-${esc(product.id)}`;
     const bought = product.purchaseCount ? `${product.purchaseCount}× gekauft` : 'noch nicht gekauft';
     const meta = [category?.name ?? 'Sonstiges', bought, product.suggestedAt ? 'schon vorgeschlagen' : null].filter(Boolean).join(' · ');
-    return `<label class="suggest-row" role="listitem" for="${id}">
-      <input type="checkbox" id="${id}" data-suggest="${product.id}"${selected.has(product.id) ? ' checked' : ''}>
+    return `<label class="suggest-row" role="listitem" for="${esc(id)}">
+      <input type="checkbox" id="${esc(id)}" data-suggest="${esc(product.id)}"${selected.has(product.id) ? ' checked' : ''}>
       ${thumb(product, category?.key, 'tiny')}
       <span class="unit-name">${esc(product.name)}<span>${esc(meta)}</span></span>
     </label>`;

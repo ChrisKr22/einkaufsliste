@@ -1,5 +1,7 @@
 // Sicherung: alle Daten als eine JSON-Datei exportieren und wieder einspielen.
 
+import { isSafeId } from './ids.js';
+
 export const BACKUP_APP = 'FeedYourself';
 export const BACKUP_FORMAT = 1;
 export const LAST_BACKUP_KEY = 'lastBackupAt';
@@ -45,18 +47,19 @@ export function parseBackup(input) {
     if (!Array.isArray(data[name])) throw new Error(`Die Sicherung ist unvollständig (${name} fehlt).`);
   }
   const fail = (what) => { throw new Error(`Die Sicherung ist beschädigt (${what}).`); };
+  // IDs landen in HTML-Attributen – eine Sicherung kann von fremder Hand stammen, darum nur sichere Form.
   const categoryIds = new Set();
   for (const c of data.categories) {
-    if (typeof c?.id !== 'string' || typeof c.key !== 'string' || typeof c.name !== 'string' || typeof c.sortOrder !== 'number') fail('Kategorie');
+    if (!isSafeId(c?.id) || typeof c.key !== 'string' || typeof c.name !== 'string' || typeof c.sortOrder !== 'number') fail('Kategorie');
     categoryIds.add(c.id);
   }
   const productIds = new Set();
   for (const p of data.products) {
-    if (typeof p?.id !== 'string' || typeof p.name !== 'string' || !Array.isArray(p.synonyms ?? [])) fail('Produkt');
+    if (!isSafeId(p?.id) || typeof p.name !== 'string' || !Array.isArray(p.synonyms ?? [])) fail('Produkt');
     productIds.add(p.id);
   }
   for (const e of data.entries) {
-    if (typeof e?.id !== 'string' || !productIds.has(e.productId) || !(e.quantity > 0) || !validUnit(e.unit) || !STATUSES.has(e.status)) fail('Listeneintrag');
+    if (!isSafeId(e?.id) || !productIds.has(e.productId) || !(e.quantity > 0) || !validUnit(e.unit) || !STATUSES.has(e.status)) fail('Listeneintrag');
   }
   for (const m of data.meta) {
     if (typeof m?.key !== 'string') fail('Einstellungen');
