@@ -13,10 +13,10 @@ import { newId } from '../data/repository.js';
 export const LEGACY_SESSION_KEY = 'sharedList';   // vor mehreren Listen: die eine gemeinsame Liste
 export const sessionKey = (listId) => `shared:${listId}`;
 export const JOIN_KEY = 'sharedJoin';
-const SYNC_MS = 5_000;
-const PUSH_DELAY_MS = 1_200;
+export const SYNC_MS = 2_000;          // Abgleich, solange die App sichtbar ist
+export const PUSH_DELAY_MS = 400;      // eigene Änderung so bald einwerfen (mehrere schnelle Tipper kommen zusammen)
 const JOIN_POLL_MS = 3_000;
-const REQUESTS_EVERY = 3;        // jeder dritte Abgleich fragt nach Beitrittsanfragen und Plätzen
+const REQUESTS_EVERY = 7;        // jeder siebte Abgleich (≈ 14 s) fragt nach Beitrittsanfragen und Plätzen
 const COMPACT_AFTER = 200;       // so viele Änderungen nach dem Gesamtstand → neuen ablegen
 const INVITE_KEEP_MS = 24 * 60 * 60_000;
 

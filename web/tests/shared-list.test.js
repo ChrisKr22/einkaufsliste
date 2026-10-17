@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import { ListModel } from '../js/list-model.js';
-import { JOIN_KEY, sessionKey, SharedList } from '../js/sync/shared-list.js';
+import { JOIN_KEY, PUSH_DELAY_MS, sessionKey, SharedList, SYNC_MS } from '../js/sync/shared-list.js';
 import { ListsManager } from '../js/lists.js';
 import { checkCode, inviteLink, newDeviceKeys, newInviteSecret, openForDevice, parseInvite, sealForDevice } from '../js/sync/join.js';
 import { Mailbox } from '../../tools/sync/src/mailbox.js';
@@ -379,3 +379,70 @@ test('Übergang: Liste von vor den Geheimnissen – das Gerät erzeugt eins, spe
   await assert.rejects(other.pull(0), (error) => error.status === 401);
   assert.deepEqual(names(b.model), ['Milch']);
 });
+
+// ---------------------------------------------------------------- Takt des Abgleichs
+
+test('Abruf: immer dieselbe Adresse, Startnummer in der Kopfzeile – so fragt der Browser nicht jedes Mal vorab', async () => {
+  const cloud = fakeCloud();
+  const { a } = await pair(cloud);
+  const seen = [];
+  a.shared.connection.fetchFn = (url, init) => { seen.push([init.method, url, init.headers['X-After']]); return cloud.fetch(url, init); };
+  await a.model.add((await productNamed(a.repository, 'Reis')).id);
+  await a.shared.sync();
+  const reads = seen.filter(([method, url]) => method === 'GET' && url.includes('/ops'));
+  assert.ok(reads.length > 0);
+  for (const [, url, after] of reads) {
+    assert.ok(url.endsWith(`/v1/lists/${a.shared.session.listId}/ops`), url);
+    assert.match(after, /^\d+$/);
+  }
+});
+
+test('Zeitgeber: eigene Änderung nach 0,4 s eingeworfen, Abgleich alle 2 s – beim anderen Gerät in gut 2 s sichtbar', async (t) => {
+  globalThis.document = { visibilityState: 'visible', addEventListener: () => {} };
+  globalThis.window = { addEventListener: () => {} };
+  t.after(() => { delete globalThis.document; delete globalThis.window; });
+  assert.equal(PUSH_DELAY_MS, 400);
+  assert.equal(SYNC_MS, 2_000);
+
+  const cloud = fakeCloud();
+  const { a, b } = await pair(cloud);
+  const posts = [];
+  const watch = (shared, name) => {
+    const inner = shared.connection.fetchFn;
+    shared.connection.fetchFn = (url, init) => { if (init.method === 'POST' && url.endsWith('/ops')) posts.push(name); return inner(url, init); };
+  };
+  // Beide mit echten Zeitgebern neu starten (wie beim Öffnen der App)
+  const restart = async (d) => {
+    const shared = new SharedList(d.model, d.store, { fetch: cloud.fetch, appUrl: () => 'https://app.example/' });
+    d.model.repository.store = d.store;
+    await new ListsManager(d.model, d.store, shared).init();
+    return shared;
+  };
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  t.after(() => mock.timers.reset());
+  const sa = await restart(a);
+  const sb = await restart(b);
+  await settle(sa, sb);
+  watch(sa, 'A');
+
+  await a.model.add((await productNamed(a.repository, 'Reis')).id);
+  mock.timers.tick(PUSH_DELAY_MS - 1);
+  await settle(sa, sb);
+  assert.deepEqual(posts, [], 'noch nicht eingeworfen');
+  mock.timers.tick(1);
+  await settle(sa, sb);
+  assert.deepEqual(posts, ['A'], 'nach 0,4 s eingeworfen');
+
+  assert.ok(!names(b.model).includes('Reis'));
+  mock.timers.tick(SYNC_MS);
+  await settle(sa, sb);
+  assert.ok(names(b.model).includes('Reis'), 'B hat es nach dem nächsten Takt');
+});
+
+/** Laufende Abgleiche (auch angestoßene) zu Ende kommen lassen. */
+async function settle(...lists) {
+  for (let round = 0; round < 20; round++) {
+    await new Promise((resolve) => setImmediate(resolve));
+    for (const s of lists) if (s.syncing) await s.syncing;
+  }
+}

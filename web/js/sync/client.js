@@ -21,8 +21,8 @@ const MESSAGES = {
   429: 'Zu viele Anfragen – gleich noch einmal versuchen.',
 };
 
-async function request(fetchFn, base, listId, method, path, { body, proof, member, secret, invite } = {}) {
-  const headers = {};
+async function request(fetchFn, base, listId, method, path, { body, proof, member, secret, invite, extra } = {}) {
+  const headers = { ...extra };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (proof) headers.Authorization = `Bearer ${proof}`;
   if (member) headers['X-Member'] = member;
@@ -63,9 +63,9 @@ export class ListConnection {
     return this.keys;
   }
 
-  async #call(method, path, body) {
+  async #call(method, path, body, extra) {
     const keys = await this.#keys();
-    return request(this.fetchFn, this.baseUrl, this.listId, method, path, { body, proof: keys.writeProof, member: this.memberId, secret: this.memberSecret });
+    return request(this.fetchFn, this.baseUrl, this.listId, method, path, { body, proof: keys.writeProof, member: this.memberId, secret: this.memberSecret, extra });
   }
 
   /** Briefkasten anlegen; dieses Gerät bekommt den ersten Platz. */
@@ -98,7 +98,8 @@ export class ListConnection {
     const ops = [];
     let last = after;
     for (let page = 0; page < 50; page++) {
-      const result = await this.#call('GET', `/ops?after=${last}`);
+      // Startnummer als Kopfzeile: Die Adresse bleibt gleich, darum fragt der Browser nicht jedes Mal vorab (CORS) nach.
+      const result = await this.#call('GET', '/ops', undefined, { 'X-After': String(last) });
       if (result.snapshot) {
         snapshotUpto = result.snapshot.upto;
         try { snapshot = await unseal(keys, result.snapshot.data); } catch { /* überspringen */ }
