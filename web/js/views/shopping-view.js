@@ -9,7 +9,10 @@ import { mountViewChoice } from './view-choice.js';
 const VIEW_KEY = 'feedyourself.shopView';
 const VIEWS = ['list', 'compact', 'grid', 'focus'];   // Reihenfolge beim Durchschalten
 const SWIPE_PX = 80;
-const RECEIPT_MS = 1400;   // so lange steht der Kassenbon nach dem Abschließen
+const RING = 2 * Math.PI * 52;   // Umfang des Countdown-Rings (r = 52)
+const PRINT_STEPS = [-78, -58, -38, -20, 0];   // Kassenbon: ruckweise aus dem Schlitz (in % der Bonhöhe)
+const PRINT_STEP_MS = 230;
+const RECEIPT_MS = 2400;   // Druck (ca. 1,6 s) und kurz stehen lassen, dann zur Liste
 
 // Kurz halten, damit der Hinweis auf dem iPhone in eine Zeile passt (→ / ← = wischen).
 const HINTS = {
@@ -27,9 +30,10 @@ const svg = {
   check: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   chevron: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
   undo: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
-  // Kassenbon mit gezacktem Abriss und Haken
-  receipt: '<svg aria-hidden="true" viewBox="0 0 64 80"><path d="M12 6h40v66l-5-3.5-5 3.5-5-3.5-5 3.5-5-3.5-5 3.5-5-3.5-5 3.5z"/>'
-    + '<path d="M21 19h22M21 28h22M21 37h14"/><path d="M24 53l6 6 11-12"/></svg>',
+  // Kassenbon mit gezacktem Abriss: vier Zeilen, die beim Drucken nacheinander erscheinen, und ein Haken
+  receipt: '<svg aria-hidden="true" viewBox="0 0 112 170"><path class="paper" d="M4 0h104v160l-8-6-8 6-8-6-8 6-8-6-8 6-8-6-8 6-8-6-8 6-8-6-8 6-8-6z"/>'
+    + '<path class="line" d="M22 30h68"/><path class="line" d="M22 48h56"/><path class="line" d="M22 66h68"/><path class="line" d="M22 84h44"/>'
+    + '<path class="check" d="M38 118l12 12 24-26"/></svg>',
 };
 
 export function mountShoppingView(root, model, { onGoToPlanning }) {
@@ -145,7 +149,8 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   document.body.append(layer);
   const app = document.querySelector('.app');
   let layerState = null;   // 'countdown' | 'receipt' | null
-  let tick = null;
+  let frame = null;      // Countdown-Ring (requestAnimationFrame)
+  let timers = [];      // Druckschritte des Kassenbons
 
   layer.addEventListener('click', (event) => { if (event.target.closest('[data-cancel-finish]')) model.cancelFinish(); });
   layer.addEventListener('keydown', (event) => { if (event.key === 'Escape' && layerState === 'countdown') model.cancelFinish(); });
@@ -159,7 +164,9 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     if (next === layerState) return;
     const wasCountdown = layerState === 'countdown';
     layerState = next;
-    clearInterval(tick);
+    cancelAnimationFrame(frame);
+    timers.forEach(clearTimeout);
+    timers = [];
     layer.hidden = !next;
     if (app) app.inert = Boolean(next);
     if (next === 'countdown') showCountdown(finishing);
@@ -174,8 +181,8 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     const secs = Math.ceil(ms / 1000);
     layer.innerHTML = `<div class="finish-screen" role="alertdialog" aria-modal="true" aria-labelledby="finish-title" aria-describedby="finish-desc">
       <div class="finish-main">
-        <div class="finish-ring" style="--finish-ms:${ms}ms">
-          <svg aria-hidden="true" viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="run" cx="60" cy="60" r="52"/></svg>
+        <div class="finish-ring">
+          <svg aria-hidden="true" viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="run" cx="60" cy="60" r="52" stroke-dasharray="${RING}"/></svg>
           <span class="finish-secs" aria-hidden="true">${secs}</span>
         </div>
         <h2 id="finish-title">Einkauf wird abgeschlossen</h2>
@@ -183,24 +190,49 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       </div>
       <button type="button" class="button secondary finish-undo" data-cancel-finish>${svg.undo}Rückgängig</button>
     </div>`;
+    // Der Ring leert sich fließend gegen den Uhrzeigersinn, die Zahl springt jede Sekunde. Er zeigt die
+    // verbleibende Zeit an und läuft deshalb auch bei „Bewegung reduzieren“ (bewusst so entschieden).
     const secsEl = layer.querySelector('.finish-secs');
-    const end = Date.now() + ms;
-    tick = setInterval(() => { secsEl.textContent = String(Math.max(0, Math.ceil((end - Date.now()) / 1000))); }, 200);
+    const runEl = layer.querySelector('.finish-ring .run');
+    const start = performance.now();
+    const step = (now) => {
+      const elapsed = Math.min(ms, now - start);
+      runEl.setAttribute('stroke-dashoffset', (RING * elapsed / ms).toFixed(1));
+      secsEl.textContent = String(Math.ceil((ms - elapsed) / 1000));
+      if (elapsed >= ms) runEl.style.visibility = 'hidden';   // sonst bleibt ein Punkt der runden Kappe stehen
+      else frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
     layer.querySelector('[data-cancel-finish]').focus({ preventScroll: true });
   }
 
   function showReceipt({ bought, kept }) {
     layer.innerHTML = `<div class="receipt-screen" role="status">
-      <span class="receipt">${svg.receipt}</span>
+      <div class="printer" aria-hidden="true"><span class="printer-slot"></span><span class="printer-out"><span class="printer-paper">${svg.receipt}</span></span></div>
       <h2>Einkauf erledigt</h2>
       <p class="sr-only">${esc(countsText(bought, kept))}</p>
     </div>`;
-    setTimeout(() => {
+    // Drucken: Der Bon schiebt sich ruckweise heraus, mit jedem Schritt erscheint eine Zeile, zum Schluss
+    // der Haken und die Überschrift. Bei „Bewegung reduzieren“ steht der fertige Bon sofort da.
+    const screen = layer.querySelector('.receipt-screen');
+    const paper = layer.querySelector('.printer-paper');
+    const lines = [...layer.querySelectorAll('.printer-paper .line')];
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+      paper.style.transform = 'translateY(0)';
+      screen.classList.add('printed');
+    } else {
+      PRINT_STEPS.forEach((y, i) => timers.push(setTimeout(() => {
+        paper.style.transform = `translateY(${y}%)`;
+        lines[i]?.classList.add('shown');
+      }, 80 + i * PRINT_STEP_MS)));
+      timers.push(setTimeout(() => screen.classList.add('printed'), 80 + PRINT_STEPS.length * PRINT_STEP_MS));
+    }
+    timers.push(setTimeout(() => {
       if (!model.state.summary) return;   // schon anders geschlossen (z. B. Sicherung eingespielt)
       model.dismissSummary();
       onGoToPlanning();
       model.notify(`Einkauf erledigt · ${boughtText(bought)}`);
-    }, RECEIPT_MS);
+    }, RECEIPT_MS));
   }
 
   keepHorizontalSwipes(content, '[data-swipe]');

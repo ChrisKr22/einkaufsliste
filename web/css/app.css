@@ -684,21 +684,30 @@ body.sheet-open { overscroll-behavior: none; }
 .finish-main, .receipt-screen { justify-content: center; }
 .finish-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .finish-ring { position: relative; width: 132px; height: 132px; margin-bottom: 20px; }
-.finish-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); fill: none; stroke-width: 8; }
+/* Gespiegelt, damit sich der Ring von 12 Uhr aus gegen den Uhrzeigersinn leert (Länge setzt das Skript) */
+.finish-ring svg { width: 100%; height: 100%; transform: rotate(-90deg) scaleY(-1); fill: none; stroke-width: 8; }
 .finish-ring .track { stroke: var(--surface2); }
-.finish-ring .run { stroke: var(--accent); stroke-linecap: round; stroke-dasharray: 326.7; animation: finish-ring var(--finish-ms, 5s) linear forwards; }
+.finish-ring .run { stroke: var(--accent); stroke-linecap: round; }
 .finish-secs { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 44px/1 var(--font-display); font-variant-numeric: tabular-nums; }
 .finish-screen h2, .receipt-screen h2 { margin: 0 0 8px; font: 700 28px/1.15 var(--font-display); letter-spacing: -0.5px; text-wrap: balance; }
 .finish-screen p { margin: 0; max-width: 32ch; font-size: 16px; line-height: 1.5; color: var(--text2); }
 /* „Rückgängig“ unten in Daumenreichweite, mit Abstand zur Home-Geste */
 .finish-undo { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 56px; margin-bottom: calc(max(env(safe-area-inset-bottom), 8px) + 16px); font-size: 17px; }
 .finish-undo svg { width: 20px; height: 20px; stroke-width: 2.2; }
-.receipt { display: inline-flex; align-items: center; justify-content: center; width: 168px; height: 168px; margin-bottom: 20px; border-radius: 84px;
-  background: var(--accent-soft); color: var(--accent-ink); animation: receipt-in 0.45s cubic-bezier(0.25, 0.8, 0.25, 1); }
-.receipt svg { width: 84px; height: 105px; fill: var(--surface); stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.receipt-screen h2 { color: var(--accent-ink); }
-@keyframes finish-ring { to { stroke-dashoffset: 326.7; } }   /* Umfang bei r = 52 */
-@keyframes receipt-in { from { opacity: 0; transform: translateY(18px) scale(0.92); } }
+/* Kassenbon: Drucker (Leiste mit Schlitz), darunter schiebt sich der Bon heraus */
+.printer { display: flex; flex-direction: column; align-items: center; margin-bottom: 22px; }
+.printer-slot { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 180px; height: 26px; border-radius: 13px; background: var(--accent-soft); }
+.printer-slot::after { content: ""; width: 142px; height: 4px; border-radius: 2px; background: var(--accent-ink); opacity: 0.5; }
+.printer-out { position: relative; z-index: 1; width: 134px; height: 204px; margin-top: -13px; overflow: hidden; }
+.printer-paper { display: block; transform: translateY(-100%); transition: transform 0.16s cubic-bezier(0.3, 0.7, 0.4, 1); }
+.printer-paper svg { display: block; width: 134px; height: 204px; stroke-linecap: round; stroke-linejoin: round; }
+.printer-paper .paper { fill: var(--surface); stroke: var(--accent-ink); stroke-width: 2.4; }
+.printer-paper .line { stroke: var(--placeholder); stroke-width: 5; opacity: 0; transition: opacity 0.2s ease; }
+.printer-paper .line.shown, .printed .printer-paper .line { opacity: 1; }
+.printer-paper .check { stroke: var(--accent-ink); stroke-width: 6; stroke-dasharray: 53; stroke-dashoffset: 53;   /* Länge des Hakens */ transition: stroke-dashoffset 0.35s ease-out; }
+.printed .printer-paper .check { stroke-dashoffset: 0; }
+.receipt-screen h2 { color: var(--accent-ink); opacity: 0; transition: opacity 0.3s ease 0.25s; }
+.receipt-screen.printed h2 { opacity: 1; }
 
 .noscript { padding: 24px; text-align: center; }
 

@@ -108,11 +108,11 @@ Umschalten über einen großen Segment-Schalter oben oder eine Tab-Leiste: **Pla
 - Leere Kategorien werden ausgeblendet.
 - Das Display bleibt während des Einkaufs an (optional, Einstellung).
 - **Einkauf abschließen** nur **per Knopf** „Fertig“ (Haken mit Beschriftung, unten neben den Modus-Reitern):
-  - Erst läuft ein **Countdown von 5 Sekunden** im Vollbild (Ring und Zahl, darunter „5 Produkte gekauft, 2 bleiben auf der Liste.“). Einziger Knopf: **„Rückgängig“**, unten in Daumenreichweite. Er bricht ab, der Einkauf läuft unverändert weiter (Hinweis „Einkauf läuft weiter“). Bis zum Ablauf ist nichts gespeichert, auch nicht in gemeinsamen Listen.
+  - Erst läuft ein **Countdown von 5 Sekunden** im Vollbild (ein Ring leert sich fließend gegen den Uhrzeigersinn, die Zahl in der Mitte zählt herunter; darunter „5 Produkte gekauft, 2 bleiben auf der Liste.“). Einziger Knopf: **„Rückgängig“**, unten in Daumenreichweite. Er bricht ab, der Einkauf läuft unverändert weiter (Hinweis „Einkauf läuft weiter“). Bis zum Ablauf ist nichts gespeichert, auch nicht in gemeinsamen Listen.
   - Läuft der Countdown ab, wird abgeschlossen: Produkte im Wagen kommen in „Zuletzt gekauft" (Verlauf), zurückgestellte und noch offene bleiben für den nächsten Einkauf auf der Liste.
-  - Danach steht kurz (ca. 1,4 s) ein **Kassenbon** im Vollbild, dann geht es von selbst zur Liste mit dem Hinweis „Einkauf erledigt · 7 Produkte gekauft“.
+  - Danach wird im Vollbild ein **Kassenbon gedruckt**: Er schiebt sich ruckweise aus einem Schlitz, die Zeilen erscheinen nacheinander, zum Schluss der Haken und „Einkauf erledigt“ (zusammen ca. 2,4 s). Dann geht es von selbst zur Liste mit dem Hinweis „Einkauf erledigt · 7 Produkte gekauft“.
   - Wer die App während des Countdowns verlässt, hat „Fertig“ bewusst getippt: Der Einkauf wird dann sofort abgeschlossen.
-  - VoiceOver: Der Fokus springt auf „Rückgängig“, angesagt wird „Einkauf wird abgeschlossen … Abschluss in 5 Sekunden“. Escape bricht ebenfalls ab. Bei „Bewegung reduzieren“ steht der Ring still, nur die Zahl zählt herunter.
+  - VoiceOver: Der Fokus springt auf „Rückgängig“, angesagt wird „Einkauf wird abgeschlossen … Abschluss in 5 Sekunden“. Escape bricht ebenfalls ab. Bei „Bewegung reduzieren“ läuft der Ring trotzdem, weil er die verbleibende Zeit anzeigt (entschieden 18.10.2026); der Kassenbon erscheint dann ohne Druckbewegung.
 
 ### 2.3 Lebenszyklus eines Eintrags
 
