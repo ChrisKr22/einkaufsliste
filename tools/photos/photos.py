@@ -353,6 +353,17 @@ def cmd_review(args):
         def log_message(self, *a):
             pass
 
+        def _local(self, post=False):
+            """Nur Anfragen dieser Seite: andere Webseiten im Browser (CSRF) und umgeleitete Namen (DNS-Rebinding) abweisen."""
+            if self.headers.get("Host") != f"127.0.0.1:{args.port}":
+                return False
+            if post:
+                if self.headers.get("Origin") != f"http://127.0.0.1:{args.port}":
+                    return False
+                if (self.headers.get("Content-Type") or "").split(";")[0].strip() != "application/json":
+                    return False   # erzwingt beim Browser eine Vorabfrage, die dieser Server nicht beantwortet
+            return True
+
         def _send(self, code, body, ctype):
             raw = body.encode("utf-8")
             self.send_response(code)
@@ -363,6 +374,8 @@ def cmd_review(args):
             self.wfile.write(raw)
 
         def do_GET(self):
+            if not self._local():
+                return self._send(403, "nicht erlaubt", "text/plain; charset=utf-8")
             if self.path in ("/", "/index.html"):
                 it, sel, st = review_data(catalog)
                 self._send(200, review_html(it, sel, st), "text/html; charset=utf-8")
@@ -372,7 +385,11 @@ def cmd_review(args):
         def do_POST(self):
             if self.path != "/save":
                 return self._send(404, "nicht gefunden", "text/plain; charset=utf-8")
+            if not self._local(post=True):
+                return self._send(403, "nicht erlaubt", "text/plain; charset=utf-8")
             length = int(self.headers.get("Content-Length") or 0)
+            if length > 5_000_000:
+                return self._send(413, "zu groß", "text/plain; charset=utf-8")
             try:
                 sel = json.loads(self.rfile.read(length).decode("utf-8"))
                 assert isinstance(sel, dict)

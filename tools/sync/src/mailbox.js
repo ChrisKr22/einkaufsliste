@@ -151,8 +151,11 @@ export class Mailbox {
   }
 
   async #body(request, maxBytes) {
+    // Erst die angekündigte Größe prüfen, dann lesen – zu große Körper werden gar nicht erst geladen.
+    const tooBig = () => Object.assign(new Error('zu groß'), { status: 413 });
+    if (Number(request.headers.get('Content-Length') ?? 0) > maxBytes) throw tooBig();
     const text = await request.text();
-    if (text.length > maxBytes) throw Object.assign(new Error('zu groß'), { status: 413 });
+    if (new TextEncoder().encode(text).length > maxBytes) throw tooBig();   // Bytes, nicht Zeichen
     try {
       const body = JSON.parse(text);
       if (body && typeof body === 'object' && !Array.isArray(body)) return body;

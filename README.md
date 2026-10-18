@@ -116,7 +116,7 @@ Ein zugeschnittenes Original (`…_zugeschnitten.jpg` daneben) hat dabei Vorrang
 
 ## Version
 
-Die App-Version steht in `VERSION` (Schema Major.Minor.Patch), die Änderungen in [CHANGELOG.md](CHANGELOG.md). Vor jedem Commit Nummer erhöhen und Eintrag ergänzen; `python3 tools/web/build.py` zeigt die Version dann unten in den Einstellungen an und setzt sie im Xcode-Projekt.
+Die App-Version steht in `VERSION` (Schema Major.Minor.Patch), die Änderungen in `privat/CHANGELOG.md` (nicht im Repository, steht in `.gitignore`). Vor jedem Commit Nummer erhöhen und Eintrag ergänzen; `python3 tools/web/build.py` zeigt die Version dann unten in den Einstellungen an und setzt sie im Xcode-Projekt.
 
 ## Katalog ändern
 

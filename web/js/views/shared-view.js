@@ -450,9 +450,10 @@ export function mountSharedDialogs(root, shared, model) {
 
   function render() {
     const { join, requests, status } = shared.state;
-    const request = status === 'active' ? requests.find((r) => !dismissed.has(r.rid)) : null;
+    const waiting = status === 'active' ? requests.filter((r) => !dismissed.has(r.rid)) : [];
+    const request = waiting[0] ?? null;
     if (join?.phase !== 'elsewhere') copied = false;
-    const key = join ? `join:${join.phase}:${join.code ?? ''}:${join.message ?? ''}:${copied}` : request ? `req:${request.rid}` : null;
+    const key = join ? `join:${join.phase}:${join.code ?? ''}:${join.message ?? ''}:${copied}` : request ? `req:${request.rid}:${waiting.length > 1}` : null;
     if (key === shownKey) return;
     shownKey = key;
     document.body.classList.toggle('sheet-open', Boolean(key));
@@ -497,7 +498,8 @@ export function mountSharedDialogs(root, shared, model) {
     } else if (request) {
       root.innerHTML = sheet(`
         <div><h2 id="shared-dialog-title">Beitrittsanfrage</h2>
-        <p class="section-note">„${esc(request.device || 'Neues Gerät')}“ möchte „${esc(shared.state.name)}“ beitreten. Zeigt das andere Gerät denselben Prüfcode?</p></div>
+        <p class="section-note">„${esc(request.device || 'Neues Gerät')}“ möchte „${esc(shared.state.name)}“ beitreten. Zeigt das andere Gerät denselben Prüfcode?</p>
+        ${waiting.length > 1 ? `<p class="section-note"><strong>Es warten ${waiting.length} Anfragen.</strong> Nur bestätigen, wenn du weißt, von welchem Gerät diese kommt – sonst ablehnen und eine neue Einladung schicken.</p>` : ''}</div>
         <p class="join-code" aria-label="Prüfcode ${esc(request.code.split('').join(' '))}">${esc(request.code)}</p>
         <div class="sheet-actions">
           <button type="button" class="button secondary" data-request-reject>Ablehnen</button>

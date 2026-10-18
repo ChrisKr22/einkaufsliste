@@ -1,7 +1,7 @@
 // Zustand und Aktionen der Einkaufsliste – für Planungs- und Einkaufsmodus gemeinsam.
 // Unabhängig vom DOM, testbar mit Node.
 
-import { backupFileName, parseBackup, summarize } from './data/backup.js';
+import { backupFileName, openVault, parseBackup, summarize, withoutVault } from './data/backup.js';
 import { FALLBACK_CATEGORY, newId } from './data/repository.js';
 import { decodeShare, encodeShare, extractShareCode, shareText, shareUrl } from './data/share.js';
 import { suggestionCandidates, suggestionMessage } from './data/suggest.js';
@@ -155,10 +155,20 @@ export class ListModel {
 
   // ---------------------------------------------------------------- Sicherung
 
-  /** Erstellt den Dateiinhalt. Erst `confirmExported()` vermerkt die Sicherung als erledigt. */
-  async prepareExport() {
-    const backup = await this.repository.exportBackup();
-    return { json: JSON.stringify(backup, null, 1), fileName: backupFileName(Date.parse(backup.exportedAt)), summary: summarize(backup) };
+  /**
+   * Erstellt den Dateiinhalt. Erst `confirmExported()` vermerkt die Sicherung als erledigt.
+   * @param {{password?: string, iterations?: number}} [options]  password: schützt die Zugänge zu gemeinsamen Listen;
+   *   ohne Passwort fehlen sie in der Datei
+   * @returns {Promise<{json: string, fileName: string, summary: object, sealed: number, dropped: number}>}
+   */
+  async prepareExport({ password = '', iterations } = {}) {
+    const { backup, sealed, dropped } = await this.repository.exportFile({ password, iterations });
+    return { json: JSON.stringify(backup, null, 1), fileName: backupFileName(Date.parse(backup.exportedAt)), summary: summarize(backup), sealed, dropped };
+  }
+
+  /** Zugänge zu gemeinsamen Listen auf diesem Gerät – dann fragt die Sicherung nach einem Passwort. */
+  backupAccessCount() {
+    return this.repository.accessCount();
   }
 
   async confirmExported() {
@@ -173,10 +183,16 @@ export class ListModel {
     return summarize(parseBackup(text));
   }
 
-  /** Ersetzt alle Daten durch die Sicherung (mit Rückgängig). */
-  async importBackup(text) {
-    const backup = parseBackup(text);
-    const { products, entries } = summarize(backup);
+  /**
+   * Ersetzt alle Daten durch die Sicherung (mit Rückgängig).
+   * @param {{password?: string}} [options]  öffnet die Zugänge zu gemeinsamen Listen; ohne Passwort bleiben sie weg
+   *   (Zugänge, die dieses Gerät schon hat, bleiben erhalten). Falsches Passwort → Fehler, nichts wird geändert.
+   */
+  async importBackup(text, { password = '' } = {}) {
+    let backup = parseBackup(text);
+    const { products, entries, vault } = summarize(backup);
+    backup = vault && password ? await openVault(backup, password) : withoutVault(backup);
+    const skipped = vault && !password;
     await this.#perform(async () => {
       const snapshot = await this.repository.importBackup(backup);
       this.state.editingId = null;
@@ -185,7 +201,7 @@ export class ListModel {
         await this.repository.undoImport(snapshot);
         await this.onDataReplaced?.();
       };
-      this.#showToast(`Sicherung eingespielt: ${products} Produkte, ${entries} auf der Liste`, true);
+      this.#showToast(`Sicherung eingespielt: ${products} Produkte, ${entries} auf der Liste${skipped ? ' – gemeinsame Listen ohne Passwort nicht übernommen' : ''}`, true);
       await this.onDataReplaced?.();
     });
   }

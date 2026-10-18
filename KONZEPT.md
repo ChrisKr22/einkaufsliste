@@ -535,7 +535,7 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 - **Nur solange die App offen ist:** etwa 5 Sekunden Verzögerung; kein Abgleich im Hintergrund, keine Mitteilungen.
 - **Ein externer Dienst kommt dazu** (Cloudflare). Er sieht keine Inhalte, aber Zeitpunkte, Größe und IP-Adressen. Fällt er weg, arbeitet die App lokal weiter.
 - **Fremde könnten die Adresse fluten:** kostet nichts, schlimmstenfalls pausiert der Abgleich bis zum nächsten Tag; die Bremse macht das unwahrscheinlich.
-- **Schlüssel weg = Liste weg:** Löscht man die App und hatte niemand sonst die Liste, ist sie nicht wiederherstellbar – darum enthält die Sicherung die Schlüssel.
+- **Schlüssel weg = Liste weg:** Löscht man die App und hatte niemand sonst die Liste, ist sie nicht wiederherstellbar – darum kann die Sicherung die Schlüssel enthalten, mit Passwort verschlüsselt (18.10.2026).
 - **Gleichzeitige Änderungen am selben Feld:** Die spätere gewinnt; für Mengen und Anmerkungen meist richtig, aber nicht immer.
 - **Mehr Technik in der App:** Der Abgleich ist der anspruchsvollste Teil bisher und braucht gute Tests.
 
@@ -564,7 +564,7 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 | Private Liste übernehmen | **Ja**, beim Anlegen einer gemeinsamen Liste wählbar. |
 | Was wird geteilt? | Einträge (Menge, Einheit, Anmerkung, Status) und eigene Produkte; pro Gerät bleiben Laden-Reihenfolge, eigene Fotos, „Zuletzt gekauft“. |
 | Einkauf abschließen | **Gilt für alle Mitglieder.** |
-| Sicherung | **Enthält die Schlüssel** der gemeinsamen Listen. |
+| Sicherung | **Enthält die Zugänge** der gemeinsamen Listen – seit 18.10.2026 **nur mit Passwort verschlüsselt**; ohne Passwort fehlen sie, und man tritt nach dem Einspielen neu bei. |
 | Namen an Einträgen | **Nein.** |
 
 #### Reihenfolge
@@ -575,13 +575,14 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 4. ✅ **Mehrere Listen** mit Auswahl, Mitgliederansicht, Verlassen, Entfernen (17.10.2026; neuer Schlüssel nach dem Entfernen steht noch aus).
 5. Sicherung mit Schlüsseln, Wake Lock, Feinschliff; Test auf mehreren iPhones.
 
-#### Umgesetzt: Härtung der gemeinsamen Listen (17.10.2026)
+#### Umgesetzt: Zugang pro Gerät, Datenformen und Sicherung mit Passwort (17./18.10.2026)
 
-- **Mitglieds-Geheimnis:** Jedes Gerät erzeugt beim Anlegen bzw. Beitreten ein eigenes Geheimnis (256 Bit) und schickt es bei jeder Anfrage mit (`X-Member-Secret`). Der Briefkasten speichert nur den Prüfwert; das bestätigende Mitglied erfährt es nie. Auf dem Gerät liegt es bei den Zugangsdaten der Liste (`meta` › `shared:<Listen-ID>`) und ist für niemanden sichtbar.
-- **Übergang für bestehende Listen:** Plätze von vor dem 17.10.2026 haben kein Geheimnis. Das Gerät erzeugt beim nächsten Öffnen eins, speichert es und schickt es dann mit; der Briefkasten übernimmt das erste, das für den Platz kommt, und verlangt es ab dann. Anfragen ganz ohne Geheimnis (alte App-Fassung) nimmt er für solche Plätze nur bis **1.11.2026** an. *Danach:* den Übergang (`LEGACY_UNTIL` in `tools/sync/src/mailbox.js`) wieder entfernen.
-- **Fremde Daten:** Art und ID von Änderungen anderer Geräte, Produktverweise und die IDs in eingespielten Sicherungen müssen der Form in `js/data/ids.js` entsprechen, sonst werden sie verworfen; beim Anzeigen werden auch IDs maskiert.
+- **Zugang pro Gerät:** Jedes Gerät hat neben seiner Mitglieds-ID ein eigenes **Mitglieds-Geheimnis** (256 Bit), erzeugt beim Anlegen bzw. Beitreten und bei jeder Anfrage mitgeschickt (`X-Member-Secret`). Der Briefkasten speichert nur den Prüfwert; das bestätigende Mitglied bekommt es nicht zu sehen. Auf dem Gerät liegt es bei den Zugangsdaten der Liste (`meta` › `shared:<Listen-ID>`) und wird nirgends angezeigt.
+- **Übergang für bestehende Listen:** Plätze von vor dem 17.10.2026 haben noch kein Geheimnis. Das Gerät erzeugt beim nächsten Öffnen eins, speichert es und schickt es dann mit; der Briefkasten übernimmt das erste, das für den Platz kommt. Anfragen ohne Geheimnis (alte App-Fassung) nimmt er für solche Plätze bis **1.11.2026** an. *Danach:* den Übergang (`LEGACY_UNTIL` in `tools/sync/src/mailbox.js`) entfernen.
+- **Feste Form für IDs:** IDs bestehen aus Buchstaben, Ziffern, `-` und `_` (`js/data/ids.js`). Änderungen anderer Geräte und Sicherungsdateien mit anderer Form übernimmt die App nicht.
 - **Content-Security-Policy** in `index.html` (siehe Kapitel 7); das Skript für die Darstellung liegt dafür in `js/theme-init.js`.
-- **Tests:** `web/tests/security.test.js`, Mitglieds-Geheimnis in `tools/sync/test/mailbox.test.js` und `web/tests/shared-list.test.js`.
+- **Sicherung mit Passwort (18.10.2026):** Die Zugänge zu gemeinsamen Listen (Listenschlüssel, Mitglieds-Geheimnis, offener Beitritt) kommen nur mit Passwort in die Datei. Gibt es solche Zugänge, fragt *Sicherung exportieren* nach einem Passwort (mindestens 8 Zeichen, zweimal). Die Zugänge liegen dann verschlüsselt im „Tresor“ der Datei (PBKDF2-SHA256 mit 600 000 Runden, AES-256-GCM); alles andere bleibt ohne Passwort lesbar. *Ohne gemeinsame Listen* sichert ohne sie. Beim Einspielen fragt die App nach dem Passwort; bleibt es leer, kommen die Daten ohne die gemeinsamen Listen. Zugänge, die das Gerät schon hat, bleiben erhalten. Das Passwort wird nirgends gespeichert. Ältere Sicherungen lassen sich weiter einspielen.
+- **Tests:** `web/tests/security.test.js`, `web/tests/backup-vault.test.js`, Zugang pro Gerät in `tools/sync/test/mailbox.test.js` und `web/tests/shared-list.test.js`.
 
 #### Umgesetzt: mehrere Listen, privat und gemeinsam (17.10.2026)
 
@@ -589,7 +590,7 @@ Die frühere Schätzung „5–8 Arbeitstage“ war eine übliche Schätzung fü
 - **Wechsel:** Tippen auf den Listennamen im Kopf öffnet eine Auswahl (Schloss = privat, Personen = gemeinsam, Haken = geöffnet) mit *Neue Liste …*. **Langes Drücken** auf den Listennamen öffnet die Einstellungen (Haptic Touch; echtes 3D Touch und Schnellaktionen am App-Symbol bietet iOS Web-Apps nicht an).
 - **Einstellungen:** Reihenfolge *Darstellung › Listen (Gemeinsam, Privat, Neue Liste, Einladung erhalten?) › Kategorien › Einheiten je Produkt › Für den Katalog vorschlagen › Geteilte Liste einfügen › Sicherung*. Private Listen lassen sich umbenennen und löschen (die letzte Liste bleibt immer); *Neue Liste* fragt nach Art und Namen, bei gemeinsamen zusätzlich nach dem Gerätenamen und ob die Einträge der geöffneten privaten Liste übernommen werden.
 - **Speicher:** Alle privaten Listen liegen im Gerätespeicher, jeder Eintrag trägt seine Listen-ID (`data/private-store.js`); Einträge ohne ID gehören zu „Meine Liste“. Die Listenverwaltung (`js/lists.js`) merkt sich Listen und geöffnete Liste und übernimmt beim ersten Start eine bestehende gemeinsame Liste. Kategorien, Produkte, Fotos und „Zuletzt gekauft“ teilen sich alle Listen.
-- **Sicherung:** umfasst alle privaten Listen und die Zugänge der gemeinsamen (Schlüssel, Entscheidung 7); nach dem Einspielen werden die Listen neu eingelesen.
+- **Sicherung:** umfasst alle privaten Listen und die Zugänge der gemeinsamen (Schlüssel, Entscheidung 7); nach dem Einspielen werden die Listen neu eingelesen. Seit 18.10.2026 kommen die Zugänge nur mit Passwort in die Datei (siehe oben).
 
 #### Umgesetzt: eine gemeinsame Liste (16.10.2026)
 

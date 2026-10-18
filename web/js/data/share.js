@@ -20,9 +20,30 @@ export function fromBase64Url(text) {
   return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }
 
-async function pipe(bytes, stream) {
-  const response = new Response(new Blob([bytes]).stream().pipeThrough(stream));
-  return new Uint8Array(await response.arrayBuffer());
+/** Entpackt höchstens so viele Bytes – ein präparierter Link soll den Speicher nicht volllaufen lassen. */
+export const MAX_UNPACKED_BYTES = 1024 * 1024;
+
+async function pipe(bytes, stream, maxBytes = Infinity) {
+  const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error('zu groß');
+    }
+    chunks.push(value);
+  }
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return result;
 }
 
 /** Objekt → kompakter Text-Code (z… = deflate-raw, j… = unkomprimiert, beides base64url). */
@@ -40,7 +61,7 @@ export async function unpackJson(code) {
   let bytes = fromBase64Url(code.slice(1));
   if (code[0] === 'z') {
     if (typeof DecompressionStream !== 'function') throw new Error('Dieser Browser kann den Link nicht lesen. Bitte Safari aktualisieren.');
-    bytes = await pipe(bytes, new DecompressionStream('deflate-raw'));
+    bytes = await pipe(bytes, new DecompressionStream('deflate-raw'), MAX_UNPACKED_BYTES);
   }
   return JSON.parse(new TextDecoder().decode(bytes));
 }

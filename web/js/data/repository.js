@@ -3,7 +3,7 @@
 // so lässt sich später ein Sync (z. B. für die Browser-Ansicht anderer) ergänzen.
 
 import { DEFAULT_UNIT, isUnit, normalizeQuantity, stepUp, UNITS, unitOf } from '../units.js';
-import { createBackup, LAST_BACKUP_KEY, restoreBackup } from './backup.js';
+import { accessCount, createBackup, LAST_BACKUP_KEY, restoreBackup, sealBackup } from './backup.js';
 
 export const FALLBACK_CATEGORY = 'sonst';
 export const DELETED_CATEGORIES_KEY = 'deletedCategoryKeys';
@@ -258,8 +258,22 @@ export class ShoppingRepository {
     return this.store.base ?? this.store;
   }
 
+  /** Vollständiger Stand im Klartext – nur für interne Zwecke (Rückgängig, Tests), nie als Datei. */
   exportBackup() {
     return createBackup(this.#deviceStore, this.now());
+  }
+
+  /**
+   * Inhalt der Sicherungsdatei: Zugänge zu gemeinsamen Listen nur mit Passwort (verschlüsselt), sonst ohne sie.
+   * @returns {Promise<{backup: object, sealed: number, dropped: number}>}
+   */
+  async exportFile({ password = '', iterations } = {}) {
+    return sealBackup(await this.exportBackup(), password, iterations ? { iterations } : undefined);
+  }
+
+  /** Zugänge zu gemeinsamen Listen auf diesem Gerät (sie brauchen in der Sicherung ein Passwort). */
+  async accessCount() {
+    return accessCount(await this.exportBackup());
   }
 
   async markBackedUp() {
@@ -275,7 +289,8 @@ export class ShoppingRepository {
   async importBackup(backup) {
     const previous = await createBackup(this.#deviceStore, this.now());
     const lastBackupAt = await this.lastBackupAt();
-    await restoreBackup(this.#deviceStore, backup, { lastBackupAt });
+    // Zugänge, die dieses Gerät schon hat, bleiben – auch wenn die Sicherung (ohne Passwort) keine mitbringt.
+    await restoreBackup(this.#deviceStore, backup, { lastBackupAt, keepAccess: previous.data.meta });
     return { previous, lastBackupAt, whole: true };
   }
 

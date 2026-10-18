@@ -137,6 +137,22 @@ test('Änderungen: Startnummer auch als Kopfzeile X-After (gleichbleibende Adres
   assert.deepEqual(await read('/ops', 'kaputt'), ['a', 'b', 'c']);
 });
 
+test('Größe: angekündigte Länge über der Grenze → 413 ohne Lesen; gezählt wird in Bytes', async () => {
+  const ctx = await created();
+  const headers = { Authorization: `Bearer ${ctx.proof}`, 'X-Member': ctx.member, 'X-Member-Secret': ctx.secrets[ctx.member], 'Content-Type': 'application/json' };
+  let read = false;
+  const huge = new Request(`${BASE}/v1/lists/${ctx.listId}/ops`, {
+    method: 'POST', duplex: 'half',
+    headers: { ...headers, 'Content-Length': String(LIMITS.opBytes + 1) },
+    body: new ReadableStream({ pull(controller) { read = true; controller.enqueue(new TextEncoder().encode('{}')); controller.close(); } }, { highWaterMark: 0 }),
+  });
+  assert.equal((await ctx.mailbox.fetch(huge)).status, 413);
+  assert.equal(read, false, 'Körper nicht gelesen');
+  // Umlaute zählen doppelt: knapp unter der Grenze in Zeichen, darüber in Bytes
+  const umlauts = 'ä'.repeat(Math.ceil(LIMITS.opBytes / 2));
+  assert.equal((await ctx.call('POST', '/ops', { proof: ctx.proof, body: { data: umlauts } })).status, 413);
+});
+
 test('Änderungen: Abruf in Seiten', async () => {
   const ctx = await created();
   for (let i = 0; i < LIMITS.page + 3; i++) await ctx.call('POST', '/ops', { proof: ctx.proof, body: { data: `d${i}` } });

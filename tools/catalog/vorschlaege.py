@@ -30,6 +30,7 @@ ROOT = katalog.ROOT
 INBOX = ROOT / "Catalog" / "Vorschlaege"
 DONE = INBOX / "erledigt"
 MARKER = re.compile(r"FY-KATALOG:([zj][A-Za-z0-9_-]+)")
+MAX_UNPACKED = 1_000_000   # Bytes – ein präparierter Code soll nicht den Speicher füllen
 UNITS = {"stk", "pck", "g", "kg", "ml", "l"}
 FALLBACK = "sonst"
 
@@ -43,7 +44,13 @@ def rel(path):
 
 def decode(code):
     raw = base64.urlsafe_b64decode(code[1:] + "=" * (-len(code[1:]) % 4))
-    data = zlib.decompress(raw, -15) if code[0] == "z" else raw
+    if code[0] == "z":
+        inflater = zlib.decompressobj(-15)
+        data = inflater.decompress(raw, MAX_UNPACKED)
+        if inflater.unconsumed_tail:
+            raise ValueError("zu groß")
+    else:
+        data = raw
     payload = json.loads(data.decode("utf-8"))
     if payload.get("v") != 1 or not isinstance(payload.get("p"), list):
         raise ValueError("unbekanntes Format")
@@ -70,6 +77,11 @@ def read_sources(use_stdin):
     return sources
 
 
+def printable(text):
+    """Steuerzeichen (z. B. ANSI-Farbcodes) aus fremden Nachrichten entfernen – sie könnten die Anzeige im Terminal verfälschen."""
+    return "".join(ch for ch in str(text) if ch.isprintable())
+
+
 def slug(name, taken):
     s = katalog.norm(name)
     s = re.sub(r"[^a-z0-9]+", "-", s).strip("-") or "produkt"
@@ -90,13 +102,13 @@ def collect(sources, catalog):
     merged = {}
     for label, _, rows in sources:
         for row in rows:
-            name = str(row.get("n", "")).strip()[:80]
+            name = printable(row.get("n", "")).strip()[:80]
             if not name:
                 continue
             item = merged.setdefault(katalog.norm(name), {
-                "name": name, "category": row.get("k"), "category_name": row.get("kn"),
+                "name": name, "category": row.get("k"), "category_name": printable(row.get("kn") or "") or None,
                 "unit": row.get("u") if row.get("u") in UNITS else None,
-                "synonyms": [s for s in row.get("y", []) if isinstance(s, str)][:10],
+                "synonyms": [printable(s)[:80] for s in row.get("y", []) if isinstance(s, str)][:10],
                 "count": 0, "from": set(),
             })
             item["count"] += int(row.get("c") or 0)
@@ -105,7 +117,7 @@ def collect(sources, catalog):
     for key, item in merged.items():
         item["in_catalog"] = known.get(key)
         if item["category"] not in categories:
-            item["category_note"] = f"„{item['category_name'] or item['category'] or '?'}“ gibt es im Katalog nicht → Sonstiges"
+            item["category_note"] = f"„{item['category_name'] or printable(item['category'] or '') or '?'}“ gibt es im Katalog nicht → Sonstiges"
             item["category"] = FALLBACK
         item["category_label"] = categories.get(item["category"], item["category"])
         items.append(item)

@@ -146,12 +146,13 @@ export async function receiveFromLocation(model, shared = null) {
     return;
   }
   if (!/[#&]liste=/.test(location.hash)) return;
+  // Erst aus der Adresse nehmen, dann lesen: Bringt ein kaputter Link die App zum Absturz, startet sie danach normal.
+  const href = location.href;
+  history.replaceState(null, '', location.pathname + location.search);
   try {
-    await model.receiveShared(location.href);
+    await model.receiveShared(href);
   } catch (error) {
     model.notify(error?.message ?? String(error));
-  } finally {
-    history.replaceState(null, '', location.pathname + location.search);
   }
 }
 

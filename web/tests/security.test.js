@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { createBackup, parseBackup } from '../js/data/backup.js';
 import { isSafeId } from '../js/data/ids.js';
+import { MAX_UNPACKED_BYTES, packJson, unpackJson } from '../js/data/share.js';
 import { SYNC_URL } from '../js/sync/client.js';
 import { formatStamp } from '../js/sync/clock.js';
 import { Replica } from '../js/sync/replica.js';
@@ -109,4 +110,12 @@ test('CSP: streng, ohne Inline-Skripte, mit dem Briefkasten als einzigem fremden
   assert.ok(html.indexOf('Content-Security-Policy') < html.indexOf('<script'), 'CSP muss vor dem ersten Skript stehen');
   assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>/.test(html), 'Inline-Skript in index.html');
   assert.ok(!/\son[a-z]+="/.test(html), 'Inline-Event-Handler in index.html');
+});
+
+test('Entpacken: geteilte Links mit riesigem Inhalt werden abgewiesen, normale nicht', async () => {
+  const small = await packJson({ v: 1, i: [{ n: 'Milch', q: 1 }] });
+  assert.deepEqual(await unpackJson(small), { v: 1, i: [{ n: 'Milch', q: 1 }] });
+  const bomb = await packJson({ x: 'a'.repeat(MAX_UNPACKED_BYTES + 10) });
+  assert.ok(bomb.length < 20_000, 'stark komprimiert');
+  await assert.rejects(unpackJson(bomb), /zu groß/);
 });
