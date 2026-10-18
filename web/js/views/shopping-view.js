@@ -141,7 +141,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   }
 
   // ---------------------------------------------------------------- Abschließen
-  // „Fertig“ startet einen Countdown (5 s) mit „Rückgängig“; danach steht kurz der Kassenbon im
+  // „Fertig“ startet einen Countdown (3 s) mit „Rückgängig“; danach steht kurz der Kassenbon im
   // Vollbild, dann geht es zur Liste. Beides liegt als eigene Ebene über allem, auch über der Leiste.
   const layer = document.createElement('div');
   layer.className = 'finish-layer';

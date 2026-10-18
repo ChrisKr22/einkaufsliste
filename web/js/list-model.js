@@ -10,7 +10,7 @@ import { formatQuantity, stepDown, stepUp, UNITS, unitOf } from './units.js';
 
 export class ListModel {
   /** @param {import('./data/repository.js').ShoppingRepository} repository */
-  constructor(repository, { toastMs = 4500, finishMs = 5000 } = {}) {
+  constructor(repository, { toastMs = 4500, finishMs = 3000 } = {}) {
     this.repository = repository;
     this.toastMs = toastMs;
     this.finishMs = finishMs;
