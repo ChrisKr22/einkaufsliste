@@ -119,6 +119,52 @@ describe('Einkaufsmodus', () => {
     assert.equal(again.note, 'Elstar');
   });
 
+  test('Fertig: Countdown, erst danach abgeschlossen', async () => {
+    const { repository } = await makeStore();
+    const model = new ListModel(repository, { toastMs: 50, finishMs: 20 });
+    await model.load();
+    for (const name of ['Äpfel', 'Milch']) await model.add((await productNamed(repository, name)).id);
+    await model.toCart(item(model, 'Äpfel'));
+
+    model.startFinish();
+    assert.deepEqual(model.state.finishing, { bought: 1, kept: 1, ms: 20 });
+    assert.equal(model.state.toast, null);
+    assert.equal(item(model, 'Äpfel').status, 'inCart');   // noch nichts gespeichert
+
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    assert.equal(model.state.finishing, null);
+    assert.deepEqual(model.state.summary, { bought: 1, kept: 1 });
+    assert.equal(item(model, 'Äpfel'), undefined);
+    assert.equal(await model.confirmFinish(), null);       // nicht doppelt abschließen
+  });
+
+  test('Fertig: Rückgängig bricht den Countdown ab, nichts ändert sich', async () => {
+    const { repository } = await makeStore();
+    const model = new ListModel(repository, { toastMs: 50, finishMs: 20 });
+    await model.load();
+    await model.add((await productNamed(repository, 'Brot')).id);
+    await model.toCart(item(model, 'Brot'));
+
+    model.startFinish();
+    model.cancelFinish();
+    assert.equal(model.state.finishing, null);
+    assert.equal(model.state.toast.text, 'Einkauf läuft weiter');
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    assert.equal(model.state.summary, null);
+    assert.equal(item(model, 'Brot').status, 'inCart');
+    assert.equal((await productNamed(repository, 'Brot')).purchaseCount ?? 0, 0);
+  });
+
+  test('Fertig: App verlassen schließt sofort ab, leerer Wagen startet nichts', async () => {
+    const { model } = await makeModel(['Salz']);
+    model.startFinish();
+    assert.equal(model.state.finishing, null);             // nichts im Wagen
+    await model.toCart(item(model, 'Salz'));
+    model.startFinish();
+    await model.confirmFinish();
+    assert.deepEqual(model.state.summary, { bought: 1, kept: 0 });
+  });
+
   test('Abschlussübersicht schließen', async () => {
     const { model } = await makeModel(['Salz']);
     await model.toCart(item(model, 'Salz'));

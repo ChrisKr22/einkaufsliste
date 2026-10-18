@@ -87,7 +87,7 @@ Umschalten über einen großen Segment-Schalter oben oder eine Tab-Leiste: **Pla
 - **Drei Ansichten, umschaltbar** (Schalter oben rechts, Auswahl wird gemerkt):
   - **Kacheln** (Standard): 2 große Foto-Kacheln pro Zeile.
   - **Liste**: Foto links, mehr Produkte gleichzeitig sichtbar.
-  - **Fokus**: immer nur **ein** Produkt als große Karte, in Laden-Reihenfolge, wie ein Kartenstapel. Ideal mit einer Hand oder wenn man nicht auf die Liste schauen will. Darunter steht „Noch 6 offen · danach: Tomaten".
+  - **Fokus**: immer nur **ein** Produkt als große Karte, in Laden-Reihenfolge, wie ein Kartenstapel. Ideal mit einer Hand oder wenn man nicht auf die Liste schauen will. Auf der Karte steht „Nächster Artikel: Tomaten“ bzw. „Letzter Artikel in …“.
   - Aufwand gering: Alle Ansichten nutzen dieselben Daten und dieselbe Gesten-Logik, nur die Anordnung (`LazyVGrid`, `List`, Kartenstapel) unterscheidet sich.
 - Name, Menge und Anmerkung sind gut lesbar, auch mit einer Hand im Laden.
 - **Gesten:**
@@ -99,16 +99,20 @@ Umschalten über einen großen Segment-Schalter oben oder eine Tab-Leiste: **Pla
   | ← nach links wischen | zurückstellen / nicht vorhanden | zurückstellen / nicht vorhanden |
 
   - Nur waagerechte Gesten – senkrecht wird überall gescrollt, auch in der Fokus-Ansicht. (Hochwischen gab es anfangs in der Fokus-Ansicht; entfernt, weil es beim Scrollen störte.)
-  - Beim Ziehen färbt sich die Karte (grün bzw. gelb = Wagen, blau = zurückstellen), ab ~80 pt Weg wird ausgelöst, dazu kommt haptisches Feedback.
-  - Zusätzlich gibt es auf jeder Karte einen kleinen ←-Knopf und in der Fokus-Ansicht zwei große Knöpfe (für VoiceOver und Bedienung ohne Wischen).
+  - Beim Ziehen färbt sich die Karte (Akzentgrün = Wagen, Schieferblau = zurückstellen), ab ~80 pt Weg wird ausgelöst, dazu kommt haptisches Feedback.
+  - Zurückstellen geht für Sehende nur per Wischen; der sichtbare ←-Knopf auf den Karten ist entfallen, damit die Kacheln ruhig bleiben. In Kacheln und Listen hat jede Karte einen unsichtbaren Knopf „zurückstellen“ für VoiceOver.
+  - Unter der Fokus-Karte stehen zwei große Knöpfe zum Wechseln der Kategorie (vorherige/nächste, in Laden-Reihenfolge, am Rand ausgegraut). Eine Zahl oben rechts zeigt, wie viele Artikel der Kategorie noch offen sind.
+  - Dass Tippen im Fokus „überspringen“ heißt und sonst „in den Wagen“, ist bewusst so entschieden (18.10.2026): Im Fokus ist die ganze Karte das Ziel, Kaufen geht dort per Wischen.
   - In SwiftUI: `DragGesture` mit Richtungsprüfung (waagerecht nur, wenn |dx| > |dy|), in der Liste alternativ die nativen `swipeActions`.
-- **Rückgängig:** Toast „Äpfel im Wagen · Rückgängig" für einige Sekunden; außerdem einklappbare Bereiche „Zurückgestellt" und „Im Wagen", in denen sich jedes Produkt zurückholen lässt.
+- **Rückgängig:** Toast „Äpfel im Wagen · Rückgängig" für 4,5 Sekunden; außerdem einklappbare Bereiche „Zurückgestellt" und „Im Wagen", in denen sich jedes Produkt zurückholen lässt.
 - Leere Kategorien werden ausgeblendet.
 - Das Display bleibt während des Einkaufs an (optional, Einstellung).
-- **Einkauf abschließen** nur **per Knopf** (immer sichtbar unten):
-  - Produkte im Wagen kommen in „Zuletzt gekauft" (Verlauf).
-  - Zurückgestellte und noch offene Produkte bleiben für den nächsten Einkauf auf der Liste.
-  - Danach eine Zusammenfassung: „7 Produkte gekauft · 1 bleibt auf der Liste".
+- **Einkauf abschließen** nur **per Knopf** „Fertig“ (Haken mit Beschriftung, unten neben den Modus-Reitern):
+  - Erst läuft ein **Countdown von 5 Sekunden** im Vollbild (Ring und Zahl, darunter „5 Produkte gekauft, 2 bleiben auf der Liste.“). Einziger Knopf: **„Rückgängig“**, unten in Daumenreichweite. Er bricht ab, der Einkauf läuft unverändert weiter (Hinweis „Einkauf läuft weiter“). Bis zum Ablauf ist nichts gespeichert, auch nicht in gemeinsamen Listen.
+  - Läuft der Countdown ab, wird abgeschlossen: Produkte im Wagen kommen in „Zuletzt gekauft" (Verlauf), zurückgestellte und noch offene bleiben für den nächsten Einkauf auf der Liste.
+  - Danach steht kurz (ca. 1,4 s) ein **Kassenbon** im Vollbild, dann geht es von selbst zur Liste mit dem Hinweis „Einkauf erledigt · 7 Produkte gekauft“.
+  - Wer die App während des Countdowns verlässt, hat „Fertig“ bewusst getippt: Der Einkauf wird dann sofort abgeschlossen.
+  - VoiceOver: Der Fokus springt auf „Rückgängig“, angesagt wird „Einkauf wird abgeschlossen … Abschluss in 5 Sekunden“. Escape bricht ebenfalls ab. Bei „Bewegung reduzieren“ steht der Ring still, nur die Zahl zählt herunter.
 
 ### 2.3 Lebenszyklus eines Eintrags
 
@@ -667,7 +671,6 @@ Seit 18.10.2026 lassen sich einzelne eigene Produkte aus der Vorschlagsliste neh
 - Planungsliste mit Fotos
 - Einkauf abschließen nur per Knopf
 - Basis-Fotos: eigene Fotos per Ordner-Import (Catalog/Inbox); Pixabay/Pexels-Werkzeug optional
-- Farbwelt: Hell frisches Grün auf neutralem Grau, Dunkel kräftiges Gelb, Zurückstellen in Blau
 - Basis-Katalog: 16 Kategorien, ca. 190 Produkte (deine Liste + Ergänzungen aus dem Entwurf)
 - Teilen: kein Android, iCloud derzeit nicht; Browser-Ansicht später optional
 

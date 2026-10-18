@@ -10,9 +10,10 @@ import { formatQuantity, stepDown, stepUp, UNITS, unitOf } from './units.js';
 
 export class ListModel {
   /** @param {import('./data/repository.js').ShoppingRepository} repository */
-  constructor(repository, { toastMs = 3500 } = {}) {
+  constructor(repository, { toastMs = 4500, finishMs = 5000 } = {}) {
     this.repository = repository;
     this.toastMs = toastMs;
+    this.finishMs = finishMs;
     this.state = {
       categories: [],
       products: [],
@@ -23,6 +24,7 @@ export class ListModel {
       error: null,
       addedCount: 0,     // Auslöser für Haptik/Animation
       cartedCount: 0,    // dito beim Einkaufen
+      finishing: null,   // Countdown vor dem Abschließen: { bought, kept, ms }
       summary: null,     // nach „Einkauf abschließen“: { bought, kept }
       lastBackupAt: null,
       incomingShare: null, // { items } – geteilte Liste, die übernommen werden kann
@@ -33,6 +35,7 @@ export class ListModel {
     this.onDataReplaced = null;   // nach dem Einspielen einer Sicherung: Listen neu einlesen (setzt die Listenverwaltung)
     this.undoAction = null;
     this.toastTimer = null;
+    this.finishTimer = null;
   }
 
   subscribe(listener) {
@@ -541,6 +544,37 @@ export class ListModel {
   /** „Doch gefunden“ bzw. „Zurück“ aus dem Wagen. */
   async reopen(item) {
     await this.#perform(() => this.repository.setStatus(item.id, 'open'));
+  }
+
+  /**
+   * „Fertig“: Countdown starten. Erst wenn er abläuft, wird der Einkauf abgeschlossen – bis dahin
+   * ist nichts gespeichert, „Rückgängig“ bricht nur ab.
+   */
+  startFinish() {
+    if (this.state.finishing || this.state.summary) return;
+    const bought = this.cartItems.length;
+    if (bought === 0) return;
+    clearTimeout(this.toastTimer);
+    this.undoAction = null;
+    this.finishTimer = setTimeout(() => this.confirmFinish(), this.finishMs);
+    this.finishTimer.unref?.();   // Node-Tests nicht aufhalten
+    this.#set({ toast: null, finishing: { bought, kept: this.state.items.length - bought, ms: this.finishMs } });
+  }
+
+  /** „Rückgängig“ während des Countdowns: Einkauf läuft weiter, nichts wurde geändert. */
+  cancelFinish() {
+    if (!this.state.finishing) return;
+    clearTimeout(this.finishTimer);
+    this.state.finishing = null;
+    this.notify('Einkauf läuft weiter');
+  }
+
+  /** Countdown abgelaufen (oder App verlassen): jetzt abschließen. */
+  async confirmFinish() {
+    if (!this.state.finishing) return null;
+    clearTimeout(this.finishTimer);
+    this.state.finishing = null;
+    return this.finishShopping();
   }
 
   async finishShopping() {

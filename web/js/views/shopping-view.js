@@ -9,6 +9,7 @@ import { mountViewChoice } from './view-choice.js';
 const VIEW_KEY = 'feedyourself.shopView';
 const VIEWS = ['list', 'compact', 'grid', 'focus'];   // Reihenfolge beim Durchschalten
 const SWIPE_PX = 80;
+const RECEIPT_MS = 1400;   // so lange steht der Kassenbon nach dem Abschließen
 
 // Kurz halten, damit der Hinweis auf dem iPhone in eine Zeile passt (→ / ← = wischen).
 const HINTS = {
@@ -25,6 +26,10 @@ const svg = {
   cart: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>',
   check: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   chevron: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+  undo: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+  // Kassenbon mit gezacktem Abriss und Haken
+  receipt: '<svg aria-hidden="true" viewBox="0 0 64 80"><path d="M12 6h40v66l-5-3.5-5 3.5-5-3.5-5 3.5-5-3.5-5 3.5-5-3.5-5 3.5z"/>'
+    + '<path d="M21 19h22M21 28h22M21 37h14"/><path d="M24 53l6 6 11-12"/></svg>',
 };
 
 export function mountShoppingView(root, model, { onGoToPlanning }) {
@@ -35,7 +40,7 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
   const content = root.querySelector('#shop-content');
   // „Einkauf abschließen“ ist der runde Haken in der schwebenden Leiste unten (nur im Einkaufsmodus sichtbar).
   const finishButton = document.querySelector('#finish');
-  finishButton?.addEventListener('click', () => { if (!finishButton.disabled) model.finishShopping(); });
+  finishButton?.addEventListener('click', () => { if (!finishButton.disabled) model.startFinish(); });
   const choice = mountViewChoice(root, { views: VIEWS, storageKey: VIEW_KEY, fallback: 'grid', onChange: () => render() });
   let cartOpen = false;
   let lastInputs = null;   // Stand beim letzten Zeichnen (siehe render)
@@ -131,6 +136,73 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     setTimeout(() => model.skip(item), 160);
   }
 
+  // ---------------------------------------------------------------- Abschließen
+  // „Fertig“ startet einen Countdown (5 s) mit „Rückgängig“; danach steht kurz der Kassenbon im
+  // Vollbild, dann geht es zur Liste. Beides liegt als eigene Ebene über allem, auch über der Leiste.
+  const layer = document.createElement('div');
+  layer.className = 'finish-layer';
+  layer.hidden = true;
+  document.body.append(layer);
+  const app = document.querySelector('.app');
+  let layerState = null;   // 'countdown' | 'receipt' | null
+  let tick = null;
+
+  layer.addEventListener('click', (event) => { if (event.target.closest('[data-cancel-finish]')) model.cancelFinish(); });
+  layer.addEventListener('keydown', (event) => { if (event.key === 'Escape' && layerState === 'countdown') model.cancelFinish(); });
+  // Wer die App während des Countdowns verlässt, hat „Fertig“ bewusst getippt: dann gleich abschließen.
+  document.addEventListener('visibilitychange', () => { if (document.hidden) model.confirmFinish(); });
+  window.addEventListener('pagehide', () => model.confirmFinish());
+
+  function renderLayer() {
+    const { finishing, summary } = model.state;
+    const next = finishing ? 'countdown' : summary ? 'receipt' : null;
+    if (next === layerState) return;
+    const wasCountdown = layerState === 'countdown';
+    layerState = next;
+    clearInterval(tick);
+    layer.hidden = !next;
+    if (app) app.inert = Boolean(next);
+    if (next === 'countdown') showCountdown(finishing);
+    else if (next === 'receipt') showReceipt(summary);
+    else {
+      layer.innerHTML = '';
+      if (wasCountdown) finishButton?.focus({ preventScroll: true });
+    }
+  }
+
+  function showCountdown({ bought, kept, ms }) {
+    const secs = Math.ceil(ms / 1000);
+    layer.innerHTML = `<div class="finish-screen" role="alertdialog" aria-modal="true" aria-labelledby="finish-title" aria-describedby="finish-desc">
+      <div class="finish-main">
+        <div class="finish-ring" style="--finish-ms:${ms}ms">
+          <svg aria-hidden="true" viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="run" cx="60" cy="60" r="52"/></svg>
+          <span class="finish-secs" aria-hidden="true">${secs}</span>
+        </div>
+        <h2 id="finish-title">Einkauf wird abgeschlossen</h2>
+        <p id="finish-desc">${esc(countsText(bought, kept))}<span class="sr-only"> Abschluss in ${secs} Sekunden.</span></p>
+      </div>
+      <button type="button" class="button secondary finish-undo" data-cancel-finish>${svg.undo}Rückgängig</button>
+    </div>`;
+    const secsEl = layer.querySelector('.finish-secs');
+    const end = Date.now() + ms;
+    tick = setInterval(() => { secsEl.textContent = String(Math.max(0, Math.ceil((end - Date.now()) / 1000))); }, 200);
+    layer.querySelector('[data-cancel-finish]').focus({ preventScroll: true });
+  }
+
+  function showReceipt({ bought, kept }) {
+    layer.innerHTML = `<div class="receipt-screen" role="status">
+      <span class="receipt">${svg.receipt}</span>
+      <h2>Einkauf erledigt</h2>
+      <p class="sr-only">${esc(countsText(bought, kept))}</p>
+    </div>`;
+    setTimeout(() => {
+      if (!model.state.summary) return;   // schon anders geschlossen (z. B. Sicherung eingespielt)
+      model.dismissSummary();
+      onGoToPlanning();
+      model.notify(`Einkauf erledigt · ${boughtText(bought)}`);
+    }, RECEIPT_MS);
+  }
+
   keepHorizontalSwipes(content, '[data-swipe]');
   attachSwipeGestures(content, {
     onCart: (id) => { const item = find(id); if (item) model.toCart(item); },
@@ -151,12 +223,12 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
       lastCarted = model.state.cartedCount;
       buzz();
     }
+    renderLayer();
     const { summary } = model.state;
     const view = choice.current;
     hint.hidden = Boolean(summary);
     if (finishButton) finishButton.hidden = Boolean(summary) || model.state.items.length === 0;
-    if (summary) {
-      content.innerHTML = summaryView(summary);
+    if (summary) {   // der Kassenbon liegt darüber; die Ansicht wird danach neu gezeichnet
       lastInputs = null;
       return;
     }
@@ -321,22 +393,15 @@ export function mountShoppingView(root, model, { onGoToPlanning }) {
     </section>`;
   }
 
-  function summaryView({ bought, kept }) {
-    const boughtText = bought === 1 ? '1 Produkt gekauft' : `${bought} Produkte gekauft`;
-    const keptText = kept === 0
-      ? 'Die Liste ist leer – Zeit, neu zu planen.'
-      : `${kept === 1 ? '1 Produkt bleibt' : `${kept} Produkte bleiben`} für den nächsten Einkauf auf der Liste.`;
-    return `<div class="summary" role="status">
-      <span class="summary-icon">${svg.check}</span>
-      <h2>Einkauf erledigt</h2>
-      <p>${boughtText} – beim nächsten Mal mit Menge und Anmerkung vorausgefüllt.</p>
-      <p>${keptText}</p>
-      <button type="button" class="button primary inline" data-to-plan>Zur Liste</button>
-    </div>`;
-  }
-
   model.subscribe(render);
   render();
+}
+
+const boughtText = (bought) => (bought === 1 ? '1 Produkt gekauft' : `${bought} Produkte gekauft`);
+
+function countsText(bought, kept) {
+  if (kept === 0) return `${boughtText(bought)}, die Liste ist danach leer.`;
+  return `${boughtText(bought)}, ${kept === 1 ? '1 bleibt' : `${kept} bleiben`} auf der Liste.`;
 }
 
 /**
