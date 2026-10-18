@@ -17,6 +17,7 @@ import { SharedList } from './sync/shared-list.js';
 import { mountListsSection, mountListSwitch, mountSharedDialogs } from './views/shared-view.js';
 import { ListsManager } from './lists.js';
 import { mountSuggestSection } from './views/suggest-view.js';
+import { mountReviewSection } from './views/review-view.js';
 import { MODE_EVENT } from './views/view-choice.js';
 import { mountProductUnits } from './views/units-view.js';
 
@@ -205,6 +206,7 @@ async function start() {
   mountBackupSection(document.querySelector('#backup'), model);
   mountProductUnits(document.querySelector('#product-units'), model);
   mountSuggestSection(document.querySelector('#suggest'), model);
+  mountReviewSection(document.querySelector('#review'), model, { versionEl: document.querySelector('.app-version') });
   mountShareButton(document.querySelector('#plan-view'), model);
   mountListsSection(document.querySelector('#lists-section'), lists, shared, model);
   mountListSwitch(document.querySelector('#list-switch'), document.querySelector('#list-menu'), lists, shared, {

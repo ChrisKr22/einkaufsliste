@@ -26,6 +26,34 @@ def norm(s):
     return s
 
 
+def dump(catalog):
+    """catalog.json im Hausformat: eine Zeile je Kategorie und Produkt, Leerzeile zwischen Kategorie-Blöcken."""
+    line = lambda obj: json.dumps(obj, ensure_ascii=False)
+    out = ["{"]
+    for key, value in catalog.items():
+        if key == "categories":
+            out.append('  "categories": [')
+            out.append(",\n".join(f"    {line(c)}" for c in value))
+            out.append("  ],")
+        elif key == "products":
+            rows, previous = [], None
+            for prod in value:
+                if previous is not None and prod.get("category") != previous:
+                    rows.append("")
+                rows.append(f"    {line(prod)},")
+                previous = prod.get("category")
+            if rows:
+                rows[-1] = rows[-1].rstrip(",")
+            out.append('  "products": [')
+            out += rows
+            out.append("  ],")
+        else:
+            out.append(f'  {line(key)}: {line(value)},')
+    out[-1] = out[-1].rstrip(",")
+    out.append("}")
+    return "\n".join(out) + "\n"
+
+
 def check(catalog):
     errors, notes = [], []
     cat_ids = [c["id"] for c in catalog["categories"]]

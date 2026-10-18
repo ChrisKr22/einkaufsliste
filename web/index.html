@@ -125,6 +125,23 @@
             <button type="button" class="button primary suggest-button" data-suggest-share disabled>Vorschlag teilen</button>
           </div>
         </section>
+        <!-- Nur im Pflegemodus (fünfmal auf die Versionsnummer tippen): Vorschläge prüfen und freigeben -->
+        <section id="review" class="settings-section" aria-labelledby="review-title" hidden>
+          <h3 class="section-title" id="review-title">Vorschläge prüfen <span>· Pflegemodus</span></h3>
+          <p class="section-note">Nachrichten mit Katalog-Vorschlägen einfügen, jeden Vorschlag aufnehmen oder ablehnen und die Freigabe an dich schicken. Am Mac übernimmt <code>vorschlaege.py --freigabe</code> sie in den Katalog.</p>
+          <div class="card paste-card">
+            <label class="sr-only" for="review-input">Vorschlags-Nachricht</label>
+            <textarea id="review-input" rows="3" placeholder="Eine oder mehrere Vorschlags-Nachrichten hier einfügen"></textarea>
+            <div class="backup-actions">
+              <button type="button" class="button secondary" data-review-clipboard>Aus Zwischenablage</button>
+              <button type="button" class="button primary" data-review-read>Einlesen</button>
+            </div>
+            <p id="review-error" class="backup-error" role="alert" hidden></p>
+          </div>
+          <div id="review-list" class="review-list" role="list"></div>
+          <button type="button" class="button primary review-share" data-review-share disabled>Freigabe teilen</button>
+          <button type="button" class="text-button review-off" data-review-off>Pflegemodus beenden</button>
+        </section>
         <section id="paste-share" class="settings-section" aria-labelledby="paste-title">
           <h3 class="section-title" id="paste-title">Geteilte Liste einfügen</h3>
           <p class="section-note">Hat dir jemand eine Liste oder eine Einladung zur gemeinsamen Liste geschickt? Nachricht oder Link kopieren und hier einfügen.</p>
@@ -152,7 +169,7 @@
             <p id="backup-error" class="backup-error" role="alert" hidden></p>
           </div>
         </section>
-        <footer class="settings-signature"><strong>FeedYourself</strong> © 2026 ChrisKr22. Alle Rechte vorbehalten; der Code ist öffentlich einsehbar, steht aber unter keiner Open-Source-Lizenz. Produktfotos: Pexels (Pexels-Lizenz).<span class="app-version">Version <span data-app-version>1.4.0</span></span></footer>
+        <footer class="settings-signature"><strong>FeedYourself</strong> © 2026 ChrisKr22. Alle Rechte vorbehalten; der Code ist öffentlich einsehbar, steht aber unter keiner Open-Source-Lizenz. Produktfotos: Pexels (Pexels-Lizenz).<span class="app-version">Version <span data-app-version>1.5.0</span></span></footer>
       </div>
     </div>
 

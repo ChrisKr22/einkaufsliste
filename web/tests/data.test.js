@@ -211,3 +211,41 @@ describe('Katalog-Import: Kategorie aufteilen', () => {
     assert.equal(await productCategory(store, 'spuelmittel'), (await byKey(store, 'haushalt')).id);
   });
 });
+
+describe('Katalog-Import: angenommener Vorschlag', () => {
+  const base = {
+    categories: [{ id: 'konserven', name: 'Konserven' }, { id: 'sonst', name: 'Sonstiges' }],
+  };
+
+  test('eigenes Produkt gleichen Namens wird zum Katalogprodukt, ohne Doppel', async () => {
+    const store = new MemoryStore();
+    await importCatalog({ ...base, version: 1, products: [] }, store);
+    const sonst = (await store.getAll('categories')).find((c) => c.key === 'sonst');
+    await store.put('products', { id: 'own1', catalogId: null, name: 'ajvar', synonyms: [], categoryId: sonst.id, isCustom: true,
+      purchaseCount: 3, suggestHidden: true, suggestedAt: '2026-10-18', unit: 'g' });
+    const summary = await importCatalog({ ...base, version: 2,
+      products: [{ id: 'ajvar', name: 'Ajvar', category: 'konserven', synonyms: ['Paprikamus'], origin: 'vorschlag' }] }, store);
+    const products = await store.getAll('products');
+    assert.equal(products.length, 1);
+    const [ajvar] = products;
+    assert.equal(ajvar.id, 'own1', 'Einträge und Foto hängen an derselben ID');
+    assert.equal(ajvar.catalogId, 'ajvar');
+    assert.equal(ajvar.isCustom, false);
+    assert.equal(ajvar.name, 'Ajvar');
+    assert.equal(ajvar.purchaseCount, 3);
+    assert.equal(ajvar.unit, 'g');
+    assert.equal(ajvar.suggestHidden, undefined);
+    assert.equal(ajvar.categoryId, (await store.getAll('categories')).find((c) => c.key === 'konserven').id);
+    assert.equal(summary.productsAdded, 0);
+  });
+
+  test('selbst einsortiertes eigenes Produkt behält seine Kategorie', async () => {
+    const store = new MemoryStore();
+    await importCatalog({ ...base, version: 1, products: [] }, store);
+    const konserven = (await store.getAll('categories')).find((c) => c.key === 'konserven');
+    await store.put('products', { id: 'own1', catalogId: null, name: 'Ajvar', synonyms: [], categoryId: konserven.id, isCustom: true });
+    await importCatalog({ categories: [...base.categories, { id: 'oel', name: 'Öle' }], version: 2,
+      products: [{ id: 'ajvar', name: 'Ajvar', category: 'oel', synonyms: [] }] }, store);
+    assert.equal((await store.getAll('products'))[0].categoryId, konserven.id);
+  });
+});

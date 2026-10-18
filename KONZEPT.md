@@ -637,7 +637,7 @@ Eigene Produkte können Nutzer für den gemeinsamen Katalog vorschlagen – ohne
 
 Seit 18.10.2026 lassen sich einzelne eigene Produkte aus der Vorschlagsliste nehmen (Papierkorb, mit Rückgängig). Das Produkt bleibt in der Suche; „… wieder anzeigen“ holt alle entfernten zurück.
 
-### Konzept (entschieden 18.10.2026): Vorschläge in der App freigeben
+### Vorschläge in der App freigeben (entschieden und umgesetzt 18.10.2026)
 
 **Ziel:** Der Pflegende entscheidet direkt in der App über Vorschläge. Der Mac wird nur noch für den Abgleich mit dem Repository gebraucht (ein Befehl, dann committen und pushen).
 
@@ -649,13 +649,13 @@ Seit 18.10.2026 lassen sich einzelne eigene Produkte aus der Vorschlagsliste neh
 5. **Abgleich am Mac:** `pbpaste | python3 tools/catalog/vorschlaege.py --freigabe -` prüft den Code (Format, Größe, Steuerzeichen, Kategorie vorhanden, ID frei), trägt aufgenommene Produkte mit origin „vorschlag“ in `catalog.json` ein, erhöht die Katalog-Version, schreibt abgelehnte nach `Catalog/abgelehnt.json` und erneuert `KATALOG.md`. Danach `build.py`, committen, pushen; die Pipeline veröffentlicht.
 6. **Ankunft bei allen:** Der Katalog-Import ergänzt die neuen Produkte. Hat jemand ein gleichnamiges eigenes Produkt, wird **dieses** zum Katalogprodukt (bekommt die Katalog-ID), statt ein zweites anzulegen. Kaufzahl, Foto, Einheit und Listeneinträge bleiben, das Produkt verschwindet aus der Vorschlagsliste. Eine Rückmeldung an Vorschlagende gibt es nicht.
 
-**Pflegemodus:** wird auf dem eigenen Gerät freigeschaltet (Eingabe eines Codes, nur lokal gespeichert, mit der Sicherung nicht übertragen). Er ist kein Schutz im engeren Sinn: Er blendet nur Werkzeuge ein. Ins Repository kommt nur, was am Mac bewusst übernommen und gepusht wird.
+**Pflegemodus:** wird auf dem eigenen Gerät freigeschaltet (fünfmal schnell auf die Versionsnummer in den Einstellungen tippen; nur lokal gespeichert, mit der Sicherung nicht übertragen). Er ist kein Schutz im engeren Sinn: Er blendet nur Werkzeuge ein. Ins Repository kommt nur, was am Mac bewusst übernommen und gepusht wird.
 
-**Abgelehnt-Liste:** `Catalog/abgelehnt.json` (Name in vereinfachter Schreibweise, Datum). Die App des Pflegenden markiert erneut eingehende abgelehnte Vorschläge, `vorschlaege.py` warnt ebenfalls. Die Datei wird nicht an alle Apps ausgeliefert.
+**Abgelehnt-Liste:** `Catalog/abgelehnt.json` (Name, Datum) für das Werkzeug; die App des Pflegenden merkt sich ihre Ablehnungen zusätzlich selbst und markiert erneut eingehende Vorschläge als „früher abgelehnt“. Die Datei wird nicht an alle Apps ausgeliefert.
 
 **Bewusst nicht:** Vorschläge über den Briefkasten-Worker (neuer öffentlicher Eingang, Spam-Schutz nötig), automatische Übernahme per GitHub Action und Schreiben ins Repository direkt aus der App (Zugangsschlüssel auf dem Telefon). Beides bleibt als spätere Stufe möglich, falls die Menge der Vorschläge wächst.
 
-**Umsetzung (geschätzt eine Sitzung):** Zusammenführen beim Katalog-Import (Schritt 6, mit Tests) → Pflegemodus und Prüfansicht → Freigabe-Code → `--freigabe` in `vorschlaege.py` (mit Tests für den Code-Austausch JS ↔ Python).
+**Umgesetzt:** Zusammenführen beim Katalog-Import (`catalog-import.js`), Prüfliste und Freigabe-Code (`data/review.js`, `views/review-view.js`), `vorschlaege.py --freigabe` mit formattreuem Schreiben von `catalog.json` (`katalog.dump`). Tests: `review.test.js`, `release-tool.test.js` (Code aus der App, gelesen von Python), `data.test.js`.
 
 ## 10. Entscheidungen & offene Fragen
 

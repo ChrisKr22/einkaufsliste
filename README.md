@@ -154,6 +154,16 @@ python3 tools/catalog/vorschlaege.py --uebernehmen 1,3
 
 Das trägt die Produkte in `catalog.json` ein (origin `vorschlag`, Version +1), aktualisiert `KATALOG.md` und legt erledigte Nachrichten nach `Catalog/Vorschlaege/erledigt/`. Danach `python3 tools/web/build.py`, committen und pushen.
 
+### Freigabe direkt in der App (Pflegemodus)
+
+Fünfmal schnell auf die Versionsnummer unten in den Einstellungen tippen: Der Pflegemodus geht an (nur auf diesem Gerät, nochmal fünfmal tippen schaltet ihn aus). Unter *Vorschläge prüfen* Nachrichten einfügen, jeden Vorschlag aufnehmen (Name, Kategorie, Einheit, Suchwörter vorher anpassbar) oder ablehnen und *Freigabe teilen*, am besten an sich selbst. Am Mac den Text kopieren und:
+
+```bash
+pbpaste | python3 tools/catalog/vorschlaege.py --freigabe -
+```
+
+Aufgenommene landen in `catalog.json` (bei ihrer Kategorie, Version +1), abgelehnte in `Catalog/abgelehnt.json`. Danach `python3 tools/web/build.py`, committen und pushen. Wer ein gleichnamiges eigenes Produkt hat, behält es: Es wird beim nächsten Start zum Katalogprodukt, samt Kaufzahl, Foto und Listeneinträgen.
+
 ## Rechte
 
 © 2026 ChrisKr22. Alle Rechte vorbehalten.

@@ -3,7 +3,10 @@
 // - Neuere Katalog-Version: fehlende ergänzen, Synonyme aktualisieren, im Katalog umbenannte Namen nachziehen,
 //   verschobene Produkte umziehen („moved_from“). Neue Kategorien landen hinter ihrem Vorgänger im Katalog.
 //   Namen, Reihenfolge und Zuordnungen, die man in der App geändert hat, bleiben unangetastet.
+// - Neues Katalogprodukt mit dem Namen eines eigenen Produkts (z. B. ein angenommener Vorschlag): Das eigene Produkt
+//   wird zum Katalogprodukt – Kaufzahl, Foto, Einheit, Kategorie und Listeneinträge bleiben, es gibt kein Doppel.
 
+import { fold } from '../search.js';
 import { DEFAULT_UNIT, isUnit } from '../units.js';
 import { DELETED_CATEGORIES_KEY, FALLBACK_CATEGORY, newId } from './repository.js';
 
@@ -52,6 +55,10 @@ export async function importCatalog(catalog, store) {
 
   const existingProducts = await store.getAll('products');
   const productsByCatalogId = new Map(existingProducts.filter((p) => p.catalogId).map((p) => [p.catalogId, p]));
+  // Liegt das eigene Produkt noch in „Sonstiges“, kommt es in die Katalog-Kategorie; selbst einsortierte bleiben, wo sie sind.
+  const fallbackId = categoriesByKey.get(FALLBACK_CATEGORY)?.id;
+  const keepOwnCategory = (own) => Boolean(own.categoryId) && own.categoryId !== fallbackId;
+  const ownByName = new Map(existingProducts.filter((p) => p.isCustom && !p.catalogId).map((p) => [fold(p.name), p]));
   const changed = [];
   for (const item of catalog.products) {
     const category = categoriesByKey.get(item.category) ?? categoriesByKey.get(FALLBACK_CATEGORY);
@@ -69,6 +76,12 @@ export async function importCatalog(catalog, store) {
         changed.push({ ...product, name: renamed ? item.name : product.name, synonyms: item.synonyms, categoryId });
         if (synonymsChanged || renamed || moved) summary.productsUpdated++;
       }
+    } else if (ownByName.has(fold(item.name))) {
+      const own = ownByName.get(fold(item.name));
+      ownByName.delete(fold(item.name));
+      const { suggestHidden, suggestedAt, ...rest } = own;
+      changed.push({ ...rest, catalogId: item.id, isCustom: false, name: item.name, synonyms: item.synonyms, categoryId: keepOwnCategory(own) ? own.categoryId : category?.id ?? own.categoryId ?? null });
+      summary.productsUpdated++;
     } else {
       changed.push({
         id: newId(),
