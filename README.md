@@ -130,7 +130,7 @@ python3 tools/catalog/katalog.py
 python3 tools/web/build.py
 ```
 
-Beim nächsten Start ergänzt die App neue Produkte und Kategorien und aktualisiert Synonyme. Umbenennungen und die Reihenfolge, die man in der App geändert hat, bleiben erhalten.
+Beim nächsten Start ergänzt die App neue Produkte und Kategorien und aktualisiert Synonyme. Umbenennungen und die Reihenfolge, die man in der App geändert hat, bleiben erhalten. Eine Kategorie im Katalog umbenennen: alten Namen unter `"renamed_from"` eintragen. Ein Produkt in eine andere Kategorie verschieben: alte Kategorie unter `"moved_from"` eintragen – es zieht nur um, wenn man es in der App nicht selbst woanders einsortiert hat.
 
 ## Katalog-Vorschläge von Nutzern
 

@@ -76,7 +76,7 @@ describe('Planungsmodus', () => {
   test('Abschnitte folgen der Laden-Reihenfolge', async () => {
     const model = await makeModel();
     for (const q of ['Waschmittel', 'Milch', 'Äpfel']) await addByQuery(model, q);
-    assert.deepEqual(model.sections.map((s) => s.category.key), ['obst', 'milch', 'drogerie']);
+    assert.deepEqual(model.sections.map((s) => s.category.key), ['obst', 'milch', 'haushalt']);
   });
 
   test('Anmerkung bearbeiten', async () => {

@@ -1,7 +1,8 @@
 // Übernimmt den mitgelieferten Katalog (data/catalog.json) in den Speicher.
 // - Erster Start: alle Kategorien und Produkte anlegen.
-// - Neuere Katalog-Version: fehlende ergänzen, Synonyme aktualisieren, im Katalog umbenannte Namen nachziehen.
-//   Namen und Reihenfolge, die man in der App geändert hat, bleiben unangetastet.
+// - Neuere Katalog-Version: fehlende ergänzen, Synonyme aktualisieren, im Katalog umbenannte Namen nachziehen,
+//   verschobene Produkte umziehen („moved_from“). Neue Kategorien landen hinter ihrem Vorgänger im Katalog.
+//   Namen, Reihenfolge und Zuordnungen, die man in der App geändert hat, bleiben unangetastet.
 
 import { DEFAULT_UNIT, isUnit } from '../units.js';
 import { DELETED_CATEGORIES_KEY, FALLBACK_CATEGORY, newId } from './repository.js';
@@ -20,16 +21,34 @@ export async function importCatalog(catalog, store) {
   const categoriesByKey = new Map(existingCategories.map((c) => [c.key, c]));
   // In der App gelöschte Kategorien nicht wieder anlegen; ihre Produkte kommen nach „Sonstiges“.
   const deletedKeys = new Set((await store.get('meta', DELETED_CATEGORIES_KEY))?.value ?? []);
-  let nextSortOrder = Math.max(-1, ...existingCategories.map((c) => c.sortOrder)) + 1;
-  const newCategories = [];
+  // Reihenfolge wie in der App; eine neue Kategorie kommt direkt hinter ihren Vorgänger im Katalog.
+  const ordered = [...existingCategories].sort((a, b) => a.sortOrder - b.sortOrder);
+  const changedCategories = new Set();
+  let previousKey = null;
   for (const item of catalog.categories) {
-    if (categoriesByKey.has(item.id) || deletedKeys.has(item.id)) continue;
-    const category = { id: newId(), key: item.id, name: item.name, sortOrder: nextSortOrder++ };
-    categoriesByKey.set(item.id, category);
-    newCategories.push(category);
+    const existing = categoriesByKey.get(item.id);
+    if (existing) {
+      // Im Katalog umbenannt und in der App nicht selbst umbenannt: neuen Namen übernehmen.
+      if (existing.name !== item.name && (item.renamed_from ?? []).includes(existing.name)) {
+        existing.name = item.name;
+        changedCategories.add(existing);
+      }
+    } else if (!deletedKeys.has(item.id)) {
+      const category = { id: newId(), key: item.id, name: item.name, sortOrder: 0 };
+      const after = previousKey ? ordered.indexOf(categoriesByKey.get(previousKey)) : -1;
+      ordered.splice(after + 1, 0, category);
+      categoriesByKey.set(item.id, category);
+      changedCategories.add(category);
+      summary.categoriesAdded++;
+    }
+    if (categoriesByKey.has(item.id)) previousKey = item.id;
   }
-  await store.putMany('categories', newCategories);
-  summary.categoriesAdded = newCategories.length;
+  if (summary.categoriesAdded > 0) {
+    ordered.forEach((category, index) => {
+      if (category.sortOrder !== index) { category.sortOrder = index; changedCategories.add(category); }
+    });
+  }
+  await store.putMany('categories', [...changedCategories]);
 
   const existingProducts = await store.getAll('products');
   const productsByCatalogId = new Map(existingProducts.filter((p) => p.catalogId).map((p) => [p.catalogId, p]));
@@ -42,9 +61,13 @@ export async function importCatalog(catalog, store) {
       // Im Katalog umbenannt (der alte Name steht jetzt unter den Synonymen): neuen Namen übernehmen.
       // Hat man das Produkt in der App selbst anders benannt, bleibt dieser Name.
       const renamed = product.name !== item.name && item.synonyms.includes(product.name);
-      if (synonymsChanged || renamed || !product.categoryId) {
-        changed.push({ ...product, name: renamed ? item.name : product.name, synonyms: item.synonyms, categoryId: product.categoryId ?? category?.id ?? null });
-        if (synonymsChanged || renamed) summary.productsUpdated++;
+      // Im Katalog in eine andere Kategorie verschoben: nur umziehen, wenn es in der App noch in der alten liegt.
+      const oldCategory = item.moved_from && categoriesByKey.get(item.moved_from);
+      const moved = Boolean(oldCategory && category && product.categoryId === oldCategory.id && category.id !== oldCategory.id);
+      if (synonymsChanged || renamed || moved || !product.categoryId) {
+        const categoryId = moved ? category.id : product.categoryId ?? category?.id ?? null;
+        changed.push({ ...product, name: renamed ? item.name : product.name, synonyms: item.synonyms, categoryId });
+        if (synonymsChanged || renamed || moved) summary.productsUpdated++;
       }
     } else {
       changed.push({

@@ -3,7 +3,7 @@
 Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalog.py`.
 Änderungen bitte in `catalog.json` machen (oder mir sagen), nicht hier.
 
-**194 Produkte · 16 Kategorien · 323 Synonyme · 87 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 124 mit Foto**
+**227 Produkte · 17 Kategorien · 398 Synonyme · 120 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 124 mit Foto**
 
 | # | Kategorie | Produkte | davon aus deiner Liste |
 |---|-----------|----------|------------------------|
@@ -21,8 +21,9 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 | 12 | [Backen & Süßes](#backen--süßes) | 13 | 5 |
 | 13 | [Snacks](#snacks) | 7 | 2 |
 | 14 | [Getränke](#getränke) | 12 | 5 |
-| 15 | [Drogerie & Haushalt](#drogerie--haushalt) | 19 | 13 |
-| 16 | [Sonstiges](#sonstiges) | 4 | 1 |
+| 15 | [Drogerie](#drogerie) | 40 | 38 |
+| 16 | [Haushalt](#haushalt) | 12 | 8 |
+| 17 | [Sonstiges](#sonstiges) | 4 | 1 |
 
 ## Obst
 
@@ -265,13 +266,57 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 |  | **Tee** | Teebeutel, Kräutertee, Schwarztee | `tee` | tea bags |
 |  | **Kakao** | Kakaopulver, Trinkschokolade | `kakao` | cocoa powder |
 
-## Drogerie & Haushalt
+## Drogerie
+
+| | Produkt | Synonyme (Suchwörter) | ID | Foto-Suche (optional) |
+|---|---------|------------------------|----|-----------------------|
+|  | **Taschentücher** | Tempos, Kosmetiktücher | `taschentuecher` | tissues |
+| ● | **Zahnpasta** | Zahncreme | `zahnpasta` | toothpaste |
+| ● | **Duschgel** | Duschbad, Herren-Duschgel | `duschgel` | shower gel |
+| ● | **Flüssigseife** | Seife, Handseife | `fluessigseife` | liquid soap dispenser |
+| ● | **Deo** | Deodorant, Deoroller, Herrendeo, Damendeo, Antitranspirant | `deo` | deodorant |
+|  | **Shampoo** | – | `shampoo` | shampoo bottle |
+| ● | **Rasierklingen** | Klingen, Rasierer, Damenrasierer, Einwegrasierer | `rasierklingen` | razor blades |
+| ● | **Zahnbürste** | Zahnbürsten, Aufsteckbürsten, Ersatzbürsten | `zahnbuerste` | toothbrush |
+| ● | **Zahnseide** | Zahnseide-Sticks | `zahnseide` | dental floss |
+| ● | **Interdentalbürsten** | Interdentalbürste, Zahnzwischenraumbürsten | `interdentalbuersten` | interdental brushes |
+| ● | **Mundspülung** | Mundwasser | `mundspuelung` | mouthwash bottle |
+| ● | **Bodylotion** | Körperlotion, Körpermilch, Body Lotion | `bodylotion` | body lotion bottle |
+| ● | **Handcreme** | – | `handcreme` | hand cream tube |
+| ● | **Lippenpflege** | Labello, Lippenbalsam, Lippenpflegestift | `lippenpflege` | lip balm |
+| ● | **Sonnencreme** | Sonnenschutz, Sonnenmilch, Sonnenspray | `sonnencreme` | sunscreen bottle |
+| ● | **After-Sun** | After Sun, Aftersun | `after-sun` | after sun lotion |
+| ● | **Wattestäbchen** | Ohrenstäbchen, Q-Tips | `wattestaebchen` | cotton swabs |
+| ● | **Wattepads** | Wattepad, Abschminkpads | `wattepads` | cotton pads |
+| ● | **Feuchttücher** | Feuchttuch, Baby-Feuchttücher, feuchtes Toilettenpapier | `feuchttuecher` | wet wipes |
+| ● | **Haarspülung** | Spülung, Conditioner | `haarspuelung` | conditioner bottle |
+| ● | **Haarkur** | Haarmaske | `haarkur` | hair mask jar |
+| ● | **Trockenshampoo** | Dry Shampoo | `trockenshampoo` | dry shampoo |
+| ● | **Haargel** | Haarwachs, Wachs, Stylinggel | `haargel` | hair gel |
+| ● | **Haar-Mousse** | Haarschaum, Schaumfestiger, Mousse | `haar-mousse` | hair mousse |
+| ● | **Haargummis** | Haargummi, Zopfgummis, Haarbänder | `haargummis` | hair ties |
+| ● | **Bartöl** | Bartpflege, Bartbalsam | `bartoel` | beard oil |
+| ● | **Binden** | Damenbinden, Monatsbinden | `binden` | sanitary pads |
+| ● | **Slipeinlagen** | Slipeinlage | `slipeinlagen` | panty liners |
+| ● | **Gesichtscreme** | Tagescreme, Feuchtigkeitscreme | `gesichtscreme` | face cream jar |
+| ● | **Nachtcreme** | – | `nachtcreme` | night cream jar |
+| ● | **Waschgel** | Gesichtsreinigung, Reinigungsgel, Gesichtswaschgel | `waschgel` | face wash |
+| ● | **Make-up-Entferner** | Abschminktücher, Mizellenwasser, Augen-Make-up-Entferner | `make-up-entferner` | micellar water |
+| ● | **Gesichtsmaske** | Tuchmaske, Maske | `gesichtsmaske` | face sheet mask |
+| ● | **Make-up** | Foundation, Makeup | `make-up` | foundation bottle |
+| ● | **Mascara** | Wimperntusche | `mascara` | mascara |
+| ● | **Kajal** | Eyeliner, Kajalstift | `kajal` | eyeliner pencil |
+| ● | **Lippenstift** | Lipgloss | `lippenstift` | lipstick |
+| ● | **Parfum** | Parfüm, Eau de Toilette, Duft | `parfum` | perfume bottle |
+| ● | **Pflaster** | Wundpflaster, Heftpflaster | `pflaster` | adhesive bandages |
+| ● | **Vitamine** | Vitamintabletten, Nahrungsergänzung, Magnesium | `vitamine` | vitamin pills |
+
+## Haushalt
 
 | | Produkt | Synonyme (Suchwörter) | ID | Foto-Suche (optional) |
 |---|---------|------------------------|----|-----------------------|
 | ● | **Toilettenpapier** | Klopapier, WC-Papier, Klo-Papier | `toilettenpapier` | toilet paper |
 | ● | **Küchenrolle** | Küchenpapier, Haushaltsrolle | `kuechenrolle` | paper towel roll |
-|  | **Taschentücher** | Tempos | `taschentuecher` | tissues |
 | ● | **Spülmittel** | Geschirrspülmittel, Spüli | `spuelmittel` | dish soap |
 | ● | **Spülmaschinentabs** | Tabs, Geschirrspültabs, Spülmaschinen Tabs | `spuelmaschinentabs` | dishwasher tablets |
 | ● | **Klarspüler** | Klarspueler | `klarspueler` | rinse aid |
@@ -282,12 +327,6 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 |  | **Alufolie** | Aluminiumfolie | `alufolie` | aluminium foil |
 |  | **Frischhaltefolie** | Klarsichtfolie | `frischhaltefolie` | plastic wrap |
 | ● | **Backpapier** | – | `backpapier` | baking paper roll |
-| ● | **Zahnpasta** | Zahncreme | `zahnpasta` | toothpaste |
-| ● | **Duschgel** | – | `duschgel` | shower gel |
-| ● | **Flüssigseife** | Seife, Handseife | `fluessigseife` | liquid soap dispenser |
-| ● | **Deo** | Deodorant, Deoroller | `deo` | deodorant |
-|  | **Shampoo** | – | `shampoo` | shampoo bottle |
-| ● | **Rasierklingen** | Klingen, Rasierer | `rasierklingen` | razor blades |
 
 ## Sonstiges
 

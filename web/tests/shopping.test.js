@@ -17,7 +17,7 @@ describe('Einkaufsmodus', () => {
   test('zeigt nur Offenes, in Laden-Reihenfolge', async () => {
     const { model } = await makeModel(['Waschmittel', 'Milch', 'Äpfel', 'Brot']);
     await model.toCart(item(model, 'Brot'));
-    assert.deepEqual(model.shopSections.map((s) => s.category.key), ['obst', 'milch', 'drogerie']);
+    assert.deepEqual(model.shopSections.map((s) => s.category.key), ['obst', 'milch', 'haushalt']);
     assert.deepEqual(model.focusQueue.map((i) => i.product.name), ['Äpfel', 'Milch', 'Waschmittel']);
   });
 

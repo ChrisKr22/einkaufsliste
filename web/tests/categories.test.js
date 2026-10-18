@@ -37,10 +37,10 @@ describe('Kategorien verwalten', () => {
     const { model, repository } = await makeModel();
     for (const name of ['Äpfel', 'Milch', 'Waschmittel']) await model.add((await productNamed(repository, name)).id);
     const ids = model.state.categories.map((c) => c.id);
-    const drogerie = byKey(model, 'drogerie').id;
-    await model.reorderCategories([drogerie, ...ids.filter((id) => id !== drogerie)]);
-    assert.equal(keys(model)[0], 'drogerie');
-    assert.deepEqual(model.sections.map((s) => s.category.key), ['drogerie', 'obst', 'milch']);
+    const haushalt = byKey(model, 'haushalt').id;
+    await model.reorderCategories([haushalt, ...ids.filter((id) => id !== haushalt)]);
+    assert.equal(keys(model)[0], 'haushalt');
+    assert.deepEqual(model.sections.map((s) => s.category.key), ['haushalt', 'obst', 'milch']);
     assert.deepEqual(model.focusQueue.map((i) => i.product.name), ['Waschmittel', 'Äpfel', 'Milch']);
     assert.deepEqual(model.state.categories.map((c) => c.sortOrder), model.state.categories.map((_, i) => i));
   });

@@ -17,6 +17,7 @@ const P = {
   snacks: 'M6 9h12l-1.5 11h-9zM7 9c-1.5-2 .5-4.5 2.8-3.2.6-2.4 4-2.4 4.4 0C16.5 4.5 18.5 7 17 9M10 12l.5 5M14 12l-.5 5',
   getraenke: 'M6 4h12l-1.6 16.5H7.6zM6.6 9.5h10.8',
   drogerie: 'M8.5 10h7v10.5h-7zM10.5 10V7h3v3M13.5 7h3M12 7V4.5',
+  haushalt: 'M4 11.5L12 5l8 6.5M6.5 9.5V20h11V9.5M10 20v-5h4v5',
   sonst: 'M5.5 8h13l-1 12.5h-11zM9 8V6.5a3 3 0 0 1 6 0V8',
 };
 
@@ -36,6 +37,7 @@ const PRESETS = {
   snacks: ['#F5E6D2', '#8A5A1F'],
   getraenke: ['#DCEBEF', '#2F6A7A'],
   drogerie: ['#E6E4F2', '#4C4A86'],
+  haushalt: ['#DDEEE8', '#2F6B5A'],
   sonst: ['#E8E5E4', '#5E5759'],
 };
 

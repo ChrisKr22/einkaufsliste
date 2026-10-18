@@ -158,3 +158,56 @@ describe('Repository', () => {
     assert.equal(saved.quantity, 3);
   });
 });
+
+describe('Katalog-Import: Kategorie aufteilen', () => {
+  const v1 = {
+    version: 1,
+    categories: [{ id: 'drogerie', name: 'Drogerie & Haushalt' }, { id: 'sonst', name: 'Sonstiges' }],
+    products: [
+      { id: 'duschgel', name: 'Duschgel', category: 'drogerie', synonyms: [] },
+      { id: 'spuelmittel', name: 'Spülmittel', category: 'drogerie', synonyms: [] },
+      { id: 'alufolie', name: 'Alufolie', category: 'drogerie', synonyms: [] },
+    ],
+  };
+  const v2 = {
+    version: 2,
+    categories: [
+      { id: 'drogerie', name: 'Drogerie', renamed_from: ['Drogerie & Haushalt'] },
+      { id: 'haushalt', name: 'Haushalt' },
+      { id: 'sonst', name: 'Sonstiges' },
+    ],
+    products: [
+      { id: 'duschgel', name: 'Duschgel', category: 'drogerie', synonyms: [] },
+      { id: 'spuelmittel', name: 'Spülmittel', category: 'haushalt', moved_from: 'drogerie', synonyms: [] },
+      { id: 'alufolie', name: 'Alufolie', category: 'haushalt', moved_from: 'drogerie', synonyms: [] },
+    ],
+  };
+  const byKey = async (store, key) => (await store.getAll('categories')).find((c) => c.key === key);
+  const productCategory = async (store, catalogId) => (await store.getAll('products')).find((p) => p.catalogId === catalogId).categoryId;
+
+  test('benennt um, legt die neue Kategorie dahinter an und verschiebt die Produkte', async () => {
+    const store = new MemoryStore();
+    await importCatalog(v1, store);
+    const summary = await importCatalog(v2, store);
+    const repository = new ShoppingRepository(store);
+    assert.deepEqual((await repository.categories()).map((c) => c.name), ['Drogerie', 'Haushalt', 'Sonstiges']);
+    assert.equal(await productCategory(store, 'spuelmittel'), (await byKey(store, 'haushalt')).id);
+    assert.equal(await productCategory(store, 'duschgel'), (await byKey(store, 'drogerie')).id);
+    assert.equal(summary.productsUpdated, 2);
+  });
+
+  test('eigene Reihenfolge, eigener Name und selbst einsortierte Produkte bleiben', async () => {
+    const store = new MemoryStore();
+    await importCatalog(v1, store);
+    const drogerie = await byKey(store, 'drogerie');
+    const sonst = await byKey(store, 'sonst');
+    await store.putMany('categories', [{ ...drogerie, name: 'Bad', sortOrder: 1 }, { ...sonst, sortOrder: 0 }]);
+    const alufolie = (await store.getAll('products')).find((p) => p.catalogId === 'alufolie');
+    await store.put('products', { ...alufolie, categoryId: sonst.id });   // selbst umsortiert
+    await importCatalog(v2, store);
+    const repository = new ShoppingRepository(store);
+    assert.deepEqual((await repository.categories()).map((c) => c.name), ['Sonstiges', 'Bad', 'Haushalt']);
+    assert.equal(await productCategory(store, 'alufolie'), sonst.id);
+    assert.equal(await productCategory(store, 'spuelmittel'), (await byKey(store, 'haushalt')).id);
+  });
+});
