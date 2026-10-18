@@ -635,6 +635,28 @@ Quellen: [Apple Developer Forums – SwiftData & CloudKit Sharing](https://devel
 
 Eigene Produkte können Nutzer für den gemeinsamen Katalog vorschlagen – ohne Server: Die App erzeugt eine Nachricht mit lesbarer Liste und Code (`FY-KATALOG:…`), die über das Teilen-Menü an die Person geht, die den Katalog pflegt. `tools/catalog/vorschlaege.py` liest die Nachrichten, fasst gleiche Vorschläge zusammen, zeigt Doppelte und übernimmt ausgewählte Produkte in `catalog.json`. Die Entscheidung bleibt beim Pflegenden; Nachrichten liegen nur lokal (`Catalog/Vorschlaege/` ist von Git ausgenommen). Verworfen: öffentliche GitHub-Issues (Konto nötig, Vorschläge öffentlich) und ein eigener Sammeldienst (Server, Datenschutz, Kosten).
 
+Seit 18.10.2026 lassen sich einzelne eigene Produkte aus der Vorschlagsliste nehmen (Papierkorb, mit Rückgängig). Das Produkt bleibt in der Suche; „… wieder anzeigen“ holt alle entfernten zurück.
+
+### Konzept (entschieden 18.10.2026): Vorschläge in der App freigeben
+
+**Ziel:** Der Pflegende entscheidet direkt in der App über Vorschläge. Der Mac wird nur noch für den Abgleich mit dem Repository gebraucht (ein Befehl, dann committen und pushen).
+
+**Ablauf**
+1. **Vorschlagen** (unverändert): Nachricht mit `FY-KATALOG:…` über das Teilen-Menü.
+2. **Prüfen in der App:** Einstellungen › „Vorschläge prüfen“ (nur sichtbar im Pflegemodus). Nachricht einfügen; die App zeigt jedes Produkt mit Name, Kategorie, Einheit, Suchwörtern und Kaufzahl. Treffer, die es im Katalog schon gibt (Name oder Suchwort, auch in anderer Schreibweise), sind markiert.
+3. **Entscheiden:** pro Produkt „Aufnehmen“ (Name, Kategorie, Einheit und Suchwörter lassen sich vorher anpassen) oder „Ablehnen“. Mehrere Nachrichten werden zusammengeführt, gleiche Produkte nur einmal gezeigt. Offene Entscheidungen bleiben auf dem Gerät gespeichert.
+4. **Freigabe-Code:** „Freigabe teilen“ erzeugt eine Nachricht mit `FY-FREIGABE:…` (gleiche Verpackung wie die Vorschläge: komprimiertes JSON, Format-Version). Inhalt: aufgenommene Produkte mit allen Angaben, abgelehnte nur mit Namen.
+5. **Abgleich am Mac:** `pbpaste | python3 tools/catalog/vorschlaege.py --freigabe -` prüft den Code (Format, Größe, Steuerzeichen, Kategorie vorhanden, ID frei), trägt aufgenommene Produkte mit origin „vorschlag“ in `catalog.json` ein, erhöht die Katalog-Version, schreibt abgelehnte nach `Catalog/abgelehnt.json` und erneuert `KATALOG.md`. Danach `build.py`, committen, pushen; die Pipeline veröffentlicht.
+6. **Ankunft bei allen:** Der Katalog-Import ergänzt die neuen Produkte. Hat jemand ein gleichnamiges eigenes Produkt, wird **dieses** zum Katalogprodukt (bekommt die Katalog-ID), statt ein zweites anzulegen. Kaufzahl, Foto, Einheit und Listeneinträge bleiben, das Produkt verschwindet aus der Vorschlagsliste. Eine Rückmeldung an Vorschlagende gibt es nicht.
+
+**Pflegemodus:** wird auf dem eigenen Gerät freigeschaltet (Eingabe eines Codes, nur lokal gespeichert, mit der Sicherung nicht übertragen). Er ist kein Schutz im engeren Sinn: Er blendet nur Werkzeuge ein. Ins Repository kommt nur, was am Mac bewusst übernommen und gepusht wird.
+
+**Abgelehnt-Liste:** `Catalog/abgelehnt.json` (Name in vereinfachter Schreibweise, Datum). Die App des Pflegenden markiert erneut eingehende abgelehnte Vorschläge, `vorschlaege.py` warnt ebenfalls. Die Datei wird nicht an alle Apps ausgeliefert.
+
+**Bewusst nicht:** Vorschläge über den Briefkasten-Worker (neuer öffentlicher Eingang, Spam-Schutz nötig), automatische Übernahme per GitHub Action und Schreiben ins Repository direkt aus der App (Zugangsschlüssel auf dem Telefon). Beides bleibt als spätere Stufe möglich, falls die Menge der Vorschläge wächst.
+
+**Umsetzung (geschätzt eine Sitzung):** Zusammenführen beim Katalog-Import (Schritt 6, mit Tests) → Pflegemodus und Prüfansicht → Freigabe-Code → `--freigabe` in `vorschlaege.py` (mit Tests für den Code-Austausch JS ↔ Python).
+
 ## 10. Entscheidungen & offene Fragen
 
 **Entschieden (v0.6)**

@@ -25,6 +25,22 @@ describe('Katalog-Vorschläge', () => {
     assert.deepEqual(list.map((p) => p.name), ['Ajvar', 'Bulgur', 'Zwieback']);
   });
 
+  test('aus der Vorschlagsliste entfernen: Produkt bleibt, Rückgängig und „wieder anzeigen“ holen es zurück', async () => {
+    const { model } = await makeModel();
+    const ajvar = await createOwn(model, 'Ajvar');
+    await createOwn(model, 'Zwieback');
+    await model.hideSuggestion(ajvar);
+    assert.deepEqual(model.catalogCandidates.map((p) => p.name), ['Zwieback']);
+    assert.deepEqual(model.hiddenCatalogCandidates.map((p) => p.name), ['Ajvar']);
+    assert.ok(model.state.products.some((p) => p.name === 'Ajvar'), 'Produkt bleibt erhalten');
+    await model.undo();
+    assert.deepEqual(model.catalogCandidates.map((p) => p.name).sort(), ['Ajvar', 'Zwieback']);
+    await model.hideSuggestion(model.state.products.find((p) => p.name === 'Ajvar'));
+    await model.showHiddenSuggestions();
+    assert.equal(model.hiddenCatalogCandidates.length, 0);
+    assert.equal(model.catalogCandidates.length, 2);
+  });
+
   test('Vorauswahl: mindestens zweimal gekauft, noch nicht vorgeschlagen', () => {
     assert.equal(preselected({ purchaseCount: 2 }), true);
     assert.equal(preselected({ purchaseCount: 1 }), false);

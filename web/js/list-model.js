@@ -4,7 +4,7 @@
 import { backupFileName, openVault, parseBackup, summarize, withoutVault } from './data/backup.js';
 import { FALLBACK_CATEGORY, newId } from './data/repository.js';
 import { decodeShare, encodeShare, extractShareCode, shareText, shareUrl } from './data/share.js';
-import { suggestionCandidates, suggestionMessage } from './data/suggest.js';
+import { hiddenSuggestions, suggestionCandidates, suggestionMessage } from './data/suggest.js';
 import { fold, searchProducts } from './search.js';
 import { formatQuantity, stepDown, stepUp, UNITS, unitOf } from './units.js';
 
@@ -236,6 +236,31 @@ export class ListModel {
   /** Eigene Produkte, die man für den gemeinsamen Katalog vorschlagen kann. */
   get catalogCandidates() {
     return suggestionCandidates(this.state.products);
+  }
+
+  /** Aus der Vorschlagsliste entfernte eigene Produkte. */
+  get hiddenCatalogCandidates() {
+    return hiddenSuggestions(this.state.products);
+  }
+
+  /** Nimmt ein eigenes Produkt aus der Vorschlagsliste (mit Rückgängig); das Produkt bleibt in der Suche. */
+  async hideSuggestion(product) {
+    await this.#perform(async () => {
+      await this.repository.setSuggestHidden([product.id], true);
+      this.undoAction = () => this.repository.setSuggestHidden([product.id], false);
+      this.#showToast(`${product.name}: nicht mehr vorschlagen`, true);
+    });
+  }
+
+  /** Alle entfernten Produkte wieder in die Vorschlagsliste aufnehmen. */
+  async showHiddenSuggestions() {
+    const ids = this.hiddenCatalogCandidates.map((p) => p.id);
+    if (!ids.length) return;
+    await this.#perform(async () => {
+      await this.repository.setSuggestHidden(ids, false);
+      this.undoAction = () => this.repository.setSuggestHidden(ids, true);
+      this.#showToast(ids.length === 1 ? '1 Produkt wieder in der Liste' : `${ids.length} Produkte wieder in der Liste`, true);
+    });
   }
 
   /** Nachricht für die ausgewählten Produkte (null, wenn keins ausgewählt ist). */

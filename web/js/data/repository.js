@@ -157,6 +157,16 @@ export class ShoppingRepository {
     }
   }
 
+  /** Eigene Produkte aus der Vorschlagsliste nehmen (hidden) oder wieder aufnehmen. Das Produkt selbst bleibt. */
+  async setSuggestHidden(productIds, hidden) {
+    for (const id of productIds) {
+      const product = await this.store.get('products', id);
+      if (!product) continue;
+      const { suggestHidden, ...rest } = product;
+      await this.store.put('products', hidden ? { ...rest, suggestHidden: true } : rest);
+    }
+  }
+
   async setNote(entryId, note) {
     await this.#update(entryId, { note });
   }

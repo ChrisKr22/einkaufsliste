@@ -9,11 +9,18 @@ export const SUGGEST_MARKER = 'FY-KATALOG:';
 const FORMAT = 1;
 const MAX_PRODUCTS = 100;
 
-/** Eigene (nicht aus dem Katalog stammende) Produkte, meistgekaufte zuerst. */
+const isOwn = (p) => p.isCustom && !p.catalogId;
+
+/** Eigene (nicht aus dem Katalog stammende) Produkte, meistgekaufte zuerst – ohne die aus der Liste entfernten. */
 export function suggestionCandidates(products) {
   return products
-    .filter((p) => p.isCustom && !p.catalogId)
+    .filter((p) => isOwn(p) && !p.suggestHidden)
     .sort((a, b) => (b.purchaseCount ?? 0) - (a.purchaseCount ?? 0) || a.name.localeCompare(b.name, 'de'));
+}
+
+/** Eigene Produkte, die man aus der Vorschlagsliste entfernt hat. */
+export function hiddenSuggestions(products) {
+  return products.filter((p) => isOwn(p) && p.suggestHidden);
 }
 
 /** Vorauswahl: mindestens zweimal gekauft und noch nicht vorgeschlagen. */

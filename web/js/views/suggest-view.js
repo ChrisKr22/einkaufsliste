@@ -1,7 +1,10 @@
-// Einstellungen › Für den Katalog vorschlagen: eigene Produkte auswählen und als Nachricht teilen.
+// Einstellungen › Für den Katalog vorschlagen: eigene Produkte auswählen und als Nachricht teilen,
+// oder einzelne aus der Liste nehmen (Papierkorb; „wieder anzeigen“ holt sie zurück).
 
 import { preselected } from '../data/suggest.js';
 import { esc, thumb } from './dom.js';
+
+const trash = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>';
 
 export function mountSuggestSection(root, model) {
   const list = root.querySelector('#suggest-list');
@@ -16,6 +19,16 @@ export function mountSuggestSection(root, model) {
     if (!box) return;
     if (box.checked) selected.add(box.dataset.suggest); else selected.delete(box.dataset.suggest);
     update();
+  });
+
+  list.addEventListener('click', async (event) => {
+    const hide = event.target.closest('[data-suggest-hide]');
+    if (hide) {
+      const product = model.catalogCandidates.find((p) => p.id === hide.dataset.suggestHide);
+      if (product) await model.hideSuggestion(product);
+    } else if (event.target.closest('[data-suggest-unhide]')) {
+      await model.showHiddenSuggestions();
+    }
   });
 
   button.addEventListener('click', async () => {
@@ -68,11 +81,14 @@ export function mountSuggestSection(root, model) {
     const id = `suggest-${esc(product.id)}`;
     const bought = product.purchaseCount ? `${product.purchaseCount}× gekauft` : 'noch nicht gekauft';
     const meta = [category?.name ?? 'Sonstiges', bought, product.suggestedAt ? 'schon vorgeschlagen' : null].filter(Boolean).join(' · ');
-    return `<label class="suggest-row" role="listitem" for="${esc(id)}">
-      <input type="checkbox" id="${esc(id)}" data-suggest="${esc(product.id)}"${selected.has(product.id) ? ' checked' : ''}>
-      ${thumb(product, category?.key, 'tiny')}
-      <span class="unit-name">${esc(product.name)}<span>${esc(meta)}</span></span>
-    </label>`;
+    return `<div class="suggest-row" role="listitem">
+      <label class="suggest-pick" for="${esc(id)}">
+        <input type="checkbox" id="${esc(id)}" data-suggest="${esc(product.id)}"${selected.has(product.id) ? ' checked' : ''}>
+        ${thumb(product, category?.key, 'tiny')}
+        <span class="unit-name">${esc(product.name)}<span>${esc(meta)}</span></span>
+      </label>
+      <button type="button" class="icon-button cat-delete" data-suggest-hide="${esc(product.id)}" aria-label="${esc(product.name)} nicht mehr vorschlagen">${trash}</button>
+    </div>`;
   }
 
   function render() {
@@ -83,9 +99,13 @@ export function mountSuggestSection(root, model) {
       if (!known.has(p.id) && preselected(p)) selected.add(p.id);
       known.add(p.id);
     }
-    list.innerHTML = candidates.length
+    const hidden = model.hiddenCatalogCandidates.length;
+    const unhide = hidden
+      ? `<button type="button" class="text-button suggest-unhide" data-suggest-unhide>${hidden === 1 ? '1 entferntes Produkt' : `${hidden} entfernte Produkte`} wieder anzeigen</button>`
+      : '';
+    list.innerHTML = (candidates.length
       ? candidates.map(row).join('')
-      : '<p class="unit-hint">Noch keine eigenen Produkte. Was du über die Suche neu anlegst, erscheint hier.</p>';
+      : `<p class="unit-hint">${hidden ? 'Keine Produkte zum Vorschlagen.' : 'Noch keine eigenen Produkte. Was du über die Suche neu anlegst, erscheint hier.'}</p>`) + unhide;
     button.hidden = candidates.length === 0;
     update();
   }
