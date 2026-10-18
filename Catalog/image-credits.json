@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-17 12:36",
+  "generated_at": "2026-10-18 08:37",
   "images": [
     {
       "product_id": "aepfel",
@@ -182,6 +182,18 @@
       "cutout": false
     },
     {
+      "product_id": "bodylotion",
+      "name": "Bodylotion",
+      "file": "Images/bodylotion.jpg",
+      "source": "Pexels",
+      "author": "Sadia Taz Oyshi",
+      "page": "https://www.pexels.com/photo/14788377/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Body Lotion_pexels-sadia-taz-oyshi-328311727-14788377.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "bratwurst",
       "name": "Bratwurst",
       "file": "Images/bratwurst.jpg",
@@ -290,6 +302,30 @@
       "cutout": false
     },
     {
+      "product_id": "croissants",
+      "name": "Croissants",
+      "file": "Images/croissants.jpg",
+      "source": "Pexels",
+      "author": "Claudio Segovia",
+      "page": "https://www.pexels.com/photo/6202224/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Croissants_pexels-claudio-segovia-11921273-6202224.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "currypulver",
+      "name": "Currypulver",
+      "file": "Images/currypulver.jpg",
+      "source": "Pexels",
+      "author": "Karola G",
+      "page": "https://www.pexels.com/photo/4198654/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "currypulver_pexels-karola-g-4198654.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "deo",
       "name": "Deo",
       "file": "Images/deo.jpg",
@@ -359,6 +395,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Feta_pexels-alesiakozik-6128854.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "feuchttuecher",
+      "name": "Feuchttücher",
+      "file": "Images/feuchttuecher.jpg",
+      "source": "Pexels",
+      "author": "Towfiqu Barbhuiya",
+      "page": "https://www.pexels.com/photo/9771341/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Feuchttücher_pexels-towfiqu-barbhuiya-3440682-9771341.jpg",
       "cutout": false
     },
     {
@@ -446,6 +494,30 @@
       "cutout": false
     },
     {
+      "product_id": "gesichtscreme",
+      "name": "Gesichtscreme",
+      "file": "Images/gesichtscreme.jpg",
+      "source": "Pexels",
+      "author": "Ekaterinamitkina",
+      "page": "https://www.pexels.com/photo/9898691/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Gesichtscreme_pexels-ekaterinamitkina-9898691.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "gesichtsmaske",
+      "name": "Gesichtsmaske",
+      "file": "Images/gesichtsmaske.jpg",
+      "source": "Pexels",
+      "author": "Olia Danilevich",
+      "page": "https://www.pexels.com/photo/9336034/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Gesichtsmaske_pexels-olia-danilevich-9336034.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "getrocknete-tomaten",
       "name": "Getrocknete Tomaten",
       "file": "Images/getrocknete-tomaten.jpg",
@@ -455,6 +527,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "getrockneteTomaten_pexels-valeriya-21558695.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "granola",
+      "name": "Granola",
+      "file": "Images/granola.jpg",
+      "source": "Pexels",
+      "author": "Pincalo",
+      "page": "https://www.pexels.com/photo/33742590/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Granola_pexels-pincalo-33742590.jpg",
       "cutout": false
     },
     {
@@ -482,6 +566,66 @@
       "cutout": false
     },
     {
+      "product_id": "haar-mousse",
+      "name": "Haar-Mousse",
+      "file": "Images/haar-mousse.jpg",
+      "source": "Pexels",
+      "author": "Ellie Burgin",
+      "page": "https://www.pexels.com/photo/4188697/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Haarmousse_pexels-ellie-burgin-1661546-4188697.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "haargel",
+      "name": "Haargel",
+      "file": "Images/haargel.jpg",
+      "source": "Pexels",
+      "author": "Ellie Burgin",
+      "page": "https://www.pexels.com/photo/4188697/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Haargel_pexels-ellie-burgin-1661546-4188697.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "haargummis",
+      "name": "Haargummis",
+      "file": "Images/haargummis.jpg",
+      "source": "Pexels",
+      "author": "Arif",
+      "page": "https://www.pexels.com/photo/13595831/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Haargummis_pexels-arif-13595831.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "haarkur",
+      "name": "Haarkur",
+      "file": "Images/haarkur.jpg",
+      "source": "Pexels",
+      "author": "Oleksandra",
+      "page": "https://www.pexels.com/photo/23349887/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Haarkur_pexels-oleksandra-23349887.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "haarspuelung",
+      "name": "Haarspülung",
+      "file": "Images/haarspuelung.jpg",
+      "source": "Pexels",
+      "author": "Oleksandra",
+      "page": "https://www.pexels.com/photo/23349887/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Haarspülung_pexels-oleksandra-23349887.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "hackfleisch",
       "name": "Hackfleisch",
       "file": "Images/hackfleisch.jpg",
@@ -503,6 +647,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Haferflocken_pexels-eva-bronzini-5988273.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "handcreme",
+      "name": "Handcreme",
+      "file": "Images/handcreme.jpg",
+      "source": "Pexels",
+      "author": "Karola G",
+      "page": "https://www.pexels.com/photo/4938331/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Handcreme_pexels-karola-g-4938331.jpg",
       "cutout": false
     },
     {
@@ -686,6 +842,18 @@
       "cutout": false
     },
     {
+      "product_id": "klarspueler",
+      "name": "Klarspüler",
+      "file": "Images/klarspueler.jpg",
+      "source": "Pexels",
+      "author": "Cottonbro",
+      "page": "https://www.pexels.com/photo/4107302/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Klarspüler_pexels-cottonbro-4107302.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "kochschinken",
       "name": "Kochschinken",
       "file": "Images/kochschinken.jpg",
@@ -707,6 +875,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "kokosmilch_pexels-carlos-lopez-117694035-9814722.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "kuechenrolle",
+      "name": "Küchenrolle",
+      "file": "Images/kuechenrolle.jpg",
+      "source": "Pexels",
+      "author": "Polina Zimmerman",
+      "page": "https://www.pexels.com/photo/4008507/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Küchenrolle_pexels-polina-zimmerman-4008507.jpg",
       "cutout": false
     },
     {
@@ -770,6 +950,30 @@
       "cutout": false
     },
     {
+      "product_id": "lippenpflege",
+      "name": "Lippenpflege",
+      "file": "Images/lippenpflege.jpg",
+      "source": "Pexels",
+      "author": "Katana",
+      "page": "https://www.pexels.com/photo/10822132/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Lippenpflege_pexels-katana-42038662-10822132.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "lippenstift",
+      "name": "Lippenstift",
+      "file": "Images/lippenstift.jpg",
+      "source": "Pexels",
+      "author": "Ankush Dawar",
+      "page": "https://www.pexels.com/photo/7810641/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Lippenstift_pexels-ankush-dawar-596696-7810641.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "mais",
       "name": "Mais",
       "file": "Images/mais.jpg",
@@ -779,6 +983,30 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Mais_pexels-jonathanborba-14321953.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "make-up",
+      "name": "Make-up",
+      "file": "Images/make-up.jpg",
+      "source": "Pexels",
+      "author": "Ahimsa",
+      "page": "https://www.pexels.com/photo/31674677/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Make-Up_pexels-ahimsa-31674677.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "make-up-entferner",
+      "name": "Make-up-Entferner",
+      "file": "Images/make-up-entferner.jpg",
+      "source": "Pexels",
+      "author": "Karola G",
+      "page": "https://www.pexels.com/photo/6633571/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Makeup-Entferner_pexels-karola-g-6633571.jpg",
       "cutout": false
     },
     {
@@ -803,6 +1031,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Marmelade_pexels-liana-horodetska-5077625-7586251.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "mascara",
+      "name": "Mascara",
+      "file": "Images/mascara.jpg",
+      "source": "Pexels",
+      "author": "Shiny Diamond",
+      "page": "https://www.pexels.com/photo/3373728/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Mascara_pexels-shiny-diamond-3373728.jpg",
       "cutout": false
     },
     {
@@ -878,6 +1118,18 @@
       "cutout": false
     },
     {
+      "product_id": "mundspuelung",
+      "name": "Mundspülung",
+      "file": "Images/mundspuelung.jpg",
+      "source": "Pexels",
+      "author": "Towfiqu Barbhuiya",
+      "page": "https://www.pexels.com/photo/8704810/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Mundspülung_pexels-towfiqu-barbhuiya-3440682-8704810.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "nuesse",
       "name": "Nüsse",
       "file": "Images/nuesse.jpg",
@@ -938,6 +1190,18 @@
       "cutout": false
     },
     {
+      "product_id": "parfum",
+      "name": "Parfum",
+      "file": "Images/parfum.jpg",
+      "source": "Pexels",
+      "author": "Fashionneedles",
+      "page": "https://www.pexels.com/photo/32630387/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Parfum_pexels-fashionneedles-32630387.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "parmesan",
       "name": "Parmesan",
       "file": "Images/parmesan.jpg",
@@ -959,6 +1223,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "penne_pexels-klaus-nielsen-6287351.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "pesto",
+      "name": "Pesto",
+      "file": "Images/pesto.jpg",
+      "source": "Pexels",
+      "author": "Cphbythea",
+      "page": "https://www.pexels.com/photo/5604816/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Pesto_pexels-cphbythea-5604816.jpg",
       "cutout": false
     },
     {
@@ -998,6 +1274,18 @@
       "cutout": false
     },
     {
+      "product_id": "pflaster",
+      "name": "Pflaster",
+      "file": "Images/pflaster.jpg",
+      "source": "Pexels",
+      "author": "Tara Winstead",
+      "page": "https://www.pexels.com/photo/7722847/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Pflaster_pexels-tara-winstead-7722847.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "pommes",
       "name": "Pommes",
       "file": "Images/pommes.jpg",
@@ -1019,6 +1307,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Proteinriegel_pexels-esra-afsar-123882149-14416430.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "puderzucker",
+      "name": "Puderzucker",
+      "file": "Images/puderzucker.jpg",
+      "source": "Pexels",
+      "author": "Felicity Tai",
+      "page": "https://www.pexels.com/photo/7965970/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Puderzucker_pexels-felicity-tai-7965970.jpg",
       "cutout": false
     },
     {
@@ -1226,6 +1526,18 @@
       "cutout": false
     },
     {
+      "product_id": "shampoo",
+      "name": "Shampoo",
+      "file": "Images/shampoo.jpg",
+      "source": "Pexels",
+      "author": "Cottonbro",
+      "page": "https://www.pexels.com/photo/7440056/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Shampoo_pexels-cottonbro-7440056.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "sojasosse",
       "name": "Sojasoße",
       "file": "Images/sojasosse.jpg",
@@ -1235,6 +1547,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Sojasosse_pexels-juanvidas-20843711.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "sonnencreme",
+      "name": "Sonnencreme",
+      "file": "Images/sonnencreme.jpg",
+      "source": "Pexels",
+      "author": "Jadesandra",
+      "page": "https://www.pexels.com/photo/17900104/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Sonnecreme_pexels-jadesandra-17900104.jpg",
       "cutout": false
     },
     {
@@ -1406,6 +1730,30 @@
       "cutout": false
     },
     {
+      "product_id": "wattepads",
+      "name": "Wattepads",
+      "file": "Images/wattepads.jpg",
+      "source": "Pexels",
+      "author": "Tara Winstead",
+      "page": "https://www.pexels.com/photo/6682967/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Wattepads_pexels-tara-winstead-6682967.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "wattestaebchen",
+      "name": "Wattestäbchen",
+      "file": "Images/wattestaebchen.jpg",
+      "source": "Pexels",
+      "author": "Rohan Dalal",
+      "page": "https://www.pexels.com/photo/9157170/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Wattestäbchen_pexels-rohan-dalal-62574732-9157170.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "wein",
       "name": "Wein",
       "file": "Images/wein.jpg",
@@ -1454,6 +1802,18 @@
       "cutout": false
     },
     {
+      "product_id": "zahnbuerste",
+      "name": "Zahnbürste",
+      "file": "Images/zahnbuerste.jpg",
+      "source": "Pexels",
+      "author": "Towfiqu Barbhuiya",
+      "page": "https://www.pexels.com/photo/13466251/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Zahnbürste_pexels-towfiqu-barbhuiya-3440682-13466251.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "zahnpasta",
       "name": "Zahnpasta",
       "file": "Images/zahnpasta.jpg",
@@ -1463,6 +1823,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Zahnpaster_pexels-miriam-alonso-7622555.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "zahnseide",
+      "name": "Zahnseide",
+      "file": "Images/zahnseide.jpg",
+      "source": "Pexels",
+      "author": "Martabranco",
+      "page": "https://www.pexels.com/photo/30551803/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "zahnseide_pexels-martabranco-30551803.jpg",
       "cutout": false
     },
     {

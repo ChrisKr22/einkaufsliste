@@ -3,7 +3,7 @@
 Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalog.py`.
 Änderungen bitte in `catalog.json` machen (oder mir sagen), nicht hier.
 
-**227 Produkte · 17 Kategorien · 398 Synonyme · 120 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 124 mit Foto**
+**228 Produkte · 17 Kategorien · 399 Synonyme · 121 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 155 mit Foto**
 
 | # | Kategorie | Produkte | davon aus deiner Liste |
 |---|-----------|----------|------------------------|
@@ -15,7 +15,7 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 | 6 | [Milchprodukte & Eier](#milchprodukte--eier) | 13 | 6 |
 | 7 | [Käse](#käse) | 8 | 2 |
 | 8 | [Tiefkühl](#tiefkühl) | 10 | 3 |
-| 9 | [Nudeln, Reis & Getreide](#nudeln-reis--getreide) | 13 | 7 |
+| 9 | [Nudeln, Reis & Getreide](#nudeln-reis--getreide) | 14 | 8 |
 | 10 | [Konserven & Fertiges](#konserven--fertiges) | 13 | 6 |
 | 11 | [Öle, Essig & Gewürze](#öle-essig--gewürze) | 14 | 9 |
 | 12 | [Backen & Süßes](#backen--süßes) | 13 | 5 |
@@ -179,7 +179,8 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 | ● | **Quinoa** | – | `quinoa` | quinoa |
 | ● | **Linsen** | rote Linsen, Berglinsen | `linsen` | red lentils |
 | ● | **Haferflocken** | Porridge, Haferflocken zart, zarte Haferflocken | `haferflocken` | rolled oats |
-| ● | **Müsli** | Müesli, Granola | `muesli` | muesli |
+| ● | **Müsli** | Müesli | `muesli` | muesli |
+| ● | **Granola** | Knuspermüsli, Crunchy Müsli | `granola` | granola |
 |  | **Cornflakes** | Frühstücksflocken, Cerealien | `cornflakes` | cornflakes |
 
 ## Konserven & Fertiges

@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "categories": [
     {"id": "obst", "name": "Obst"},
     {"id": "gemuese", "name": "Gemüse"},
@@ -138,7 +138,8 @@
     {"id": "quinoa", "name": "Quinoa", "category": "nudeln", "synonyms": [], "query_en": "quinoa", "origin": "nutzer"},
     {"id": "linsen", "name": "Linsen", "category": "nudeln", "synonyms": ["rote Linsen", "Berglinsen"], "query_en": "red lentils", "origin": "nutzer"},
     {"id": "haferflocken", "name": "Haferflocken", "category": "nudeln", "synonyms": ["Porridge", "Haferflocken zart", "zarte Haferflocken"], "query_en": "rolled oats", "origin": "nutzer"},
-    {"id": "muesli", "name": "Müsli", "category": "nudeln", "synonyms": ["Müesli", "Granola"], "query_en": "muesli", "origin": "nutzer"},
+    {"id": "muesli", "name": "Müsli", "category": "nudeln", "synonyms": ["Müesli"], "query_en": "muesli", "origin": "nutzer"},
+    {"id": "granola", "name": "Granola", "category": "nudeln", "synonyms": ["Knuspermüsli", "Crunchy Müsli"], "query_en": "granola", "origin": "nutzer"},
     {"id": "cornflakes", "name": "Cornflakes", "category": "nudeln", "synonyms": ["Frühstücksflocken", "Cerealien"], "query_en": "cornflakes", "origin": "entwurf"},
 
     {"id": "passierte-tomaten", "name": "Passierte Tomaten", "category": "konserven", "synonyms": ["Passata", "Tomaten passiert"], "query_en": "tomato passata", "origin": "entwurf"},

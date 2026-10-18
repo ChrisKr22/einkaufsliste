@@ -12,15 +12,59 @@ const check = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12.5l4.5 
 // Kleiner Stift statt „Anmerkung hinzufügen“: dezent, Tippen öffnet das Detailfenster.
 const pen = '<svg class="note-pen" aria-hidden="true" viewBox="0 0 24 24"><path d="M14.5 5.5l4 4M5 19l1-4L15.5 5.5a1.4 1.4 0 0 1 2 0l1 1a1.4 1.4 0 0 1 0 2L9 18z"/></svg>';
 
+/**
+ * Kopf mit Suche und Treffern bleibt stehen, auch bei offener Tastatur auf dem iPhone:
+ * - Treffer bekommen genau die Höhe, die im sichtbaren Bereich unter dem Kopf frei ist, und scrollen in sich.
+ * - Solange das Suchfeld den Fokus hat, scrollt die Seite nicht (Safari schiebt sonst den sichtbaren Ausschnitt
+ *   samt festem Kopf weg); falls Safari doch verschiebt, rückt der Kopf um denselben Betrag nach.
+ * @returns {() => void} Höhe der Treffer neu anpassen (nach jedem Zeichnen)
+ */
+function pinSearchWhileTyping(input, suggestionsEl) {
+  const header = input.closest('.header');
+  const viewport = window.visualViewport;
+  let typing = false;
+
+  function fit() {
+    if (!header || suggestionsEl.hidden) return;
+    const height = viewport?.height ?? window.innerHeight;
+    const stickyTop = parseFloat(getComputedStyle(header).top) || 0;
+    const free = height - stickyTop - suggestionsEl.offsetTop - 12;
+    // Ohne Tastatur bleibt unten ein Teil der Liste sichtbar.
+    suggestionsEl.style.maxHeight = `${Math.max(120, Math.min(free, typing ? free : height * 0.55))}px`;
+  }
+
+  function follow() {
+    if (!header) return;
+    const shift = typing && viewport ? viewport.offsetTop : 0;
+    header.style.transform = shift > 0 ? `translateY(${shift}px)` : '';
+    fit();
+  }
+
+  input.addEventListener('focus', () => { typing = true; follow(); });
+  input.addEventListener('blur', () => { typing = false; follow(); });
+  viewport?.addEventListener('resize', follow);
+  viewport?.addEventListener('scroll', follow);
+
+  // Beim Tippen scrollen nur die Treffer, nie die Seite dahinter.
+  document.addEventListener('touchmove', (event) => {
+    if (!typing) return;
+    const inSuggestions = event.target instanceof Element && event.target.closest('#suggestions');
+    if (inSuggestions && suggestionsEl.scrollHeight > suggestionsEl.clientHeight) return;
+    if (event.cancelable) event.preventDefault();
+  }, { passive: false });
+
+  return fit;
+}
+
 function readRecentOrder() {
   try { return localStorage.getItem(RECENT_ORDER_KEY) === 'frequent' ? 'frequent' : 'recent'; } catch { return 'recent'; }
 }
 
 export function mountPlanningView(root, model) {
-  // Suche sitzt fest im Kopf (außerhalb der Planungsansicht).
+  // Suche und Treffer sitzen fest im Kopf (außerhalb der Planungsansicht).
   const input = document.querySelector('#search');
   const clearButton = document.querySelector('#search-clear');
-  const suggestionsEl = root.querySelector('#suggestions');
+  const suggestionsEl = document.querySelector('#suggestions');
   const listEl = root.querySelector('#list');
   const recentEl = root.querySelector('#recent');
   let lastAddedCount = model.state.addedCount;
@@ -40,6 +84,7 @@ export function mountPlanningView(root, model) {
   });
 
   const keepTyping = () => input.focus({ preventScroll: true });
+  const fitSuggestions = pinSearchWhileTyping(input, suggestionsEl);
 
   // --- Suche
   input.addEventListener('input', () => model.setQuery(input.value));
@@ -116,6 +161,7 @@ export function mountPlanningView(root, model) {
     }
     suggestionsEl.innerHTML = rows.join('');
     suggestionsEl.hidden = rows.length === 0;
+    fitSuggestions();
   }
 
   function renderRecent() {

@@ -212,6 +212,9 @@ body:not(.shopping) .dock-finish, .dock-finish[hidden] { display: none; }
 .section-title span { font-weight: 400; }
 .suggestions { margin-top: 8px; }
 .suggestions[hidden] { display: none; }
+/* Im festen Kopf: eigene Scrollfläche, Höhe setzt planning-view.js passend zum sichtbaren Bereich (auch bei offener Tastatur). */
+.header .suggestions { max-height: 55dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-shadow: none; }
+body.shopping .header .suggestions { display: none; }
 
 /* Produktbild-Platzhalter */
 /* Neutrale Fläche für alle Produkte; die Kategorie zeigt sich nur als feiner Rahmen in ihrer Farbe. */
