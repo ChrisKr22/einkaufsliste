@@ -45,9 +45,11 @@ function pinSearchWhileTyping(input, suggestionsEl) {
   viewport?.addEventListener('resize', follow);
   viewport?.addEventListener('scroll', follow);
 
-  // Beim Tippen scrollen nur die Treffer, nie die Seite dahinter.
+  // Beim Tippen scrollen nur die Treffer, nie die Seite dahinter. Ohne Treffer (z. B. gleich nach dem
+  // Hinzufügen, wenn das Feld leer ist, aber den Fokus behält) scrollt die Seite; die Tastatur geht dann zu.
   document.addEventListener('touchmove', (event) => {
     if (!typing) return;
+    if (suggestionsEl.hidden) { input.blur(); return; }
     const inSuggestions = event.target instanceof Element && event.target.closest('#suggestions');
     if (inSuggestions && suggestionsEl.scrollHeight > suggestionsEl.clientHeight) return;
     if (event.cancelable) event.preventDefault();
