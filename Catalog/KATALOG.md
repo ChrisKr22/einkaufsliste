@@ -3,12 +3,12 @@
 Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalog.py`.
 Änderungen bitte in `catalog.json` machen (oder mir sagen), nicht hier.
 
-**228 Produkte · 17 Kategorien · 399 Synonyme · 121 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 155 mit Foto**
+**233 Produkte · 17 Kategorien · 415 Synonyme · 126 aus deiner Liste (●) · 0 aus Vorschlägen (◆) · 160 mit Foto**
 
 | # | Kategorie | Produkte | davon aus deiner Liste |
 |---|-----------|----------|------------------------|
-| 1 | [Obst](#obst) | 16 | 7 |
-| 2 | [Gemüse](#gemüse) | 24 | 6 |
+| 1 | [Obst](#obst) | 17 | 8 |
+| 2 | [Gemüse](#gemüse) | 25 | 7 |
 | 3 | [Backwaren](#backwaren) | 9 | 4 |
 | 4 | [Fleisch & Wurst](#fleisch--wurst) | 14 | 11 |
 | 5 | [Fisch](#fisch) | 5 | 0 |
@@ -16,11 +16,11 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 | 7 | [Käse](#käse) | 8 | 2 |
 | 8 | [Tiefkühl](#tiefkühl) | 10 | 3 |
 | 9 | [Nudeln, Reis & Getreide](#nudeln-reis--getreide) | 14 | 8 |
-| 10 | [Konserven & Fertiges](#konserven--fertiges) | 13 | 6 |
+| 10 | [Konserven & Fertiges](#konserven--fertiges) | 14 | 7 |
 | 11 | [Öle, Essig & Gewürze](#öle-essig--gewürze) | 14 | 9 |
-| 12 | [Backen & Süßes](#backen--süßes) | 13 | 5 |
+| 12 | [Backen & Süßes](#backen--süßes) | 14 | 6 |
 | 13 | [Snacks](#snacks) | 7 | 2 |
-| 14 | [Getränke](#getränke) | 12 | 5 |
+| 14 | [Getränke](#getränke) | 13 | 6 |
 | 15 | [Drogerie](#drogerie) | 40 | 38 |
 | 16 | [Haushalt](#haushalt) | 12 | 8 |
 | 17 | [Sonstiges](#sonstiges) | 4 | 1 |
@@ -45,6 +45,7 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 | ● | **Avocado** | Avocados | `avocados` | avocado |
 |  | **Ananas** | – | `ananas` | pineapple |
 | ● | **Mango** | Mangos | `mango` | mango |
+| ● | **Granatapfel** | Granatäpfel, Granatapfelkerne | `granatapfel` | pomegranate |
 
 ## Gemüse
 
@@ -59,6 +60,7 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 |  | **Knoblauch** | Knoblauchzehe | `knoblauch` | garlic bulb |
 |  | **Karotten** | Möhren, Möhre, Mohrrüben, Karotte | `karotten` | carrots |
 | ● | **Kartoffeln** | Kartoffel, Erdäpfel | `kartoffeln` | potatoes |
+| ● | **Süßkartoffel** | Süßkartoffeln, Batate, Bataten | `suesskartoffel` | sweet potato |
 |  | **Brokkoli** | Broccoli | `brokkoli` | broccoli |
 |  | **Blumenkohl** | – | `blumenkohl` | cauliflower |
 |  | **Zucchini** | – | `zucchini` | zucchini |
@@ -200,6 +202,7 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 |  | **Pesto** | Pesto Genovese | `pesto` | pesto |
 |  | **Tomatensoße** | Nudelsoße, Tomatensauce, Pastasoße | `tomatensosse` | tomato sauce jar |
 |  | **Kokosmilch** | – | `kokosmilch` | coconut milk |
+| ● | **Klöße** | Kloß, Knödel, Kartoffelklöße, Kartoffelknödel, Semmelknödel, Kloßteig | `kloesse` | potato dumplings |
 
 ## Öle, Essig & Gewürze
 
@@ -236,6 +239,7 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 | ● | **Getrocknete Früchte** | Trockenobst, Trockenfrüchte, Rosinen, Datteln | `getrocknete-fruechte` | dried fruit |
 |  | **Marmelade** | Konfitüre, Gelee | `marmelade` | jam jar |
 | ● | **Nuss-Nougat-Creme** | Schokocreme, Nutella, Schokoladencreme | `nuss-nougat-creme` | chocolate hazelnut spread |
+| ● | **Mandelmus** | Mandelcreme, Nussmus | `mandelmus` | almond butter jar |
 |  | **Kekse** | Plätzchen, Biskuits | `kekse` | cookies |
 
 ## Snacks
@@ -262,6 +266,7 @@ Automatisch erzeugt aus `Catalog/catalog.json` mit `python3 tools/catalog/katalo
 | ● | **Bier** | Pils | `bier` | beer bottle |
 | ● | **Wein** | Rotwein, Weißwein | `wein` | wine bottle |
 |  | **Sekt** | Prosecco, Schaumwein | `sekt` | sparkling wine |
+| ● | **Aperol** | Aperitif, Spritz, Aperol Spritz | `aperol` | aperol bottle |
 | ● | **Whisky** | Whiskey, Scotch, Bourbon | `whisky` | whisky bottle |
 |  | **Kaffee** | Kaffeebohnen, Kaffeepulver | `kaffee` | coffee beans |
 |  | **Tee** | Teebeutel, Kräutertee, Schwarztee | `tee` | tea bags |

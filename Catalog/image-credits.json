@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-18 08:37",
+  "generated_at": "2026-10-28 18:17",
   "images": [
     {
       "product_id": "aepfel",
@@ -35,6 +35,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Ananas_pexels-picfoods-com-804644-1674574.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "aperol",
+      "name": "Aperol",
+      "file": "Images/aperol.jpg",
+      "source": "Pexels",
+      "author": "Jpgata",
+      "page": "https://www.pexels.com/photo/11430594/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Aperol_pexels-jpgata-11430594.jpg",
       "cutout": false
     },
     {
@@ -530,6 +542,18 @@
       "cutout": false
     },
     {
+      "product_id": "granatapfel",
+      "name": "Granatapfel",
+      "file": "Images/granatapfel.jpg",
+      "source": "Pexels",
+      "author": "Pixabay",
+      "page": "https://www.pexels.com/photo/65256/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Granatapfel_pexels-pixabay-65256.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "granola",
       "name": "Granola",
       "file": "Images/granola.jpg",
@@ -854,6 +878,18 @@
       "cutout": false
     },
     {
+      "product_id": "kloesse",
+      "name": "Klöße",
+      "file": "Images/kloesse.jpg",
+      "source": "Pexels",
+      "author": "Anh Nguyen",
+      "page": "https://www.pexels.com/photo/37616036/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Knödel_pexels-anh-nguyen-517648218-37616036.jpg",
+      "cutout": false
+    },
+    {
       "product_id": "kochschinken",
       "name": "Kochschinken",
       "file": "Images/kochschinken.jpg",
@@ -1007,6 +1043,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Makeup-Entferner_pexels-karola-g-6633571.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "mandelmus",
+      "name": "Mandelmus",
+      "file": "Images/mandelmus.jpg",
+      "source": "Pexels",
+      "author": "Mohamed9380",
+      "page": "https://www.pexels.com/photo/36617237/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Mandelmus_pexels-mohamed9380-36617237.jpg",
       "cutout": false
     },
     {
@@ -1619,6 +1667,18 @@
       "license": "Pexels License",
       "license_url": "https://www.pexels.com/license/",
       "original_file": "Spülmittel_pexels-karola-g-4239104.jpg",
+      "cutout": false
+    },
+    {
+      "product_id": "suesskartoffel",
+      "name": "Süßkartoffel",
+      "file": "Images/suesskartoffel.jpg",
+      "source": "Pexels",
+      "author": "Ela Haney",
+      "page": "https://www.pexels.com/photo/89247/",
+      "license": "Pexels License",
+      "license_url": "https://www.pexels.com/license/",
+      "original_file": "Süßkartoffel_pexels-ela-haney-18168-89247.jpg",
       "cutout": false
     },
     {

@@ -1,7 +1,7 @@
 // Service Worker: speichert die App beim ersten Aufruf, danach läuft sie komplett offline.
 // VERSION und PRECACHE werden von tools/web/build.py gesetzt – nicht von Hand ändern.
 
-const VERSION = '895a63603b86';
+const VERSION = 'b38c0ce9f053';
 const PRECACHE = [
   './',
   'index.html',
@@ -53,6 +53,7 @@ const PRECACHE = [
   'images/aepfel.jpg',
   'images/alufolie.jpg',
   'images/ananas.jpg',
+  'images/aperol.jpg',
   'images/apfelsaft.jpg',
   'images/aufschnitt.jpg',
   'images/avocados.jpg',
@@ -94,6 +95,7 @@ const PRECACHE = [
   'images/gesichtscreme.jpg',
   'images/gesichtsmaske.jpg',
   'images/getrocknete-tomaten.jpg',
+  'images/granatapfel.jpg',
   'images/granola.jpg',
   'images/grillkohle.jpg',
   'images/gurke.jpg',
@@ -121,6 +123,7 @@ const PRECACHE = [
   'images/kidneybohnen.jpg',
   'images/kiwis.jpg',
   'images/klarspueler.jpg',
+  'images/kloesse.jpg',
   'images/kochschinken.jpg',
   'images/kokosmilch.jpg',
   'images/kuechenrolle.jpg',
@@ -134,6 +137,7 @@ const PRECACHE = [
   'images/mais.jpg',
   'images/make-up-entferner.jpg',
   'images/make-up.jpg',
+  'images/mandelmus.jpg',
   'images/mango.jpg',
   'images/marmelade.jpg',
   'images/mascara.jpg',
@@ -185,6 +189,7 @@ const PRECACHE = [
   'images/spinat.jpg',
   'images/spuelmaschinentabs.jpg',
   'images/spuelmittel.jpg',
+  'images/suesskartoffel.jpg',
   'images/tee.jpg',
   'images/thunfisch.jpg',
   'images/toast.jpg',

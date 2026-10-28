@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "categories": [
     {"id": "obst", "name": "Obst"},
     {"id": "gemuese", "name": "Gemüse"},
@@ -36,6 +36,7 @@
     {"id": "avocados", "name": "Avocado", "category": "obst", "synonyms": ["Avocados"], "query_en": "avocado", "origin": "nutzer"},
     {"id": "ananas", "name": "Ananas", "category": "obst", "synonyms": [], "query_en": "pineapple", "origin": "entwurf"},
     {"id": "mango", "name": "Mango", "category": "obst", "synonyms": ["Mangos"], "query_en": "mango", "origin": "nutzer"},
+    {"id": "granatapfel", "name": "Granatapfel", "category": "obst", "synonyms": ["Granatäpfel", "Granatapfelkerne"], "query_en": "pomegranate", "origin": "nutzer"},
 
     {"id": "tomaten", "name": "Tomaten", "category": "gemuese", "synonyms": ["Tomate"], "query_en": "tomatoes", "origin": "nutzer"},
     {"id": "cherrytomaten", "name": "Cherrytomaten", "category": "gemuese", "synonyms": ["Kirschtomaten", "Cocktailtomaten", "Tomaten"], "query_en": "cherry tomatoes", "origin": "entwurf"},
@@ -46,6 +47,7 @@
     {"id": "knoblauch", "name": "Knoblauch", "category": "gemuese", "synonyms": ["Knoblauchzehe"], "query_en": "garlic bulb", "origin": "entwurf"},
     {"id": "karotten", "name": "Karotten", "category": "gemuese", "synonyms": ["Möhren", "Möhre", "Mohrrüben", "Karotte"], "query_en": "carrots", "origin": "entwurf"},
     {"id": "kartoffeln", "name": "Kartoffeln", "category": "gemuese", "synonyms": ["Kartoffel", "Erdäpfel"], "query_en": "potatoes", "origin": "nutzer"},
+    {"id": "suesskartoffel", "name": "Süßkartoffel", "category": "gemuese", "synonyms": ["Süßkartoffeln", "Batate", "Bataten"], "query_en": "sweet potato", "origin": "nutzer"},
     {"id": "brokkoli", "name": "Brokkoli", "category": "gemuese", "synonyms": ["Broccoli"], "query_en": "broccoli", "origin": "entwurf"},
     {"id": "blumenkohl", "name": "Blumenkohl", "category": "gemuese", "synonyms": [], "query_en": "cauliflower", "origin": "entwurf"},
     {"id": "zucchini", "name": "Zucchini", "category": "gemuese", "synonyms": [], "query_en": "zucchini", "origin": "entwurf"},
@@ -155,6 +157,7 @@
     {"id": "pesto", "name": "Pesto", "category": "konserven", "synonyms": ["Pesto Genovese"], "query_en": "pesto", "origin": "entwurf"},
     {"id": "tomatensosse", "name": "Tomatensoße", "category": "konserven", "synonyms": ["Nudelsoße", "Tomatensauce", "Pastasoße"], "query_en": "tomato sauce jar", "origin": "entwurf"},
     {"id": "kokosmilch", "name": "Kokosmilch", "category": "konserven", "synonyms": [], "query_en": "coconut milk", "origin": "entwurf"},
+    {"id": "kloesse", "name": "Klöße", "category": "konserven", "synonyms": ["Kloß", "Knödel", "Kartoffelklöße", "Kartoffelknödel", "Semmelknödel", "Kloßteig"], "query_en": "potato dumplings", "origin": "nutzer"},
 
     {"id": "olivenoel", "name": "Olivenöl", "category": "oel", "synonyms": ["Öl"], "query_en": "olive oil bottle", "origin": "nutzer"},
     {"id": "rapsoel", "name": "Rapsöl", "category": "oel", "synonyms": ["Sonnenblumenöl", "Speiseöl", "Öl"], "query_en": "cooking oil bottle", "origin": "entwurf"},
@@ -183,6 +186,7 @@
     {"id": "getrocknete-fruechte", "name": "Getrocknete Früchte", "category": "backen", "synonyms": ["Trockenobst", "Trockenfrüchte", "Rosinen", "Datteln"], "query_en": "dried fruit", "origin": "nutzer"},
     {"id": "marmelade", "name": "Marmelade", "category": "backen", "synonyms": ["Konfitüre", "Gelee"], "query_en": "jam jar", "origin": "entwurf"},
     {"id": "nuss-nougat-creme", "name": "Nuss-Nougat-Creme", "category": "backen", "synonyms": ["Schokocreme", "Nutella", "Schokoladencreme"], "query_en": "chocolate hazelnut spread", "origin": "nutzer"},
+    {"id": "mandelmus", "name": "Mandelmus", "category": "backen", "synonyms": ["Mandelcreme", "Nussmus"], "query_en": "almond butter jar", "origin": "nutzer"},
     {"id": "kekse", "name": "Kekse", "category": "backen", "synonyms": ["Plätzchen", "Biskuits"], "query_en": "cookies", "origin": "entwurf"},
 
     {"id": "chips", "name": "Chips", "category": "snacks", "synonyms": ["Kartoffelchips"], "query_en": "potato chips", "origin": "entwurf"},
@@ -201,6 +205,7 @@
     {"id": "bier", "name": "Bier", "category": "getraenke", "synonyms": ["Pils"], "query_en": "beer bottle", "origin": "nutzer"},
     {"id": "wein", "name": "Wein", "category": "getraenke", "synonyms": ["Rotwein", "Weißwein"], "query_en": "wine bottle", "origin": "nutzer"},
     {"id": "sekt", "name": "Sekt", "category": "getraenke", "synonyms": ["Prosecco", "Schaumwein"], "query_en": "sparkling wine", "origin": "entwurf"},
+    {"id": "aperol", "name": "Aperol", "category": "getraenke", "synonyms": ["Aperitif", "Spritz", "Aperol Spritz"], "query_en": "aperol bottle", "origin": "nutzer"},
     {"id": "whisky", "name": "Whisky", "category": "getraenke", "synonyms": ["Whiskey", "Scotch", "Bourbon"], "query_en": "whisky bottle", "origin": "nutzer"},
     {"id": "kaffee", "name": "Kaffee", "category": "getraenke", "synonyms": ["Kaffeebohnen", "Kaffeepulver"], "query_en": "coffee beans", "origin": "entwurf"},
     {"id": "tee", "name": "Tee", "category": "getraenke", "synonyms": ["Teebeutel", "Kräutertee", "Schwarztee"], "query_en": "tea bags", "origin": "entwurf"},
