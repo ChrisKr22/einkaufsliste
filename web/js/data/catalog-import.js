@@ -5,6 +5,8 @@
 //   Namen, Reihenfolge und Zuordnungen, die man in der App geändert hat, bleiben unangetastet.
 // - Neues Katalogprodukt mit dem Namen eines eigenen Produkts (z. B. ein angenommener Vorschlag): Das eigene Produkt
 //   wird zum Katalogprodukt – Kaufzahl, Foto, Einheit, Kategorie und Listeneinträge bleiben, es gibt kein Doppel.
+//   Gibt es daneben schon das Katalogprodukt, aber noch unbenutzt (nie gekauft, auf keiner Liste, kein Foto),
+//   ersetzt das eigene es (z. B. ein Doppel aus einer gemeinsamen Liste).
 
 import { fold } from '../search.js';
 import { DEFAULT_UNIT, isUnit } from '../units.js';
@@ -59,11 +61,25 @@ export async function importCatalog(catalog, store) {
   const fallbackId = categoriesByKey.get(FALLBACK_CATEGORY)?.id;
   const keepOwnCategory = (own) => Boolean(own.categoryId) && own.categoryId !== fallbackId;
   const ownByName = new Map(existingProducts.filter((p) => p.isCustom && !p.catalogId).map((p) => [fold(p.name), p]));
+  const adopt = (own, item, category) => {
+    ownByName.delete(fold(item.name));
+    const { suggestHidden, suggestedAt, ...rest } = own;
+    return { ...rest, catalogId: item.id, isCustom: false, name: item.name, synonyms: item.synonyms, categoryId: keepOwnCategory(own) ? own.categoryId : category?.id ?? own.categoryId ?? null };
+  };
+  const listed = new Set((await store.getAll('entries')).map((e) => e.productId));
+  const withPhoto = new Set((await store.getAll('photos')).map((p) => p.productId));
+  const unused = (p) => !p.purchaseCount && !p.lastPurchasedAt && !listed.has(p.id) && !withPhoto.has(p.id);
   const changed = [];
+  const removed = [];
   for (const item of catalog.products) {
     const category = categoriesByKey.get(item.category) ?? categoriesByKey.get(FALLBACK_CATEGORY);
     const product = productsByCatalogId.get(item.id);
-    if (product) {
+    const twin = product && ownByName.get(fold(item.name));
+    if (twin && unused(product)) {
+      removed.push(product.id);
+      changed.push(adopt(twin, item, category));
+      summary.productsUpdated++;
+    } else if (product) {
       const synonymsChanged = JSON.stringify(product.synonyms) !== JSON.stringify(item.synonyms);
       // Im Katalog umbenannt (der alte Name steht jetzt unter den Synonymen): neuen Namen übernehmen.
       // Hat man das Produkt in der App selbst anders benannt, bleibt dieser Name.
@@ -77,10 +93,7 @@ export async function importCatalog(catalog, store) {
         if (synonymsChanged || renamed || moved) summary.productsUpdated++;
       }
     } else if (ownByName.has(fold(item.name))) {
-      const own = ownByName.get(fold(item.name));
-      ownByName.delete(fold(item.name));
-      const { suggestHidden, suggestedAt, ...rest } = own;
-      changed.push({ ...rest, catalogId: item.id, isCustom: false, name: item.name, synonyms: item.synonyms, categoryId: keepOwnCategory(own) ? own.categoryId : category?.id ?? own.categoryId ?? null });
+      changed.push(adopt(ownByName.get(fold(item.name)), item, category));
       summary.productsUpdated++;
     } else {
       changed.push({
@@ -99,6 +112,7 @@ export async function importCatalog(catalog, store) {
       summary.productsAdded++;
     }
   }
+  for (const id of removed) await store.delete('products', id);
   await store.putMany('products', changed);
   await store.put('meta', { key: VERSION_KEY, value: catalog.version });
   return summary;

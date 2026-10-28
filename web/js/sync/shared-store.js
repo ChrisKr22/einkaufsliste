@@ -117,12 +117,13 @@ export class SharedStore {
     const products = await this.base.getAll('products');
     const byRef = new Map();
     const customByName = new Map();
+    const catalogByName = new Map();
     for (const p of products) {
       byRef.set(productRef(p), p);
-      if (!p.catalogId) {
-        byRef.set(`s:${p.id}`, p);
-        customByName.set(normalizeName(p.name), p);
-      }
+      // Alte „s:“-Verweise gelten weiter, auch wenn das eigene Produkt inzwischen Katalogprodukt ist.
+      byRef.set(`s:${p.id}`, p);
+      if (p.sharedId) byRef.set(`s:${p.sharedId}`, p);
+      (p.catalogId ? catalogByName : customByName).set(normalizeName(p.name), p);
     }
     let categories = null;
     const result = [];
@@ -131,7 +132,7 @@ export class SharedStore {
       let product = byRef.get(record.ref);
       if (!product) {
         categories ??= await this.#categoryKeys();
-        product = await this.#materialize(record, categories, customByName);
+        product = await this.#materialize(record, categories, customByName, catalogByName);
         byRef.set(record.ref, product);
       }
       const entry = { id: record.id, productId: product.id };
@@ -146,13 +147,14 @@ export class SharedStore {
   }
 
   /** Produkt, das ein anderes Gerät auf die Liste gesetzt hat, hier anlegen (bzw. ein gleichnamiges eigenes verknüpfen). */
-  async #materialize(record, categories, customByName) {
+  async #materialize(record, categories, customByName, catalogByName) {
     const shared = record.ref.startsWith('s:') ? record.ref.slice(2) : null;
     const info = (shared && this.replica.get('product', shared)) || {};
     const name = String(info.name ?? record.name ?? 'Unbekanntes Produkt').slice(0, 80);
     const categoryKey = info.cat ?? record.cat;
     if (shared) {
-      const sameName = customByName.get(normalizeName(name));
+      // Gleichnamiges Katalogprodukt vor eigenem: hier ist es schon im Katalog (mit Foto), beim anderen Gerät noch nicht.
+      const sameName = catalogByName.get(normalizeName(name)) ?? customByName.get(normalizeName(name));
       if (sameName) {
         const linked = { ...sameName, sharedId: shared };
         await this.base.put('products', linked);

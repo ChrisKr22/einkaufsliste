@@ -239,6 +239,33 @@ describe('Katalog-Import: angenommener Vorschlag', () => {
     assert.equal(summary.productsAdded, 0);
   });
 
+  test('Doppel aus eigenem und unbenutztem Katalogprodukt: das eigene wird Katalogprodukt, das andere entfällt', async () => {
+    const store = new MemoryStore();
+    const v1 = { ...base, version: 1, products: [{ id: 'ajvar', name: 'Ajvar', category: 'konserven', synonyms: [] }] };
+    await importCatalog(v1, store);
+    const sonst = (await store.getAll('categories')).find((c) => c.key === 'sonst');
+    await store.put('products', { id: 'own1', catalogId: null, name: 'Ajvar', synonyms: [], categoryId: sonst.id, isCustom: true });
+    await store.put('entries', { id: 'e1', productId: 'own1', quantity: 1, note: '', status: 'open', addedAt: 1 });
+    await importCatalog({ ...v1, version: 2 }, store);
+    const products = await store.getAll('products');
+    assert.deepEqual(products.map((p) => [p.id, p.catalogId]), [['own1', 'ajvar']]);
+    assert.equal(products[0].categoryId, (await store.getAll('categories')).find((c) => c.key === 'konserven').id);
+  });
+
+  test('Doppel bleibt, wenn das Katalogprodukt schon benutzt ist', async () => {
+    const store = new MemoryStore();
+    const v1 = { ...base, version: 1, products: [{ id: 'ajvar', name: 'Ajvar', category: 'konserven', synonyms: [] }] };
+    await importCatalog(v1, store);
+    const ajvar = (await store.getAll('products'))[0];
+    await store.put('entries', { id: 'e1', productId: ajvar.id, quantity: 1, note: '', status: 'open', addedAt: 1 });
+    await store.put('products', { id: 'own1', catalogId: null, name: 'Ajvar', synonyms: [], categoryId: null, isCustom: true });
+    await importCatalog({ ...v1, version: 2 }, store);
+    const products = await store.getAll('products');
+    assert.equal(products.length, 2);
+    assert.equal(products.find((p) => p.id === ajvar.id).catalogId, 'ajvar');
+    assert.equal(products.find((p) => p.id === 'own1').catalogId, null);
+  });
+
   test('selbst einsortiertes eigenes Produkt behält seine Kategorie', async () => {
     const store = new MemoryStore();
     await importCatalog({ ...base, version: 1, products: [] }, store);

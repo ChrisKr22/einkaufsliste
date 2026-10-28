@@ -7,7 +7,8 @@ import { ListsManager } from '../js/lists.js';
 import { checkCode, inviteLink, newDeviceKeys, newInviteSecret, openForDevice, parseInvite, sealForDevice } from '../js/sync/join.js';
 import { Mailbox } from '../../tools/sync/src/mailbox.js';
 import { ListConnection } from '../js/sync/client.js';
-import { makeStore, productNamed } from './helpers.js';
+import { catalog, makeStore, productNamed } from './helpers.js';
+import { importCatalog } from '../js/data/catalog-import.js';
 
 // ---------------------------------------------------------------- Briefkasten im Speicher (echter Code, SQLite von Node)
 
@@ -135,6 +136,41 @@ test('Änderungen kommen beim anderen an – auch eigene Produkte', async () => 
   assert.deepEqual(names(a.model), ['Brot', 'Eier', 'Hafermilch Barista', 'Milch']);
   const custom = a.model.state.items.find((i) => i.product.name === 'Hafermilch Barista');
   assert.equal(custom.product.isCustom, true);
+});
+
+test('Katalog-Update: eigenes Produkt auf der gemeinsamen Liste wird Katalogprodukt und bleibt es', async () => {
+  const cloud = fakeCloud();
+  const { a } = await pair(cloud);
+  // Vor dem Update gab es Aperol nicht im Katalog: als eigenes Produkt (Sonstiges) auf die Liste
+  const product = (await a.repository.products()).find((p) => p.catalogId === 'aperol');
+  await a.store.delete('products', product.id);
+  a.model.setQuery('Aperol');
+  await a.model.createProductFromQuery();
+  await a.shared.sync();
+  // Neuer Katalog bringt Aperol mit; der Import läuft auf dem Gerätespeicher
+  await a.store.put('meta', { key: 'catalogVersion', value: catalog.version - 1 });
+  await importCatalog(catalog, a.store);
+  await a.model.load();
+  const item = a.model.state.items.find((i) => i.product.name === 'Aperol');
+  assert.equal(item.product.catalogId, 'aperol');
+  const all = (await a.store.getAll('products')).filter((p) => p.name === 'Aperol');
+  assert.equal(all.length, 1, 'kein Doppel');
+  assert.equal(all[0].catalogId, 'aperol');
+});
+
+test('Eigenes Produkt vom anderen Gerät, hier schon im Katalog: wird mit dem Katalogprodukt verknüpft', async () => {
+  const cloud = fakeCloud();
+  const { a, b } = await pair(cloud);
+  // B kennt Aperol noch nicht aus dem Katalog und legt es selbst an
+  const aperolB = (await b.repository.products()).find((p) => p.catalogId === 'aperol');
+  await b.store.delete('products', aperolB.id);
+  b.model.setQuery('Aperol');
+  await b.model.createProductFromQuery();
+  await b.shared.sync();
+  await a.shared.sync();
+  const item = a.model.state.items.find((i) => i.product.name === 'Aperol');
+  assert.equal(item.product.catalogId, 'aperol');
+  assert.equal((await a.store.getAll('products')).filter((p) => p.name === 'Aperol').length, 1, 'kein Doppel');
 });
 
 test('Gleichzeitig: A ändert die Menge, B die Anmerkung – beides bleibt', async () => {
